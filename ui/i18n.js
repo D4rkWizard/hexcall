@@ -61,7 +61,7 @@ const I18N = (() => {
     'Update-Prüfung ist noch nicht eingerichtet (kein GitHub-Repository in version.json).': 'Update check is not set up yet (no GitHub repository in version.json).',
     'Noch kein Release auf GitHub veröffentlicht.': 'No release published on GitHub yet.',
     // help
-    "So funktioniert's": 'How it works', 'Ausführliche Anleitung': 'Full guide (German)', 'Sprachliste': 'Line list (German)', 'Anleitung': 'Guide', 'Changelog': 'Changelog',
+    "So funktioniert's": 'How it works', 'Ausführliche Anleitung': 'Full guide', 'Sprachliste': 'Line list', 'Anleitung': 'Guide', 'Changelog': 'Changelog',
     'Testen': 'Test', 'Effekte ': 'Effects ', 'Aktivieren ': 'Activate ', 'Tipps': 'Tips',
     // dialogs & toasts
     'Wie soll dein Sound-Mod heißen?': 'What should your sound mod be called?', 'Abbrechen': 'Cancel', 'Erstellen': 'Create',
@@ -108,6 +108,8 @@ const I18N = (() => {
     "WoT lädt die Sounds beim Spielstart. Zuverlässig hörst du die neuen Sounds erst nach einem Neustart des Spiels. Soll Hexcall WoT dafür neu starten? (Nicht mitten im Gefecht!)": "WoT loads its sounds when the game starts. You will reliably hear the new sounds only after restarting the game. Should Hexcall restart WoT for you? (Not in the middle of a battle!)",
     "World of Tanks konnte nicht gestartet werden (WorldOfTanks.exe fehlt).": "World of Tanks could not be started (WorldOfTanks.exe missing).",
     "Neu: WoT direkt aus dem Client starten bzw. nach „Neu laden“ neu starten": "New: start WoT from the client, or restart it after \"Reload\"",
+    'Alles auch auf Englisch': 'English everywhere', 'Anleitung und Sprachliste auch auf Englisch': 'Guide and line list also in English',
+    'Behoben: einige englische Texte blieben deutsch': 'Fixed: some English texts stayed German',
     // changelog entries
     'Bereit zum Veröffentlichen': 'Ready for release', 'Anleitung & Sprachliste für Windows': 'Guide & line list for Windows',
     'Aktiver Mod & Wieder einschalten': 'Active mod & turn back on', 'Stabilität & Feinschliff': 'Stability & polish', 'Kleines Changelog': 'Small changelog',
@@ -158,11 +160,11 @@ const I18N = (() => {
     [/^Auf v(.+) aktualisieren\?$/, 'Update to v$1?'],
     [/^v(.+) wird installiert – der Client startet gleich neu\.$/, 'v$1 is being installed – the client restarts in a moment.'],
     [/^Update-Prüfung nicht möglich: (.+)$/, 'Update check not possible: $1'],
-    [/^(d+) Ansagen$/, '$1 lines'],
-    [/^(d+) Effekte$/, '$1 effects'],
-    [/^(.+) → (.+): Deine Sounds ((.+)) sind deshalb gerade aus.$/, '$1 → $2: your sounds ($3) are off because of that.'],
-    [/^Achtung: veraltete Version (v(.+))$/, 'Warning: outdated version (v$1)'],
-    [/^v(.+) ist da. Ohne Update funktioniert der Mod evtl. nicht richtig – deine Mods und Einstellungen bleiben erhalten.$/, "v$1 is out. Without updating, the mod may not work properly – your mods and settings are kept."],
+    [/^(\d+) Ansagen$/, '$1 lines'],
+    [/^(\d+) Effekte$/, '$1 effects'],
+    [/^(.+) → (.+): Deine Sounds \((.+)\) sind deshalb gerade aus\.$/, '$1 → $2: your sounds ($3) are off because of that.'],
+    [/^Achtung: veraltete Version \(v(.+)\)$/, 'Warning: outdated version (v$1)'],
+    [/^v(.+) ist da\. Ohne Update funktioniert der Mod evtl\. nicht richtig – deine Mods und Einstellungen bleiben erhalten\.$/, "v$1 is out. Without updating, the mod may not work properly – your mods and settings are kept."],
     [/^Installiere v(.+) automatisch …$/, 'Installing v$1 automatically …'],
   ];
 

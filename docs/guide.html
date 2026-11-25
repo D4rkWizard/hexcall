@@ -1,0 +1,163 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>Guide – Hexcall</title>
+<meta name="viewport" content="width=device-width, initial-scale=1"><style>
+:root { --bg:#0d0915; --panel:#181126; --panel2:#201732; --line:#33264e; --text:#f0eafb; --text2:#cfc3e6; --muted:#9d8fbf;
+  --accent:#b46cff; --accent2:#7c3aed; --hi:#cf9bff; --soft:rgba(180,108,255,.14); --ok:#4cc38a; --head:"Bahnschrift","Segoe UI",sans-serif; }
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--text); font: 15.5px/1.65 "Segoe UI", system-ui, sans-serif; }
+body::before { content: ""; position: fixed; inset: 0; pointer-events: none; background: radial-gradient(900px 480px at 90% -10%, rgba(124,58,237,.25), transparent 70%); }
+.wrap { max-width: 980px; margin: 0 auto; padding: 40px 32px 70px; position: relative; }
+header { display: flex; align-items: center; gap: 18px; margin-bottom: 8px; }
+.emblem { width: 62px; height: 62px; filter: drop-shadow(0 6px 18px rgba(180,108,255,.45)); flex: none; }
+.eyebrow { font-family: var(--head); color: var(--accent); letter-spacing: .2em; text-transform: uppercase; font-size: 12px; }
+h1 { font-family: var(--head); font-size: 34px; margin: 0; line-height: 1.15; }
+h2 { font-family: var(--head); font-size: 22px; margin: 38px 0 12px; display: flex; align-items: center; gap: 10px; }
+h2 .n { width: 30px; height: 30px; border-radius: 9px; display: inline-grid; place-items: center; background: var(--soft); color: var(--hi); font-size: 15px; }
+h3 { font-family: var(--head); font-size: 17px; margin: 22px 0 8px; }
+p { color: var(--text2); margin: 0 0 12px; }
+.lead { font-size: 16.5px; color: var(--text2); max-width: 720px; margin: 10px 0 22px; }
+a { color: var(--hi); }
+b, strong { color: var(--text); }
+.toc { display: flex; flex-wrap: wrap; gap: 8px; margin: 0 0 8px; }
+.toc a { text-decoration: none; padding: 6px 12px; border-radius: 20px; border: 1px solid var(--line); background: var(--panel); color: var(--text2); font-size: 13.5px; }
+.toc a:hover { border-color: var(--accent); color: var(--text); }
+.cards { display: grid; grid-template-columns: repeat(2, 1fr); gap: 14px; }
+.card { background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 16px 18px; }
+.card h3 { margin-top: 0; }
+.card p:last-child { margin-bottom: 0; }
+.steps { counter-reset: s; list-style: none; padding: 0; margin: 0 0 12px; display: grid; gap: 10px; }
+.steps li { counter-increment: s; position: relative; padding: 12px 16px 12px 56px; background: var(--panel); border: 1px solid var(--line); border-radius: 12px; color: var(--text2); }
+.steps li::before { content: counter(s); position: absolute; left: 14px; top: 11px; width: 28px; height: 28px; border-radius: 8px; display: grid; place-items: center; background: linear-gradient(180deg, var(--hi), var(--accent2)); color: #fff; font: 700 14px var(--head); }
+ul.dots { padding-left: 20px; color: var(--text2); margin: 0 0 12px; }
+ul.dots li { margin: 4px 0; }
+table { width: 100%; border-collapse: collapse; background: var(--panel); border: 1px solid var(--line); border-radius: 12px; overflow: hidden; margin: 0 0 14px; }
+th, td { text-align: left; padding: 10px 14px; border-bottom: 1px solid var(--line); vertical-align: top; }
+th { font-family: var(--head); font-size: 12.5px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); background: var(--panel2); }
+tr:last-child td { border-bottom: 0; }
+td { color: var(--text2); }
+code, kbd { font-family: "Cascadia Mono", Consolas, monospace; font-size: 13px; background: var(--panel2); border: 1px solid var(--line); border-radius: 6px; padding: 1px 6px; color: var(--hi); white-space: nowrap; }
+kbd { color: var(--text); }
+.note { border-left: 3px solid var(--accent); background: var(--soft); padding: 10px 14px; border-radius: 0 10px 10px 0; color: var(--text2); margin: 0 0 14px; }
+.warn { border-left-color: #e5484d; background: rgba(229,72,77,.1); }
+.bar { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin: 6px 0 18px; }
+.search { flex: 1; min-width: 240px; height: 40px; border-radius: 10px; border: 1px solid var(--line); background: var(--panel); color: var(--text); padding: 0 14px; font: inherit; outline: none; }
+.search:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--soft); }
+.btn { height: 40px; padding: 0 16px; border-radius: 10px; border: 1px solid var(--accent); background: linear-gradient(180deg, var(--hi), var(--accent2)); color: #fff; font: 600 14px "Segoe UI", sans-serif; cursor: pointer; }
+.btn.ghost { background: transparent; color: var(--hi); border-color: var(--line); }
+.file { font-family: "Cascadia Mono", Consolas, monospace; font-size: 12.5px; color: var(--hi); overflow-wrap: anywhere; }
+.copy { border: 0; background: none; color: var(--muted); cursor: pointer; font-size: 13px; padding: 0 0 0 6px; }
+.copy:hover { color: var(--hi); }
+.line { color: #f2dcff; font-style: italic; }
+.grp td { background: var(--panel2); font: 600 12px var(--head); letter-spacing: .12em; text-transform: uppercase; color: var(--accent); }
+.count { color: var(--muted); font-size: 13px; }
+footer { margin-top: 40px; color: var(--muted); font-size: 13px; text-align: center; }
+@media (max-width: 760px) { .cards { grid-template-columns: 1fr; } }
+@media print {
+  :root { --bg:#fff; --panel:#fff; --panel2:#f3f0f8; --line:#d9d2e6; --text:#111; --text2:#333; --muted:#666; --hi:#6d28d9; --soft:#f3ecff; }
+  body::before, .bar, .toc, .copy, .noprint { display: none !important; }
+  .wrap { padding: 0; max-width: none; }
+  h2 { break-after: avoid; } tr, .card, .steps li { break-inside: avoid; }
+  .line { color: #333; }
+}</style></head>
+<body><div class="wrap">
+<header><svg viewBox="0 0 120 120" class="emblem" aria-hidden="true"><defs>
+<radialGradient id="o" cx=".5" cy=".5" r=".5"><stop offset="0" stop-color="#fff"/><stop offset=".35" stop-color="#cf9bff"/><stop offset="1" stop-color="#7c3aed" stop-opacity="0"/></radialGradient>
+<linearGradient id="h" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#cf9bff"/><stop offset="1" stop-color="#7c3aed"/></linearGradient></defs>
+<path fill="url(#h)" d="M60 6 C46 6 36 14 31 26 L22 14 L24 36 C19 45 17 55 17 64 C17 82 23 96 30 108 L47 100 C41 88 39 76 40 63 C42 43 50 33 60 33 C70 33 78 43 80 63 C81 76 79 88 73 100 L90 108 C97 96 103 82 103 64 C103 55 101 45 96 36 L98 14 L89 26 C84 14 74 6 60 6Z"/>
+<path fill="#0b0613" d="M60 33 C50 33 42 43 40 63 C42 77 50 86 60 88 C70 86 78 77 80 63 C78 43 70 33 60 33Z"/>
+<path fill="#cf9bff" d="M47 59 L56 62 L55 65 L48 63Z M73 59 L64 62 L65 65 L72 63Z"/>
+<circle cx="60" cy="98" r="21" fill="url(#o)" opacity=".55"/><circle cx="60" cy="98" r="10" fill="url(#o)"/>
+<path fill="url(#h)" d="M38 104 C40 94 46 88 52 88 L50 100 C48 106 44 110 38 110Z M82 104 C80 94 74 88 68 88 L70 100 C72 106 76 110 82 110Z"/></svg><div><div class="eyebrow">Hexcall for World of Tanks</div><h1>Guide</h1></div></header>
+
+<p class="lead">Your own commander voice and your own sound effects (gun, engine, turret …) for World of Tanks – recorded with your microphone, switched on with one click. No Wwise needed, everything runs locally.</p>
+<p class="count"><a href="anleitung.html">Deutsche Version</a></p>
+<nav class="toc">
+  <a href="#start">Start</a><a href="#areas">Areas</a><a href="#studio">Recording studio</a><a href="#slots">Two voices</a>
+  <a href="#test">Testing</a><a href="#tips">Tips</a><a href="#update">Updates</a><a href="#folders">Folders</a><a href="#limits">Limits</a>
+</nav>
+
+<h2 id="start"><span class="n">1</span>Start</h2>
+<ol class="steps">
+  <li>Start <b>Hexcall</b> from the Start menu or the desktop shortcut (without the installer: <b>Hexcall.vbs</b> in the program folder). The client opens in its own window.</li>
+  <li>The first time you record, the window asks for the microphone: click <b>Allow</b>.</li>
+  <li>Closing the window stops everything. A background service only runs while the window is open.</li>
+  <li>WoT is detected automatically. If not: <b>Settings → World of Tanks → Choose folder</b>.</li>
+  <li>Language: English, German, Russian, Polish, French or Spanish under <b>Settings → Language</b>.</li>
+</ol>
+
+<h2 id="areas"><span class="n">2</span>The areas of the client</h2>
+<div class="cards">
+  <div class="card"><h3>Overview</h3><p>What is active in game right now, your recently edited mods and "Create new sound mod".</p></div>
+  <div class="card"><h3>My Mods</h3><p>All sound mods with progress (voice x/55, effects x/12). The active mod is marked green. Record, activate/deactivate, open folder.</p></div>
+  <div class="card"><h3>Recording Studio</h3><p>Record step by step. Switch between <b>Voice</b> and <b>Effects</b> at the top.</p></div>
+  <div class="card"><h3>Active in Game</h3><p>Choose the slots (mod, original, test tone). Changed slots are marked and the blue <b>Reload</b> button lights up – it builds the sounds. <b>Mod off</b> switches everything to original, <b>Turn back on</b> restores the previous state.</p></div>
+  <div class="card"><h3>Settings</h3><p>Language, theme (DarkWizard, Commander, Light), WoT folder, updates (automatic if you like), animations.</p></div>
+  <div class="card"><h3>Help</h3><p>Quick guide and a small changelog. Bottom left: WoT status, <b>Start WoT</b> and – while WoT runs – your player name.</p></div>
+</div>
+
+<h2 id="studio"><span class="n">3</span>Recording studio</h2>
+<ul class="dots">
+  <li>Every callout with its situation and an example line. The list is on the left, a tick marks finished steps.</li>
+  <li><b>Red button</b> or <kbd>Space</kbd>: start and stop recording, with a live meter. The take is played back right away.</li>
+  <li><b>Skip</b>: the callout stays original in game.</li>
+  <li><b>Save as an additional variant</b>: several versions per callout, the game picks one at random.</li>
+  <li><b>Drag &amp; drop</b>: simply drop WAV, MP3, M4A or OGG files into the window.</li>
+  <li>After the last callout the studio asks whether you want to continue with the effects.</li>
+  <li><b>Done – activate in game</b> builds the mod and switches it on.</li>
+</ul>
+<p>All callouts and effects are listed in the <a href="lines.html">line list</a>.</p>
+
+<h2 id="slots"><span class="n">4</span>Switching between two voices in game</h2>
+<table>
+  <tr><th>WoT setting (Sound › national crew voices)</th><th>What you hear</th></tr>
+  <tr><td>off</td><td>Voice – slot 1</td></tr>
+  <tr><td>on</td><td>Voice – slot 2</td></tr>
+</table>
+<p>Effects always apply. WoT loads its sounds when the game starts: if the game is running when you press <b>Reload</b>, Hexcall offers <b>Apply &amp; restart WoT</b>.</p>
+
+<h2 id="test"><span class="n">5</span>Testing</h2>
+<ol class="steps">
+  <li>Under <b>Active in Game</b> set everything to <b>Test tone (beep)</b> and press <b>Reload</b>.</li>
+  <li>Start (or restart) WoT and fire a few shots and drive around in the training room.</li>
+  <li>Instead of voice, gun and engine you hear a double beep – then everything works.</li>
+</ol>
+
+<h2 id="tips"><span class="n">6</span>Tips for good recordings</h2>
+<div class="cards">
+  <div class="card"><h3>Voice</h3><p>Keep it short: 0.5 to 2 seconds. Clear, and loud when it fits – it should sound like battle.</p></div>
+  <div class="card"><h3>Loops</h3><p>Engine, turret, tracks and fire play in a loop: 2–4 seconds of steady sound without a start or end. The game changes the engine pitch itself.</p></div>
+  <div class="card"><h3>Bangs</h3><p>Gun and explosions: a short, punchy bang.</p></div>
+  <div class="card"><h3>Automatic</h3><p>Silence and clicks at the start and end are removed, the volume is levelled and everything is built into the game at 48 kHz.</p></div>
+</div>
+
+<h2 id="update"><span class="n">7</span>Updates</h2>
+<p><b>Hexcall:</b> on start the client checks for a new version and warns you about an outdated one with <b>Update now</b>. If you like, it installs updates automatically. Your mods are kept.</p>
+<p><b>World of Tanks:</b> the sounds live in <code>res_mods\&lt;version&gt;</code> for each game version. After a WoT update Hexcall shows a notice with <b>Turn sounds back on</b> – this builds your setup for the new version.</p>
+
+<h2 id="folders"><span class="n">8</span>Folders</h2>
+<table>
+  <tr><th>Folder / file</th><th>Contents</th></tr>
+  <tr><td><code>Hexcall.vbs</code></td><td>Starts the client (without a console window)</td></tr>
+  <tr><td><code>%APPDATA%\Hexcall\mods\&lt;name&gt;\stimme</code></td><td>Your voice recordings (<a href="lines.html">line list</a>)</td></tr>
+  <tr><td><code>%APPDATA%\Hexcall\mods\&lt;name&gt;\effekte</code></td><td>Your effects</td></tr>
+  <tr><td><code>%APPDATA%\Hexcall\user</code></td><td>Settings</td></tr>
+  <tr><td><code>ui</code>, <code>tools</code>, <code>runtime</code></td><td>Program files (replaced on updates)</td></tr>
+</table>
+<details class="noprint"><summary><b>Advanced: command line</b></summary>
+<p>In PowerShell in the program folder:</p>
+<table>
+  <tr><td><code>node tools\build.js --profil "My Mod"</code></td><td>Mod in all slots</td></tr>
+  <tr><td><code>node tools\build.js --standard "My Mod" --national original --effekte "My Mod"</code></td><td>Slots one by one</td></tr>
+  <tr><td><code>node tools\build.js --deinstallieren</code></td><td>Everything original</td></tr>
+  <tr><td><code>node tools\docs.js</code></td><td>Regenerate guide and line list</td></tr>
+</table></details>
+
+<h2 id="limits"><span class="n">9</span>Limits</h2>
+<ul class="dots">
+  <li>Special crew voices (bloggers, events, Sabaton etc.) are not replaced.</li>
+  <li>Engine sounds cover the 14 engine types the game currently uses.</li>
+  <li>Reload sounds and hits on your own tank are not included (yet).</li>
+</ul>
+
+<footer>Hexcall · a DarkWizard production · generated on 25/11/2026</footer>
+</div></body></html>

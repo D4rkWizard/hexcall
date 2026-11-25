@@ -69,11 +69,11 @@ footer { margin-top: 40px; color: var(--muted); font-size: 13px; text-align: cen
 <circle cx="60" cy="98" r="21" fill="url(#o)" opacity=".55"/><circle cx="60" cy="98" r="10" fill="url(#o)"/>
 <path fill="url(#h)" d="M38 104 C40 94 46 88 52 88 L50 100 C48 106 44 110 38 110Z M82 104 C80 94 74 88 68 88 L70 100 C72 106 76 110 82 110Z"/></svg><div><div class="eyebrow">Hexcall für World of Tanks</div><h1>Anleitung</h1></div></header>
 
-<p class="lead">Eigene Commander-Stimme und eigene Effekte (Kanone, Motor, Turm …) für World of Tanks – aufgenommen mit deinem Mikrofon,
-aktiviert mit einem Klick. Du brauchst kein Wwise, nur Node.js und Microsoft Edge (bei Windows dabei).</p>
+<p class="lead">Eigene Commander-Stimme und eigene Effekte (Kanone, Motor, Turm …) für World of Tanks – aufgenommen mit deinem Mikrofon, aktiviert mit einem Klick. Kein Wwise nötig, alles läuft lokal.</p>
+<p class="count"><a href="Guide.html">English version</a></p>
 <nav class="toc">
-  <a href="#start">Start</a><a href="#bereiche">Bereiche</a><a href="#studio">Aufnahme-Studio</a><a href="#slots">Zwei Stimmen</a>
-  <a href="#testen">Testen</a><a href="#tipps">Tipps</a><a href="#update">Nach einem WoT-Update</a><a href="#ordner">Ordner</a><a href="#grenzen">Grenzen</a>
+  <a href="#start">Start</a><a href="#areas">Bereiche</a><a href="#studio">Aufnahme-Studio</a><a href="#slots">Zwei Stimmen</a>
+  <a href="#test">Testen</a><a href="#tips">Tipps</a><a href="#update">Updates</a><a href="#folders">Ordner</a><a href="#limits">Grenzen</a>
 </nav>
 
 <h2 id="start"><span class="n">1</span>Start</h2>
@@ -82,16 +82,17 @@ aktiviert mit einem Klick. Du brauchst kein Wwise, nur Node.js und Microsoft Edg
   <li>Beim ersten Aufnehmen fragt das Fenster nach dem Mikrofon: auf <b>Zulassen</b> klicken.</li>
   <li>Fenster schließen beendet alles. Ein Hintergrunddienst läuft nur, solange das Fenster offen ist.</li>
   <li>WoT wird automatisch gefunden. Falls nicht: <b>Einstellungen → World of Tanks → Ordner wählen</b>.</li>
+  <li>Sprache: Englisch, Deutsch, Russisch, Polnisch, Französisch oder Spanisch unter <b>Einstellungen → Sprache</b>.</li>
 </ol>
 
-<h2 id="bereiche"><span class="n">2</span>Die Bereiche im Client</h2>
+<h2 id="areas"><span class="n">2</span>Die Bereiche im Client</h2>
 <div class="cards">
   <div class="card"><h3>Übersicht</h3><p>Was gerade im Spiel aktiv ist, deine zuletzt bearbeiteten Mods und „Neuen Sound-Mod erstellen“.</p></div>
   <div class="card"><h3>Meine Mods</h3><p>Alle Sound-Mods mit Fortschritt (Stimme x/55, Effekte x/12). Der aktive Mod ist grün markiert. Aufnehmen, Aktivieren/Deaktivieren, Ordner öffnen.</p></div>
   <div class="card"><h3>Aufnahme-Studio</h3><p>Schritt für Schritt aufnehmen. Oben zwischen <b>Stimme</b> und <b>Effekte</b> wechseln.</p></div>
-  <div class="card"><h3>Im Spiel aktiv</h3><p>Slots wählen (Mod, Original, Testton) und <b>Anwenden</b>. <b>Mod aus</b> schaltet alles auf Original, danach holt <b>Wieder einschalten</b> den vorherigen Zustand zurück.</p></div>
-  <div class="card"><h3>Einstellungen</h3><p>Design: DarkWizard (Lila), Commander (Dark) oder Hell. Animationen an/aus.</p></div>
-  <div class="card"><h3>Hilfe</h3><p>Kurzanleitung und ein kleines Changelog. Läuft WoT, steht unten links dein Spielername.</p></div>
+  <div class="card"><h3>Im Spiel aktiv</h3><p>Slots wählen (Mod, Original, Testton). Geänderte Slots werden markiert und der blaue Knopf <b>Neu laden</b> leuchtet auf – er baut die Sounds. <b>Mod aus</b> schaltet alles auf Original, <b>Wieder einschalten</b> holt den vorherigen Zustand zurück.</p></div>
+  <div class="card"><h3>Einstellungen</h3><p>Sprache, Design (DarkWizard, Commander, Hell), WoT-Ordner, Updates (auf Wunsch automatisch), Animationen.</p></div>
+  <div class="card"><h3>Hilfe</h3><p>Kurzanleitung und ein kleines Changelog. Unten links: WoT-Status, <b>WoT starten</b> und – wenn WoT läuft – dein Spielername.</p></div>
 </div>
 
 <h2 id="studio"><span class="n">3</span>Aufnahme-Studio</h2>
@@ -112,48 +113,46 @@ aktiviert mit einem Klick. Du brauchst kein Wwise, nur Node.js und Microsoft Edg
   <tr><td>aus</td><td>Stimme – Slot 1</td></tr>
   <tr><td>an</td><td>Stimme – Slot 2</td></tr>
 </table>
-<p>Effekte gelten immer. Änderungen hörst du ab dem nächsten Gefecht – falls nicht, WoT neu starten.</p>
+<p>Effekte gelten immer. WoT lädt die Sounds beim Spielstart: Läuft das Spiel beim <b>Neu laden</b>, bietet Hexcall <b>Anwenden &amp; WoT neu starten</b> an.</p>
 
-<h2 id="testen"><span class="n">5</span>Testen</h2>
+<h2 id="test"><span class="n">5</span>Testen</h2>
 <ol class="steps">
-  <li>Unter <b>Im Spiel aktiv</b> alles auf <b>Testton (Piep)</b> stellen und <b>Anwenden</b>.</li>
-  <li>WoT starten und im Trainingsraum ein paar Schüsse abgeben und fahren.</li>
+  <li>Unter <b>Im Spiel aktiv</b> alles auf <b>Testton (Piep)</b> stellen und <b>Neu laden</b>.</li>
+  <li>WoT starten (oder neu starten) und im Trainingsraum ein paar Schüsse abgeben und fahren.</li>
   <li>Statt Stimme, Kanone und Motor hörst du einen Doppel-Piep – dann funktioniert alles.</li>
 </ol>
 
-<h2 id="tipps"><span class="n">6</span>Tipps für gute Aufnahmen</h2>
+<h2 id="tips"><span class="n">6</span>Tipps für gute Aufnahmen</h2>
 <div class="cards">
   <div class="card"><h3>Stimme</h3><p>Kurz halten: 0,5 bis 2 Sekunden. Deutlich, ruhig auch mal laut – es soll nach Gefecht klingen.</p></div>
   <div class="card"><h3>Schleifen</h3><p>Motor, Turm, Ketten und Feuer laufen in Schleife: 2–4 Sekunden gleichmäßiges Geräusch ohne Anfang und Ende. Die Motor-Tonhöhe ändert das Spiel selbst.</p></div>
   <div class="card"><h3>Knall</h3><p>Kanone und Explosionen: ein kurzer, kräftiger Knall.</p></div>
-  <div class="card"><h3>Automatik</h3><p>Stille am Anfang und Ende wird abgeschnitten, die Lautstärke angeglichen und auf 24 kHz mono umgerechnet.</p></div>
+  <div class="card"><h3>Automatik</h3><p>Stille und Klicks am Anfang und Ende werden entfernt, die Lautstärke angeglichen, alles in 48 kHz ins Spiel gebaut.</p></div>
 </div>
 
 <h2 id="update"><span class="n">7</span>Updates</h2>
-<p><b>Hexcall:</b> Beim Start prüft der Client, ob es eine neue Version gibt, und zeigt dann oben einen Hinweis mit <b>Jetzt aktualisieren</b>. Deine Mods bleiben dabei erhalten.</p>
-<p><b>World of Tanks:</b></p>
-<p>Die eingebauten Sounds liegen pro Spielversion in <code>res_mods\&lt;Version&gt;</code>. Nach einem Update ist der Mod deshalb erst einmal aus:
-Client öffnen und unter <b>Im Spiel aktiv</b> auf <b>Anwenden</b> klicken – er wird für die neue Version gebaut.</p>
+<p><b>Hexcall:</b> Beim Start prüft der Client, ob es eine neue Version gibt, und warnt bei einer veralteten Version mit <b>Jetzt aktualisieren</b>. Auf Wunsch installiert er Updates automatisch. Deine Mods bleiben erhalten.</p>
+<p><b>World of Tanks:</b> Die Sounds liegen pro Spielversion in <code>res_mods\&lt;Version&gt;</code>. Nach einem WoT-Update zeigt Hexcall einen Hinweis mit <b>Sounds wieder einschalten</b> – das baut deinen Stand für die neue Version.</p>
 
-<h2 id="ordner"><span class="n">8</span>Ordner</h2>
+<h2 id="folders"><span class="n">8</span>Ordner</h2>
 <table>
   <tr><th>Ordner / Datei</th><th>Inhalt</th></tr>
   <tr><td><code>Hexcall.vbs</code></td><td>Startet den Client (ohne Konsolenfenster)</td></tr>
-  <tr><td><code>%APPDATA%\Hexcall\mods\&lt;Name&gt;\stimme</code></td><td>Deine Sprachaufnahmen (Namen siehe <a href="Sprachliste.html">Sprachliste</a>)</td></tr>
+  <tr><td><code>%APPDATA%\Hexcall\mods\&lt;Name&gt;\stimme</code></td><td>Deine Sprachaufnahmen (<a href="Sprachliste.html">Sprachliste</a>)</td></tr>
   <tr><td><code>%APPDATA%\Hexcall\mods\&lt;Name&gt;\effekte</code></td><td>Deine Effekte</td></tr>
-  <tr><td><code>%APPDATA%\Hexcall\user</code></td><td>Einstellungen (Design, Animationen, WoT-Ordner)</td></tr>
+  <tr><td><code>%APPDATA%\Hexcall\user</code></td><td>Einstellungen</td></tr>
   <tr><td><code>ui</code>, <code>tools</code>, <code>runtime</code></td><td>Programmdateien (werden bei Updates ersetzt)</td></tr>
 </table>
 <details class="noprint"><summary><b>Für Fortgeschrittene: Kommandozeile</b></summary>
-<p>In PowerShell im Projektordner:</p>
+<p>In PowerShell im Programmordner:</p>
 <table>
-  <tr><td><code>node tools\build.js --profil "Mein Mod"</code></td><td>Mod in alle Slots</td></tr>
-  <tr><td><code>node tools\build.js --standard "Mein Mod" --national original --effekte "Mein Mod"</code></td><td>Slots einzeln</td></tr>
+  <tr><td><code>node tools\build.js --profil "My Mod"</code></td><td>Mod in alle Slots</td></tr>
+  <tr><td><code>node tools\build.js --standard "My Mod" --national original --effekte "My Mod"</code></td><td>Slots einzeln</td></tr>
   <tr><td><code>node tools\build.js --deinstallieren</code></td><td>Alles Original</td></tr>
   <tr><td><code>node tools\docs.js</code></td><td>Anleitung und Sprachliste neu erzeugen</td></tr>
 </table></details>
 
-<h2 id="grenzen"><span class="n">9</span>Grenzen</h2>
+<h2 id="limits"><span class="n">9</span>Grenzen</h2>
 <ul class="dots">
   <li>Spezielle Besatzungsstimmen (Blogger, Events, Sabaton usw.) werden nicht ersetzt.</li>
   <li>Motorsounds gibt es für die 14 Motortypen, die das Spiel aktuell nutzt.</li>

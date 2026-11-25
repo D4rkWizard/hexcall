@@ -24,21 +24,22 @@ SolidCompression=yes
 WizardStyle=modern
 
 [Languages]
+Name: "en"; MessagesFile: "compiler:Default.isl"
 Name: "de"; MessagesFile: "compiler:Languages\German.isl"
 
 [Tasks]
-Name: "desktopicon"; Description: "Verknüpfung auf dem Desktop"; GroupDescription: "Zusätzlich:"
+Name: "desktopicon"; Description: "Desktop shortcut"; GroupDescription: "Additional:"
 
 [Files]
 Source: "{#SourceDir}\*"; DestDir: "{app}"; Flags: recursesubdirs createallsubdirs ignoreversion
 
 [Icons]
 Name: "{group}\Hexcall"; Filename: "{sys}\wscript.exe"; Parameters: """{app}\Hexcall.vbs"""; IconFilename: "{app}\icon.ico"
-Name: "{group}\Anleitung"; Filename: "{app}\Anleitung.html"
-Name: "{group}\Hexcall deinstallieren"; Filename: "{uninstallexe}"
+Name: "{group}\Hexcall Guide"; Filename: "{app}\Guide.html"
+Name: "{group}\Uninstall Hexcall"; Filename: "{uninstallexe}"
 Name: "{userdesktop}\Hexcall"; Filename: "{sys}\wscript.exe"; Parameters: """{app}\Hexcall.vbs"""; IconFilename: "{app}\icon.ico"; Tasks: desktopicon
 
 [Run]
-Filename: "{sys}\wscript.exe"; Parameters: """{app}\Hexcall.vbs"""; Description: "Hexcall jetzt starten"; Flags: postinstall nowait skipifsilent
+Filename: "{sys}\wscript.exe"; Parameters: """{app}\Hexcall.vbs"""; Description: "Start Hexcall now"; Flags: postinstall nowait skipifsilent
 
 ; User data in %APPDATA%\Hexcall is intentionally kept on uninstall.

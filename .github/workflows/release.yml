@@ -22,7 +22,7 @@ jobs:
         shell: pwsh
         run: |
           $v = (Get-Content version.json | ConvertFrom-Json).version
-          if ("v$v" -ne "${{ github.ref_name }}") { throw "Tag ${{ github.ref_name }} passt nicht zu version.json ($v)" }
+          if ("v$v" -ne "${{ github.ref_name }}") { throw "Tag ${{ github.ref_name }} does not match version.json ($v)" }
 
       - name: Install Inno Setup
         run: choco install innosetup -y --no-progress

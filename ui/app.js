@@ -809,6 +809,7 @@ async function installUpdate(auto) {
 
 /* ---------- small changelog (Hilfe › Changelog) ---------- */
 const CHANGELOG = [
+  ['6.1.1', '25.11.2026', 'Alles auch auf Englisch', ['Anleitung und Sprachliste auch auf Englisch', 'Behoben: einige englische Texte blieben deutsch']],
   ['6.1', '25.11.2026', 'Mehr Sprachen, Neu-laden-Knopf & Update-Warnung', ['Russisch, Polnisch, Französisch und Spanisch', '„Im Spiel aktiv“: blauer Neu-laden-Knopf, leuchtet bei Änderungen', 'Eigene Aufklapp-Menüs im Hexcall-Design', 'Warnung bei veralteter Version, auf Wunsch automatische Updates', 'Hinweis nach WoT-Updates mit „Sounds wieder einschalten“', 'Neu: WoT direkt aus dem Client starten bzw. nach „Neu laden“ neu starten']],
   ['6.0', '25.11.2026', 'Bereit zum Veröffentlichen', ['Neuer Name: Hexcall · Sprache Englisch/Deutsch', 'Saubere Aufnahmen: kein Knacken mehr, Stille und Klicks werden sofort entfernt', 'Update-Prüfung über GitHub mit Ein-Klick-Update', 'WoT-Ordner wird automatisch gefunden oder kann gewählt werden', 'Mods und Einstellungen liegen jetzt in %APPDATA%\\Hexcall']],
   ['5.4', '25.11.2026', 'Anleitung & Sprachliste für Windows', ['Anleitung.html und Sprachliste.html: Doppelklick öffnet sie im Browser', 'Sprachliste mit Suche, Kopier-Knopf und Druckansicht', 'Links dazu unter Hilfe']],

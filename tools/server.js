@@ -347,10 +347,13 @@ const server = http.createServer(async (req, res) => {
       return send(res, 200, await route(url.searchParams, isWav ? body : body && body.toString('utf8')));
     }
     if (req.method !== 'GET') return send(res, 404, { error: 'not found' });
-    const DOCS = { '/docs/anleitung': 'Anleitung.html', '/docs/sprachliste': 'Sprachliste.html' };
+    // guide and line list in German or English, following the client language
+    const de = readSettings().lang === 'de';
+    const DOCS = { '/docs/anleitung': de ? 'Anleitung.html' : 'Guide.html', '/docs/sprachliste': de ? 'Sprachliste.html' : 'Lines.html',
+      '/docs/Guide.html': 'Guide.html', '/docs/Lines.html': 'Lines.html', '/docs/Anleitung.html': 'Anleitung.html', '/docs/Sprachliste.html': 'Sprachliste.html' };
     if (DOCS[url.pathname]) {
       const f = path.join(ROOT, DOCS[url.pathname]);
-      if (!fs.existsSync(f)) return send(res, 404, 'Bitte "node tools\\docs.js" ausführen.', 'text/plain; charset=utf-8');
+      if (!fs.existsSync(f)) return send(res, 404, 'Please run "node tools\\docs.js".', 'text/plain; charset=utf-8');
       return send(res, 200, fs.readFileSync(f), MIME['.html']);
     }
     const rel = url.pathname === '/' ? 'index.html' : decodeURIComponent(url.pathname.slice(1));

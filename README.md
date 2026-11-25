@@ -1,53 +1,57 @@
 <p align="center"><img src="ui/icon-emblem.svg" width="96" alt=""></p>
 
 <h1 align="center">Hexcall</h1>
-<p align="center"><b>Eigene Commander-Stimme und eigene Effekte für World of Tanks</b><br>
-Mit dem Mikrofon aufnehmen, mit einem Klick im Spiel aktivieren. Ohne Wwise.</p>
+<p align="center"><b>Your own commander voice and sound effects for World of Tanks</b><br>
+Record with your microphone, switch on in game with one click. No Wwise needed.</p>
 
-<p align="center"><a href="../../releases/latest"><b>⬇ Neueste Version herunterladen</b></a></p>
+<p align="center"><a href="../../releases/latest"><b>⬇ Download the latest version</b></a> · <a href="https://d4rkwizard.github.io/hexcall/">Website</a></p>
 
-![Hexcall](docs/img/v5.3-bibliothek-aktiv.jpg)
+![Hexcall](docs/img/v6.0-home-en.png)
 
-## Funktionen
+## Features
 
-- **Aufnahme-Studio:** alle 55 Commander-Ansagen Schritt für Schritt mit dem Mikrofon einsprechen, mit Überspringen, Varianten und Drag & Drop (WAV, MP3, M4A, OGG)
-- **Effekte:** Kanone, Motor, Turm, Ketten, Explosionen, Feuer, getrennt für den eigenen Panzer und für andere
-- **Saubere Aufnahmen:** Stille und Klicks werden automatisch entfernt, die Lautstärke wird angeglichen
-- **Zwei Stimmen im Spiel umschaltbar** über die Option „nationale Besatzungsstimmen“
-- **Ein-Klick-Updates:** Der Client prüft beim Start, ob es eine neue Version gibt
-- Drei Designs: DarkWizard, Commander und Hell
+- **Recording studio:** record all 55 commander callouts step by step with your microphone – with skip, variants and drag & drop (WAV, MP3, M4A, OGG)
+- **Effects:** gun, engine, turret, tracks, explosions and fire – separately for your own tank and for others
+- **Clean recordings:** silence and clicks are removed automatically, the volume is levelled
+- **Two voices in game**, switchable via the "national crew voices" option
+- **Reload button:** see at a glance whether your selection is already in the game; restart WoT from the client when needed
+- **Updates:** the client checks for new versions on start and updates with one click (optionally automatic)
+- **6 languages:** English, German, Russian, Polish, French, Spanish
+- Three themes: DarkWizard, Commander and Light
 
 ## Installation
 
-1. Unter [Releases](../../releases/latest) den **Installer** (`Hexcall-Setup-x.y.z.exe`) oder das **ZIP** laden.
-2. Installer ausführen, oder das ZIP entpacken und `Hexcall.vbs` starten.
-3. Windows zeigt eventuell „Der Computer wurde durch Windows geschützt“, weil das Programm nicht signiert ist. Dann auf **Weitere Informationen → Trotzdem ausführen** klicken.
+1. Download the **installer** (`Hexcall-Setup-x.y.z.exe`) or the **ZIP** from [Releases](../../releases/latest).
+2. Run the installer, or unzip the ZIP and start `Hexcall.vbs`.
+3. Windows may show "Windows protected your PC" because the program is not signed. Click **More info → Run anyway**.
 
-Voraussetzungen: Windows 10/11, Microsoft Edge (vorinstalliert), World of Tanks (EU/NA/ASIA-Client von Wargaming).
-Node.js ist im Download enthalten.
+Requirements: Windows 10/11, Microsoft Edge (pre-installed), World of Tanks (Wargaming client EU/NA/ASIA).
+Node.js is included in the download.
 
-## Datenschutz
+See the [guide](https://d4rkwizard.github.io/hexcall/guide.html) and the [line list](https://d4rkwizard.github.io/hexcall/lines.html) for details.
 
-- Alles läuft lokal. Es werden keine Daten verschickt.
-- Die einzige Internetverbindung ist die Update-Prüfung bei GitHub.
-- Deine Mods liegen in `%APPDATA%\Hexcall`.
-- Der WoT-Spielername wird nur lokal aus der WoT-Einstellungsdatei angezeigt.
+## Privacy
 
-## Hinweise
+- Everything runs locally. No data is sent anywhere.
+- The only internet connection is the update check on GitHub.
+- Your mods are stored in `%APPDATA%\Hexcall`.
+- The WoT player name is only shown locally, read from the WoT settings file.
 
-- Es werden keine Dateien von Wargaming mitgeliefert. Die Sound-Banken entstehen auf deinem PC aus deiner eigenen WoT-Installation.
-- Nach einem WoT-Update im Client einmal **Anwenden** klicken.
-- Sound-Mods sind nach den Mod-Regeln von Wargaming erlaubt. Nutzung auf eigene Verantwortung.
-- Dies ist ein Fan-Projekt und steht in keiner Verbindung zu Wargaming.
+## Notes
 
-## Für Entwickler
+- No Wargaming files are distributed. The sound banks are built on your PC from your own WoT installation.
+- After a WoT update, Hexcall shows a notice – click **Turn sounds back on**.
+- Sound mods are allowed under Wargaming's mod rules. Use at your own risk.
+- This is a fan project and not affiliated with Wargaming.
+
+## For developers
 
 ```
-node tools\release.js     # baut dist\ (ZIP mit Node, SHA256SUMS, Installer falls Inno Setup installiert)
-node tools\docs.js        # erzeugt Anleitung.html, Sprachliste.html und die Download-Seite (docs\)
+node tools\release.js     # builds dist\ (ZIP with Node, SHA256SUMS, installer if Inno Setup is installed)
+node tools\docs.js        # generates the guide and line list (EN + DE) and the download page (docs\)
 ```
 
-Release: Version in `version.json` erhöhen, Tag `vX.Y.Z` pushen. Der GitHub-Workflow baut und veröffentlicht automatisch.
+Release: bump the version in `version.json`, push a tag `vX.Y.Z`. The GitHub workflow builds and publishes automatically.
 
 ---
 <sub>a DarkWizard production</sub>
