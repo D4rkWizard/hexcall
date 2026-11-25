@@ -1,0 +1,15 @@
+# personal data – never upload
+mods/
+user/
+backups/
+portable.txt
+
+# build output
+dist/
+build/
+node_modules/
+*.log
+
+# personal project history and notes – stay local
+Projektverlauf/
+CLAUDE.md

@@ -1,0 +1,37 @@
+# Builds and publishes a release when a version tag (e.g. v6.0.0) is pushed.
+name: Release
+
+on:
+  push:
+    tags: ['v*']
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Check tag matches version.json
+        shell: pwsh
+        run: |
+          $v = (Get-Content version.json | ConvertFrom-Json).version
+          if ("v$v" -ne "${{ github.ref_name }}") { throw "Tag ${{ github.ref_name }} passt nicht zu version.json ($v)" }
+
+      - name: Install Inno Setup
+        run: choco install innosetup -y --no-progress
+
+      - name: Build release
+        run: node tools/release.js
+
+      - name: Publish GitHub release
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release create "${{ github.ref_name }}" (Get-ChildItem dist -File | Where-Object Name -ne 'RELEASE_NOTES.md' | ForEach-Object FullName) --title "Hexcall ${{ github.ref_name }}" --notes-file dist/RELEASE_NOTES.md
