@@ -105,7 +105,7 @@ const docsFor = (lang) => {
   'Your own commander voice and your own sound effects (gun, engine, turret …) for World of Tanks – recorded with your microphone, switched on with one click. No Wwise needed, everything runs locally.')}</p>
 ${other}
 <nav class="toc">
-  <a href="#start">Start</a><a href="#areas">${T('Bereiche', 'Areas')}</a><a href="#studio">${T('Aufnahme-Studio', 'Recording studio')}</a><a href="#slots">${T('Zwei Stimmen', 'Two voices')}</a>
+  <a href="#start">Start</a><a href="#areas">${T('Bereiche', 'Areas')}</a><a href="#studio">${T('Aufnahme-Studio', 'Recording studio')}</a><a href="#slots">${T('Standard & Kommandant', 'Standard & Commander')}</a>
   <a href="#test">${T('Testen', 'Testing')}</a><a href="#tips">${T('Tipps', 'Tips')}</a><a href="#update">Updates</a><a href="#folders">${T('Ordner', 'Folders')}</a><a href="#limits">${T('Grenzen', 'Limits')}</a>
 </nav>
 
@@ -140,19 +140,19 @@ ${other}
 </ul>
 <p>${T('Welche Ansagen und Effekte es gibt, steht in der', 'All callouts and effects are listed in the')} <a href="${lines}">${T('Sprachliste', 'line list')}</a>.</p>
 
-<h2 id="slots"><span class="n">4</span>${T('Zwei Stimmen im Spiel umschalten', 'Switching between two voices in game')}</h2>
+<h2 id="slots"><span class="n">4</span>${T('Zwei Stimmen: Standard und Kommandant', 'Two voices: Standard and Commander')}</h2>
 <table>
-  <tr><th>${T('Einstellung in WoT (Ton › nationale Besatzungsstimmen)', 'WoT setting (Sound › national crew voices)')}</th><th>${T('Was du hörst', 'What you hear')}</th></tr>
-  <tr><td>${T('aus', 'off')}</td><td>${T('Stimme – Slot 1', 'Voice – slot 1')}</td></tr>
-  <tr><td>${T('an', 'on')}</td><td>${T('Stimme – Slot 2', 'Voice – slot 2')}</td></tr>
+  <tr><th>${T('Einstellung in WoT (Ton › Sprachausgabe)', 'WoT setting (Sound › voice-over)')}</th><th>${T('Was du hörst', 'What you hear')}</th></tr>
+  <tr><td>Standard</td><td>${T('Stimme · Standard (Testton: zwei Pieptöne)', 'Voice · Standard (test tone: two beeps)')}</td></tr>
+  <tr><td>${T('Kommandant', 'Commander')}</td><td>${T('Stimme · Kommandant (Testton: drei Pieptöne)', 'Voice · Commander (test tone: three beeps)')}</td></tr>
 </table>
-<p>${T('Effekte gelten immer. WoT lädt die Sounds beim Spielstart: Läuft das Spiel beim <b>Neu laden</b>, bietet Hexcall <b>Anwenden &amp; WoT neu starten</b> an.', 'Effects always apply. WoT loads its sounds when the game starts: if the game is running when you press <b>Reload</b>, Hexcall offers <b>Apply &amp; restart WoT</b>.')}</p>
+<p>${T('Bei „Kommandant“ nutzt WoT die Stimme der Nation deines Kommandanten. Spezial-Kommandanten (Battle Pass, Blogger, Events) haben eine eigene Stimme – mit ihnen hörst du weiter deren Original. ', 'With "Commander" WoT uses the voice of your commander\'s nation. Special commanders (Battle Pass, bloggers, events) have a voice of their own – with them you keep hearing their original. ')}${T('Effekte gelten immer. WoT lädt die Sounds beim Spielstart: Läuft das Spiel beim <b>Neu laden</b>, bietet Hexcall <b>Anwenden &amp; WoT neu starten</b> an.', 'Effects always apply. WoT loads its sounds when the game starts: if the game is running when you press <b>Reload</b>, Hexcall offers <b>Apply &amp; restart WoT</b>.')}</p>
 
 <h2 id="test"><span class="n">5</span>${T('Testen', 'Testing')}</h2>
 <ol class="steps">
   <li>${T('Unter <b>Im Spiel aktiv</b> alles auf <b>Testton (Piep)</b> stellen und <b>Neu laden</b>.', 'Under <b>Active in Game</b> set everything to <b>Test tone (beep)</b> and press <b>Reload</b>.')}</li>
   <li>${T('WoT starten (oder neu starten) und im Trainingsraum ein paar Schüsse abgeben und fahren.', 'Start (or restart) WoT and fire a few shots and drive around in the training room.')}</li>
-  <li>${T('Statt Stimme, Kanone und Motor hörst du einen Doppel-Piep – dann funktioniert alles.', 'Instead of voice, gun and engine you hear a double beep – then everything works.')}</li>
+  <li>${T('Statt Stimme, Kanone und Motor hörst du Pieptöne – zwei bei „Standard“, drei bei „Kommandant“. Dann funktioniert alles.', 'Instead of voice, gun and engine you hear beeps – two with "Standard", three with "Commander". Then everything works.')}</li>
 </ol>
 
 <h2 id="tips"><span class="n">6</span>${T('Tipps für gute Aufnahmen', 'Tips for good recordings')}</h2>
@@ -276,7 +276,7 @@ Free, no Wwise, everything runs locally on your PC.</p>
 <div class="cards">
   <div class="card"><h3>🎙 Recording studio</h3><p>Record all 55 callouts step by step. Silence and clicks are removed automatically.</p></div>
   <div class="card"><h3>💥 Effects</h3><p>Gun, engine, turret, tracks, explosions and fire – for your tank and for others.</p></div>
-  <div class="card"><h3>🔁 Two voices</h3><p>Switch between two of your own voices in game via "national crew voices".</p></div>
+  <div class="card"><h3>🔁 Two voices</h3><p>One voice for the WoT voice-over "Standard", another one for "Commander".</p></div>
   <div class="card"><h3>🌍 6 languages</h3><p>English, German, Russian, Polish, French and Spanish. Automatic update check with one-click updates.</p></div>
 </div>
 <h2><span class="n">▶</span>Screenshots</h2>

@@ -13,7 +13,7 @@ Record with your microphone, switch on in game with one click. No Wwise needed.<
 - **Recording studio:** record all 55 commander callouts step by step with your microphone – with skip, variants and drag & drop (WAV, MP3, M4A, OGG)
 - **Effects:** gun, engine, turret, tracks, explosions and fire – separately for your own tank and for others
 - **Clean recordings:** silence and clicks are removed automatically, the volume is levelled
-- **Two voices in game**, switchable via the "national crew voices" option
+- **Two voices in game:** one for the WoT voice-over "Standard", one for "Commander"
 - **Reload button:** see at a glance whether your selection is already in the game; restart WoT from the client when needed
 - **Updates:** the client checks for new versions on start and updates with one click (optionally automatic)
 - **6 languages:** English, German, Russian, Polish, French, Spanish

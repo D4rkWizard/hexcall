@@ -104,8 +104,8 @@ const label = (v) => FIXED[v] || v;
 const slotKind = (v) => (v === 'original' ? 'orig' : v === 'testton' ? 'test' : 'mod');
 
 const SLOT_DEF = [
-  { id: 'standard', title: 'Stimme · Slot 1', sub: 'Nationale Stimmen im Spiel aus', ico: 'voice', kind: 'stimme' },
-  { id: 'national', title: 'Stimme · Slot 2', sub: 'Nationale Stimmen im Spiel an', ico: 'swap', kind: 'stimme' },
+  { id: 'standard', title: 'Stimme · Standard', sub: 'WoT-Sprachausgabe „Standard“', ico: 'voice', kind: 'stimme' },
+  { id: 'national', title: 'Stimme · Kommandant', sub: 'WoT-Sprachausgabe „Kommandant“', ico: 'swap', kind: 'stimme' },
   { id: 'effekte', title: 'Effekte', sub: 'Kanone, Motor, Turm, Ketten …', ico: 'gun', kind: 'effekte' },
 ];
 
@@ -218,8 +218,8 @@ async function activateMod(mod) {
   const m = S.info.mods.find((x) => x.name === mod);
   if (!m || !m.dateien) return toast('Dieser Mod hat noch keine Aufnahmen.', 'err');
   const choice = await modal({ title: `„${mod}“ aktivieren`,
-    text: `Stimme: ${m.stimme} von ${S.info.counts.stimme} Ansagen\nEffekte: ${m.effekte} von ${S.info.counts.effekte}\n\nIn welchen Slot soll die Stimme?`,
-    buttons: [{ label: 'Abbrechen', value: null }, { label: 'Slot 2 (National)', value: 'national' }, { label: 'Slot 1 (Standard)', value: 'standard', cls: 'primary', default: true }] });
+    text: `Stimme: ${m.stimme} von ${S.info.counts.stimme} Ansagen\nEffekte: ${m.effekte} von ${S.info.counts.effekte}\n\nFür welche WoT-Sprachausgabe soll die Stimme gelten?`,
+    buttons: [{ label: 'Abbrechen', value: null }, { label: 'Kommandant', value: 'national' }, { label: 'Standard', value: 'standard', cls: 'primary', default: true }] });
   if (!choice) return;
   const req = {};
   if (m.stimme) req[choice] = mod;
@@ -287,7 +287,7 @@ async function applyNow(req) {
     const r = await api('/api/apply', { method: 'POST', json: req });
     $('#log').textContent = r.output;
     t.remove();
-    toast(r.ok ? 'Angewendet. Wirkt ab dem nächsten Gefecht.' : 'Fehler beim Bauen – siehe Protokoll', r.ok ? 'ok' : 'err', 5000);
+    toast(r.ok ? 'Angewendet. Wirkt nach einem Neustart von WoT.' : 'Fehler beim Bauen – siehe Protokoll', r.ok ? 'ok' : 'err', 5000);
     if (r.ok) { S.pending = null; S.muteApplied = $('#muteMissing').checked; if (restart) startGame(true); }
     else { go('slots'); $('#logBox').open = true; }
   } catch (err) { t.remove(); toast(err.message, 'err'); }
@@ -313,7 +313,7 @@ async function restoreLast() {
     const r = await api('/api/restore', { method: 'POST', json: {} });
     $('#log').textContent = r.output;
     t.remove();
-    toast(r.ok ? 'Wieder eingeschaltet. Wirkt ab dem nächsten Gefecht.' : 'Fehler – siehe Protokoll', r.ok ? 'ok' : 'err', 5000);
+    toast(r.ok ? 'Wieder eingeschaltet. Wirkt nach einem Neustart von WoT.' : 'Fehler – siehe Protokoll', r.ok ? 'ok' : 'err', 5000);
   } catch (err) { t.remove(); toast(err.message, 'err'); }
   await refresh();
 }
@@ -809,6 +809,7 @@ async function installUpdate(auto) {
 
 /* ---------- small changelog (Hilfe › Changelog) ---------- */
 const CHANGELOG = [
+  ['6.2', '25.11.2026', 'Standard & Kommandant', ['Slots heißen wie in WoT: Standard und Kommandant', 'Eigener Testton für Kommandant (drei Pieptöne)', 'Hinweis: Neue Sounds wirken nach einem Neustart von WoT']],
   ['6.1.1', '25.11.2026', 'Alles auch auf Englisch', ['Anleitung und Sprachliste auch auf Englisch', 'Behoben: einige englische Texte blieben deutsch']],
   ['6.1', '25.11.2026', 'Mehr Sprachen, Neu-laden-Knopf & Update-Warnung', ['Russisch, Polnisch, Französisch und Spanisch', '„Im Spiel aktiv“: blauer Neu-laden-Knopf, leuchtet bei Änderungen', 'Eigene Aufklapp-Menüs im Hexcall-Design', 'Warnung bei veralteter Version, auf Wunsch automatische Updates', 'Hinweis nach WoT-Updates mit „Sounds wieder einschalten“', 'Neu: WoT direkt aus dem Client starten bzw. nach „Neu laden“ neu starten']],
   ['6.0', '25.11.2026', 'Bereit zum Veröffentlichen', ['Neuer Name: Hexcall · Sprache Englisch/Deutsch', 'Saubere Aufnahmen: kein Knacken mehr, Stille und Klicks werden sofort entfernt', 'Update-Prüfung über GitHub mit Ein-Klick-Update', 'WoT-Ordner wird automatisch gefunden oder kann gewählt werden', 'Mods und Einstellungen liegen jetzt in %APPDATA%\\Hexcall']],
@@ -922,7 +923,7 @@ $('#wotReapply').onclick = async () => {
     const r = await api('/api/reapply', { method: 'POST', json: {} });
     $('#log').textContent = r.output;
     t.remove();
-    toast(r.ok ? 'Wieder eingeschaltet. Wirkt ab dem nächsten Gefecht.' : 'Fehler – siehe Protokoll', r.ok ? 'ok' : 'err', 5000);
+    toast(r.ok ? 'Wieder eingeschaltet. Wirkt nach einem Neustart von WoT.' : 'Fehler – siehe Protokoll', r.ok ? 'ok' : 'err', 5000);
   } catch (err) { t.remove(); toast(err.message, 'err'); }
   await refresh();
 };

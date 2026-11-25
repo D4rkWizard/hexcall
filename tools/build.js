@@ -6,8 +6,8 @@
 // Variants: <name>_2.wav, <name>_3.wav ... (the game picks one at random)
 //
 // Three slots:
-//   standard  voice when "national voices" is OFF in the game settings
-//   national  voice when "national voices" is ON
+//   standard  voice when the WoT voice-over setting is "Standard"
+//   national  voice when it is "Commander" (the commander's nation; special commanders keep their own voice)
 //   effekte   gun/engine/... sounds
 //
 //   node tools/build.js --standard "<Mod>" --national "<Mod>" --effekte "<Mod>"
@@ -81,21 +81,24 @@ function listMods() {
   }));
 }
 
-function beep() {
-  const b = new Float32Array(RATE * 0.35);
-  for (let i = 0; i < b.length; i++) {
-    if (i < RATE * 0.15) b[i] = 0.5 * Math.sin(i * 2 * Math.PI * 880 / RATE);
-    else if (i > RATE * 0.2) b[i] = 0.5 * Math.sin(i * 2 * Math.PI * 1320 / RATE);
-  }
+// Test tones: "Standard" slot = two rising beeps, "Commander" slot = three falling beeps (so you hear which one plays)
+function beep(slot) {
+  const tones = slot === 'national' ? [1568, 1175, 880] : [880, 1320];
+  const len = RATE * 0.12, gap = RATE * 0.05;
+  const b = new Float32Array(Math.round(tones.length * (len + gap)));
+  tones.forEach((f, n) => {
+    const o = Math.round(n * (len + gap));
+    for (let i = 0; i < len; i++) b[o + i] = 0.5 * Math.sin(i * 2 * Math.PI * f / RATE) * Math.min(1, i / 200, (len - i) / 200);
+  });
   return b;
 }
 
 // Map(key -> [{file, wem}]) for a slot value
-function loadTakes(value, kind) {
+function loadTakes(value, kind, slot) {
   const keys = KEYS[kind];
   const recs = new Map();
   if (value === 'testton') {
-    const t = [{ file: '(Testton)', wem: toWem(beep(), RATE) }];
+    const t = [{ file: slot === 'national' ? '(Testton-Kommandant)' : '(Testton)', wem: toWem(beep(slot), RATE) }];
     for (const k of keys.keys()) recs.set(k, t);
     return recs;
   }
@@ -174,7 +177,7 @@ function applySlot(ver, slot, value) {
     console.log(`${slot.padEnd(9)} → Original`);
     return;
   }
-  const recs = loadTakes(value, kind);
+  const recs = loadTakes(value, kind, slot);
   const fill = kind === 'stimme' ? val('--luecken', 'original') : 'original';
   let keys = 0;
   for (const rel of banks) {
@@ -237,7 +240,7 @@ function main() {
     if (Object.values(state).every((v) => v === 'original')) { try { fs.unlinkSync(stateFile(ver)); } catch {} }
     else fs.writeFileSync(stateFile(ver), JSON.stringify(state, null, 2));
   }
-  console.log('Fertig. Wirkt ab dem nächsten Gefecht (falls nicht: WoT neu starten).');
+  console.log('Fertig. Wirkt nach einem Neustart von WoT.');
 }
 
 try { main(); } catch (e) { console.error('FEHLER:', e.message); process.exit(1); }

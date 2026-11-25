@@ -1,5 +1,11 @@
 # Changelog – Hexcall
 
+## v6.2 – 2026-11-25 – Standard & Commander
+- The two voice slots are now named like the WoT voice-over setting: **Standard** and **Commander** (instead of "slot 1 / national")
+- Own test tone for the Commander slot: three falling beeps (Standard: two rising beeps) – so you hear which voice is active
+- Clear note: with "Commander", special commanders (Battle Pass, bloggers, events) keep their own voice
+- All hints now say: new sounds take effect after restarting WoT (the game loads its sound banks on start)
+
 ## v6.1.1 – 2026-11-25 – English everywhere
 - Guide and line list now also in English (Guide.html, Lines.html) – the client opens them in your language
 - README, changelog, release notes, installer and download page in English
