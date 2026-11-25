@@ -1,5 +1,12 @@
 # Changelog – Hexcall
 
+## v6.1 – 25.11.2026 – Mehr Sprachen, Neu-laden-Knopf & Update-Warnung
+- Neue Sprachen: **Русский, Polski, Français, Español** (Oberfläche und alle 67 Aufnahme-Schritte)
+- „Im Spiel aktiv“: Auswahl ist erst ein Entwurf – geänderte Slots werden markiert, der blaue **Neu laden**-Knopf leuchtet auf und baut die Sound-Banken neu; ohne Änderung bleibt er ausgegraut. „Verwerfen“ setzt die Auswahl zurück
+- Eigene Aufklapp-Menüs im Hexcall-Design statt der Windows-Standardliste (Slots, Studio-Auswahl), Protokoll-Bereich passend gestaltet
+- Beim Start: deutliche Warnung „veraltete Version – Mod funktioniert evtl. nicht richtig“ mit Update-Knopf; in den Einstellungen optional **automatische Updates**
+- Nach einem WoT-Update: Hinweis, dass die Sounds aus sind, mit **Sounds wieder einschalten** (baut den alten Stand für die neue Spielversion)
+- **WoT starten** direkt aus dem Client (unten links, wenn das Spiel nicht läuft); läuft WoT beim „Neu laden“, bietet Hexcall „Anwenden & WoT neu starten“ an – WoT lädt die Sound-Banken beim Spielstart
 
 ## v6.0 – 25.11.2026 – Hexcall: bereit zum Veröffentlichen
 - Neuer Name: **Hexcall** (Hex = Zauber, Call = Callouts), Daten ziehen automatisch mit um

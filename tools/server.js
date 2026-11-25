@@ -19,12 +19,20 @@ const PORT = Number(process.env.SOUND_COMMANDER_PORT || 47811);
 let GAME = paths.gameDir();
 
 const KEYS = { stimme: EVENTS.map((e) => e[0]), effekte: SFX.map((c) => c[0]) };
-const EN = require('./events_en');
+// Step texts per language: German in events.js/sfx.js, the others in events_en.js / events_i18n.js
+const LANGS = ['en', 'de', 'ru', 'pl', 'fr', 'es'];
+const STEP_TR = { en: require('./events_en'), ...require('./events_i18n') };
+const trOf = (kind, key) => {
+  const out = {};
+  for (const [l, d] of Object.entries(STEP_TR)) {
+    const t = kind === 'stimme' ? d.voice && d.voice[key] : d.effects && d.effects[key];
+    if (t) out[l] = kind === 'stimme' ? { title: t[0], text: t[1] } : { title: t[0], text: t[1], hint: t[2] };
+  }
+  return out;
+};
 const STEPS = [
-  ...EVENTS.map((e) => ({ kind: 'stimme', key: e[0], title: e[1], text: e[2],
-    en: { title: EN.voice[e[0]][0], text: EN.voice[e[0]][1] } })),
-  ...SFX.map((c) => ({ kind: 'effekte', key: c[0], title: c[1], text: c[2], hint: c[3],
-    en: { title: EN.effects[c[0]][0], text: EN.effects[c[0]][1], hint: EN.effects[c[0]][2] } })),
+  ...EVENTS.map((e) => ({ kind: 'stimme', key: e[0], title: e[1], text: e[2], tr: trOf('stimme', e[0]) })),
+  ...SFX.map((c) => ({ kind: 'effekte', key: c[0], title: c[1], text: c[2], hint: c[3], tr: trOf('effekte', c[0]) })),
 ];
 const MIME = { '.html': 'text/html; charset=utf-8', '.css': 'text/css; charset=utf-8', '.js': 'text/javascript; charset=utf-8',
   '.svg': 'image/svg+xml', '.png': 'image/png', '.webp': 'image/webp', '.jpg': 'image/jpeg', '.wav': 'audio/wav', '.ico': 'image/x-icon' };
@@ -111,7 +119,7 @@ const routes = {
     try { info = JSON.parse(r.output); } catch {}
     const laeuft = await gameRunning();
     return { version: info.version, aktiv: info.aktiv, mods: listMods(), wotLaeuft: laeuft, wotSpieler: laeuft ? wotPlayer() : null,
-      letzter: readLastState(), app: paths.versionInfo().version, gameDir: GAME, gameFound: !!GAME, dataDir: paths.DATA,
+      letzter: readLastState(), wotUpdate: wotUpdated(info), app: paths.versionInfo().version, gameDir: GAME, gameFound: !!GAME, dataDir: paths.DATA,
       counts: { stimme: KEYS.stimme.length, effekte: KEYS.effekte.length } };
   },
   'GET /api/steps': async () => STEPS,
@@ -172,16 +180,28 @@ const routes = {
     if (!a.deinstallieren && ['standard', 'national', 'effekte'].some((s) => a[s] && a[s] !== 'original')) { try { fs.unlinkSync(LAST_STATE); } catch {} }
     if (a.luecken === 'stumm') args.push('--luecken', 'stumm');
     if (!args.length) throw new Error('Nichts ausgewählt');
-    return runBuild(args);
+    return rememberBuild(await runBuild(args));
   },
   'POST /api/restore': async () => {
     const last = readLastState();
     if (!last) throw new Error('Es gibt keinen gespeicherten Zustand zum Wiedereinschalten.');
     const args = [];
     for (const s of ['standard', 'national', 'effekte']) if (last[s]) args.push(`--${s}`, last[s]);
-    const r = await runBuild(args);
+    const r = await rememberBuild(await runBuild(args));
     if (r.ok) { try { fs.unlinkSync(LAST_STATE); } catch {} }
     return r;
+  },
+  // after a WoT update: build the sounds that were active before again for the new game version
+  'POST /api/reapply': async () => {
+    const lb = readLastBuild();
+    if (!lb || !lb.aktiv) throw new Error('Es gibt keinen gespeicherten Zustand zum Wiedereinschalten.');
+    const args = [];
+    for (const s of ['standard', 'national', 'effekte']) {
+      const v = lb.aktiv[s];
+      if (v && (v === 'testton' || v === 'original' || (safeName(v) && fs.existsSync(path.join(MODS, v))))) args.push(`--${s}`, v);
+    }
+    if (!args.length) throw new Error('Nichts ausgewählt');
+    return rememberBuild(await runBuild(args));
   },
   'POST /api/open': async (q, body) => {
     const { mod } = JSON.parse(body || '{}');
@@ -191,6 +211,21 @@ const routes = {
     return { ok: true };
   },
   'POST /api/ping': async () => { lastPing = Date.now(); return { ok: true }; },
+  // Start WoT from the client; "restart" closes the running game first (new sound banks load on game start)
+  'POST /api/game/start': async (q, body) => {
+    const { restart } = JSON.parse(body || '{}');
+    GAME = paths.gameDir();
+    const exe = GAME && path.join(GAME, 'WorldOfTanks.exe');
+    if (!exe || !fs.existsSync(exe)) throw new Error('World of Tanks konnte nicht gestartet werden (WorldOfTanks.exe fehlt).');
+    if (restart && await gameRunning()) {
+      execFile('taskkill', ['/IM', 'WorldOfTanks.exe'], { windowsHide: true }, () => {}); // ask nicely first
+      for (let i = 0; i < 20 && await gameRunning(); i++) await new Promise((r) => setTimeout(r, 500));
+      if (await gameRunning()) await new Promise((r) => execFile('taskkill', ['/F', '/IM', 'WorldOfTanks.exe'], { windowsHide: true }, () => r()));
+      await new Promise((r) => setTimeout(r, 1500));
+    } else if (await gameRunning()) return { ok: true, already: true };
+    spawn(exe, [], { cwd: GAME, detached: true, stdio: 'ignore' }).unref();
+    return { ok: true };
+  },
   'GET /api/games': async () => ({ current: paths.gameDir(), found: paths.findGames() }),
   'POST /api/pickfolder': async () => {
     const dir = await pickFolder();
@@ -207,7 +242,7 @@ const routes = {
       throw new Error('In diesem Ordner wurde kein World of Tanks gefunden (version.xml / res\\audioww fehlen).');
     }
     const clean = { theme: ['wizard', 'dark', 'light'].includes(s.theme) ? s.theme : DEFAULT_SETTINGS.theme, animations: s.animations !== false,
-      gameDir: s.gameDir || null, lang: ['en', 'de'].includes(s.lang) ? s.lang : DEFAULT_SETTINGS.lang };
+      gameDir: s.gameDir || null, lang: LANGS.includes(s.lang) ? s.lang : DEFAULT_SETTINGS.lang, autoUpdate: s.autoUpdate === true };
     fs.mkdirSync(USER, { recursive: true });
     fs.writeFileSync(path.join(USER, 'settings.json'), JSON.stringify(clean, null, 2));
     return clean;
@@ -215,7 +250,7 @@ const routes = {
 };
 
 const USER = paths.USER;
-const DEFAULT_SETTINGS = { theme: 'wizard', animations: true, gameDir: null, lang: 'en' }; // English on first start
+const DEFAULT_SETTINGS = { theme: 'wizard', animations: true, gameDir: null, lang: 'en', autoUpdate: false }; // English on first start
 const LAST_STATE = path.join(USER, 'letzter_zustand.json');
 async function currentState() {
   const r = await runBuild(['--status']);
@@ -237,7 +272,47 @@ function readSettings() {
   let s = {};
   try { s = JSON.parse(fs.readFileSync(path.join(USER, 'settings.json'), 'utf8')); } catch {}
   return { theme: ['wizard', 'dark', 'light'].includes(s.theme) ? s.theme : DEFAULT_SETTINGS.theme, animations: s.animations !== false,
-    gameDir: s.gameDir || null, lang: ['en', 'de'].includes(s.lang) ? s.lang : DEFAULT_SETTINGS.lang };
+    gameDir: s.gameDir || null, lang: LANGS.includes(s.lang) ? s.lang : DEFAULT_SETTINGS.lang, autoUpdate: s.autoUpdate === true };
+}
+
+// Which game version the sounds were last built for. The active state lives in res_mods\<version>,
+// so after a WoT update the mod is silently gone – the client warns and offers to re-apply.
+const LAST_BUILD = path.join(USER, 'letzter_build.json');
+function readLastBuild() {
+  try { return JSON.parse(fs.readFileSync(LAST_BUILD, 'utf8')); } catch {}
+  // no record yet (older Hexcall): look at the state files build.js left in res_mods\<old version>
+  try {
+    const rm = path.join(GAME, 'res_mods');
+    const cmp = (a, b) => { const x = a.split('.').map(Number), y = b.split('.').map(Number); for (let i = 0; i < 4; i++) if ((x[i] || 0) !== (y[i] || 0)) return (x[i] || 0) - (y[i] || 0); return 0; };
+    const vers = fs.readdirSync(rm).filter((v) => /^\d+(\.\d+){3}$/.test(v)).sort(cmp).reverse();
+    for (const v of vers.slice(1, 2)) { // only the version right before the newest (= current) one
+      const f = path.join(rm, v, 'audioww', 'eigene_stimme.json');
+      if (fs.existsSync(f)) return { version: v, aktiv: { standard: 'original', national: 'original', effekte: 'original', ...JSON.parse(fs.readFileSync(f, 'utf8')) } };
+    }
+  } catch {}
+  return null;
+}
+async function rememberBuild(r) {
+  if (!r.ok) return r;
+  try {
+    const info = JSON.parse((await runBuild(['--liste'])).output);
+    fs.mkdirSync(USER, { recursive: true });
+    fs.writeFileSync(LAST_BUILD, JSON.stringify({ version: info.version, aktiv: info.aktiv }, null, 2));
+  } catch {}
+  return r;
+}
+function wotUpdated(info) {
+  const lb = readLastBuild();
+  // first start with this feature: remember what is active right now
+  if (!lb && info.version && Object.values(info.aktiv || {}).some((v) => v && v !== 'original')) {
+    try { fs.mkdirSync(USER, { recursive: true }); fs.writeFileSync(LAST_BUILD, JSON.stringify({ version: info.version, aktiv: info.aktiv }, null, 2)); } catch {}
+    return null;
+  }
+  if (!lb || !lb.version || !info.version || lb.version === info.version || !lb.aktiv) return null;
+  const was = Object.values(lb.aktiv).filter((v) => v && v !== 'original');
+  const now = Object.values(info.aktiv || {}).filter((v) => v && v !== 'original');
+  if (!was.length || now.length) return null; // nothing was active before, or already re-applied
+  return { from: lb.version, to: info.version, aktiv: lb.aktiv };
 }
 
 // Native folder picker (runs a small STA PowerShell dialog on the local machine)

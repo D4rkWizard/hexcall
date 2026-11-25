@@ -23,7 +23,7 @@ async function api(path, { method = 'GET', json, body } = {}) {
   return data;
 }
 
-const S = { page: 'home', info: null, steps: [], mod: null, files: { stimme: {}, effekte: {} }, kind: 'stimme', idx: 0, fresh: null, askedBranch: false };
+const S = { page: 'home', info: null, steps: [], mod: null, files: { stimme: {}, effekte: {} }, kind: 'stimme', idx: 0, fresh: null, askedBranch: false, pending: null, muteApplied: false };
 const FIXED = { original: 'Original (WoT)', testton: 'Testton (Piep)' };
 
 /* ---------- toasts & modal ---------- */
@@ -88,13 +88,15 @@ async function refresh(force = true) {
   const gs = $('#gameStatus');
   gs.classList.toggle('on', i.wotLaeuft);
   $('.txt', gs).textContent = i.wotLaeuft ? 'WoT läuft' : 'WoT nicht gestartet';
+  $('#gameStart').hidden = i.wotLaeuft || !i.gameFound;
   const wp = $('#wotPlayer');
   wp.hidden = !(i.wotLaeuft && i.wotSpieler);
   if (i.wotSpieler) { $('span', wp).textContent = i.wotSpieler; wp.title = 'Eingeloggt in World of Tanks'; }
   renderModState();
   renderSlotsSummary();
   renderMods();
-  if (force || S.page !== 'slots') renderSlotEditor(); // don't reset unsaved choices
+  if (!$('.dd-menu')) renderSlotEditor(); // unsaved choices live in S.pending; don't close an open menu
+  renderWotUpdate();
   renderStudioPick();
 }
 
@@ -226,27 +228,58 @@ async function activateMod(mod) {
 }
 
 /* ---------- slots page ---------- */
+// Choices on this page are only a draft (S.pending) until "Neu laden" builds the sound banks.
 function slotOptions(kind, value) {
-  const opts = [['original', FIXED.original], ['testton', FIXED.testton],
-    ...S.info.mods.map((m) => [m.name, `${m.name}  (${m[kind]} ${kind === 'stimme' ? 'Ansagen' : 'Effekte'})`])];
-  return opts.map(([v, l]) => `<option value="${esc(v)}" ${v === value ? 'selected' : ''}>${esc(l)}</option>`).join('');
+  const opts = [['original', FIXED.original, 'Original-Sounds von WoT', 'orig'], ['testton', FIXED.testton, 'Piepton zum Testen', 'test'],
+    ...S.info.mods.map((m) => [m.name, m.name, `${m[kind]} ${kind === 'stimme' ? 'Ansagen' : 'Effekte'}`, 'mod'])];
+  return opts.map(([v, l, sub, k]) => `<option value="${esc(v)}" data-sub="${esc(sub)}" data-kind="${k}" ${v === value ? 'selected' : ''}>${esc(l)}</option>`).join('');
 }
+const activeOf = (id) => S.info.aktiv[id] || 'original';
+const chosenOf = (id) => (S.pending && S.pending[id] !== undefined ? S.pending[id] : activeOf(id));
+const slotsDirty = () => SLOT_DEF.some((d) => chosenOf(d.id) !== activeOf(d.id));
+const isDirty = () => slotsDirty() || $('#muteMissing').checked !== S.muteApplied;
+
 function renderSlotEditor() {
+  if (S.pending && !slotsDirty()) S.pending = null;
   $('#slotCards').innerHTML = SLOT_DEF.map((d) => {
-    const v = S.info.aktiv[d.id] || 'original';
-    return `<div class="card slot-card is-${slotKind(v)}">
-      <div class="row"><div class="slot-ico">${icon(d.ico)}</div>
+    const act = activeOf(d.id), v = chosenOf(d.id), changed = v !== act;
+    return `<div class="card slot-card is-${slotKind(v)} ${changed ? 'is-changed' : ''}">
+      ${changed ? '<div class="changed-badge">geändert</div>' : ''}
+      <div class="row"><div class="slot-ico">${icon(v === 'testton' ? 'beep' : d.ico)}</div>
       <div><div class="slot-label">${d.title}</div><div class="slot-sub">${d.sub}</div></div></div>
       <select class="select slot-select" data-slot="${d.id}">${slotOptions(d.kind, v)}</select>
-      <div class="slot-sub">Aktuell: <b style="color:var(--text)">${esc(label(v))}</b></div></div>`;
+      <div class="slot-sub">Im Spiel: <b style="color:var(--text)">${esc(label(act))}</b></div></div>`;
   }).join('');
+  $$('.slot-select').forEach((s) => {
+    enhanceSelect(s);
+    s.onchange = () => {
+      S.pending = { ...(S.pending || {}), [s.dataset.slot]: s.value };
+      renderSlotEditor();
+    };
+  });
+  updateApplyState();
 }
 
+function updateApplyState() {
+  const dirty = isDirty();
+  const btn = $('#applyBtn');
+  btn.disabled = !dirty;
+  btn.classList.toggle('ready', dirty);
+  $('#discardBtn').hidden = !dirty;
+  const st = $('#applyState');
+  st.className = `apply-state ${dirty ? 'dirty' : ''}`;
+  $('.txt', st).textContent = dirty ? 'Änderungen noch nicht übernommen' : 'Alles übernommen';
+}
+$('#muteMissing').onchange = updateApplyState;
+$('#discardBtn').onclick = () => { S.pending = null; $('#muteMissing').checked = S.muteApplied; renderSlotEditor(); };
+
 async function applyNow(req) {
+  let restart = false;
   if (S.info.wotLaeuft) {
-    const ok = await modal({ title: 'World of Tanks läuft', text: 'Die neuen Sounds greifen sicher erst nach einem Neustart des Spiels (evtl. schon ab dem nächsten Gefecht). Trotzdem anwenden?',
-      buttons: [{ label: 'Abbrechen', value: false }, { label: 'Anwenden', value: true, cls: 'primary', default: true }] });
+    const ok = await modal({ title: 'World of Tanks läuft', text: 'WoT lädt die Sounds beim Spielstart. Zuverlässig hörst du die neuen Sounds erst nach einem Neustart des Spiels. Soll Hexcall WoT dafür neu starten? (Nicht mitten im Gefecht!)',
+      buttons: [{ label: 'Abbrechen', value: false }, { label: 'Nur anwenden', value: 'apply' }, { label: 'Anwenden & WoT neu starten', value: 'restart', cls: 'primary', default: true }] });
     if (!ok) return;
+    restart = ok === 'restart';
   }
   if ($('#muteMissing').checked) req.luecken = 'stumm';
   const t = toast('Baue Sound-Banken …', 'busy', 0);
@@ -255,13 +288,15 @@ async function applyNow(req) {
     $('#log').textContent = r.output;
     t.remove();
     toast(r.ok ? 'Angewendet. Wirkt ab dem nächsten Gefecht.' : 'Fehler beim Bauen – siehe Protokoll', r.ok ? 'ok' : 'err', 5000);
-    if (!r.ok) { go('slots'); $('#logBox').open = true; }
+    if (r.ok) { S.pending = null; S.muteApplied = $('#muteMissing').checked; if (restart) startGame(true); }
+    else { go('slots'); $('#logBox').open = true; }
   } catch (err) { t.remove(); toast(err.message, 'err'); }
   await refresh();
 }
 $('#applyBtn').onclick = () => {
+  if (!isDirty()) return;
   const req = {};
-  $$('.slot-select').forEach((s) => (req[s.dataset.slot] = s.value));
+  SLOT_DEF.forEach((d) => (req[d.id] = chosenOf(d.id)));
   applyNow(req);
 };
 $('#allOff').onclick = async () => {
@@ -285,7 +320,10 @@ async function restoreLast() {
 
 /* ---------- studio ---------- */
 function renderStudioPick() {
-  $('#studioPick').innerHTML = S.info.mods.map((m) => `<option>${esc(m.name)}</option>`).join('') || '<option value="">– noch keine Mods –</option>';
+  const pick = $('#studioPick'), keep = pick.value;
+  pick.innerHTML = S.info.mods.map((m) => `<option value="${esc(m.name)}" data-sub="${m.dateien === 1 ? '1 Datei' : `${m.dateien} Dateien`}">${esc(m.name)}</option>`).join('') || '<option value="">– noch keine Mods –</option>';
+  if (keep && S.info.mods.some((m) => m.name === keep)) pick.value = keep;
+  enhanceSelect(pick);
 }
 $('#studioOpen').onclick = () => { const v = $('#studioPick').value; if (v) openStudio(v); else newMod(); };
 $('#closeStudio').onclick = () => { if (rec.active) stopRecording(false); S.mod = null; $('#studio').hidden = true; $('#studioEmpty').hidden = false; refresh(); };
@@ -358,7 +396,7 @@ function showStep() {
   $('#stepTitle').textContent = s.title;
   const line = $('#stepLine');
   line.classList.toggle('fx', s.kind === 'effekte');
-  line.textContent = s.kind === 'stimme' ? (I18N.lang === 'en' ? `"${s.text}"` : `„${s.text}“`) : s.text;
+  line.textContent = s.kind === 'stimme' ? I18N.quote(s.text) : s.text;
   $('#stepHint').textContent = s.kind === 'stimme' ? 'Sprich den Satz – oder deine eigene Version – kurz und deutlich ein.' : s.hint;
   const n = takesOf(s).length;
   const b = $('#stepBadge');
@@ -686,6 +724,7 @@ function applySettings(s) {
   $$('.theme-card').forEach((c) => c.classList.toggle('active', c.dataset.themePick === s.theme));
   $$('.lang-card').forEach((c) => c.classList.toggle('active', c.dataset.lang === I18N.lang));
   $('#animToggle').checked = s.animations;
+  $('#autoUpdToggle').checked = !!s.autoUpdate;
   try { localStorage.setItem('sc-settings', JSON.stringify(s)); } catch {}
   if (S.mod && S.page === 'studio') { clearScope(); renderTakes(); }
 }
@@ -705,6 +744,7 @@ $$('.lang-card').forEach((c) => (c.onclick = async () => {
   location.reload(); // re-render everything in the new language
 }));
 $('#animToggle').onchange = (e) => saveSettings({ animations: e.target.checked });
+$('#autoUpdToggle').onchange = (e) => saveSettings({ autoUpdate: e.target.checked });
 
 /* ---------- WoT folder ---------- */
 $('#gameDetect').onclick = async () => {
@@ -735,15 +775,19 @@ function showUpdate(u) {
   st.textContent = `Neue Version verfügbar: v${u.latest}`;
   st.className = 'new';
   if (sessionStorage.getItem('upd-dismissed') === u.latest) return;
-  $('#updTitle').textContent = `Update verfügbar: v${u.latest}`;
-  $('#updSub').textContent = `Du nutzt v${u.current}. Deine Mods und Einstellungen bleiben erhalten.`;
+  $('#updTitle').textContent = `Achtung: veraltete Version (v${u.current})`;
+  $('#updSub').textContent = `v${u.latest} ist da. Ohne Update funktioniert der Mod evtl. nicht richtig – deine Mods und Einstellungen bleiben erhalten.`;
   $('#updNotes').href = u.url;
   $('#updInstall').hidden = !u.installable;
   $('#updBanner').hidden = false;
   $('#updBanner').dataset.latest = u.latest;
 }
-async function checkUpdate(force) {
-  try { showUpdate(await api(`/api/update${force ? '?force=1' : ''}`)); } catch { /* offline: ignore */ }
+async function checkUpdate(force, startup) {
+  let u;
+  try { u = await api(`/api/update${force ? '?force=1' : ''}`); } catch { return; } // offline: ignore
+  showUpdate(u);
+  // optional: install new versions right away on start
+  if (startup && u.update && u.installable && S.settings && S.settings.autoUpdate && !rec.active) installUpdate(u.latest);
 }
 $('#updCheck').onclick = async () => { $('#updStatus').textContent = 'Suche …'; await checkUpdate(true); };
 $('#updClose').onclick = () => { $('#updBanner').hidden = true; sessionStorage.setItem('upd-dismissed', $('#updBanner').dataset.latest || ''); };
@@ -752,8 +796,10 @@ $('#updInstall').onclick = async () => {
   const ok = await modal({ title: `Auf v${$('#updBanner').dataset.latest} aktualisieren?`,
     text: 'Das Update wird heruntergeladen und geprüft. Danach schließt sich der Client kurz und startet neu.\nDeine Mods und Einstellungen bleiben erhalten.',
     buttons: [{ label: 'Später', value: false }, { label: 'Jetzt aktualisieren', value: true, cls: 'primary', default: true }] });
-  if (!ok) return;
-  const t = toast('Lade Update herunter und prüfe es …', 'busy', 0);
+  if (ok) installUpdate();
+};
+async function installUpdate(auto) {
+  const t = toast(auto ? `Installiere v${auto} automatisch …` : 'Lade Update herunter und prüfe es …', 'busy', 0);
   try {
     const r = await api('/api/update/install', { method: 'POST', json: {} });
     t.remove();
@@ -763,6 +809,7 @@ $('#updInstall').onclick = async () => {
 
 /* ---------- small changelog (Hilfe › Changelog) ---------- */
 const CHANGELOG = [
+  ['6.1', '25.11.2026', 'Mehr Sprachen, Neu-laden-Knopf & Update-Warnung', ['Russisch, Polnisch, Französisch und Spanisch', '„Im Spiel aktiv“: blauer Neu-laden-Knopf, leuchtet bei Änderungen', 'Eigene Aufklapp-Menüs im Hexcall-Design', 'Warnung bei veralteter Version, auf Wunsch automatische Updates', 'Hinweis nach WoT-Updates mit „Sounds wieder einschalten“', 'Neu: WoT direkt aus dem Client starten bzw. nach „Neu laden“ neu starten']],
   ['6.0', '25.11.2026', 'Bereit zum Veröffentlichen', ['Neuer Name: Hexcall · Sprache Englisch/Deutsch', 'Saubere Aufnahmen: kein Knacken mehr, Stille und Klicks werden sofort entfernt', 'Update-Prüfung über GitHub mit Ein-Klick-Update', 'WoT-Ordner wird automatisch gefunden oder kann gewählt werden', 'Mods und Einstellungen liegen jetzt in %APPDATA%\\Hexcall']],
   ['5.4', '25.11.2026', 'Anleitung & Sprachliste für Windows', ['Anleitung.html und Sprachliste.html: Doppelklick öffnet sie im Browser', 'Sprachliste mit Suche, Kopier-Knopf und Druckansicht', 'Links dazu unter Hilfe']],
   ['5.3', '25.11.2026', 'Aktiver Mod & Wieder einschalten', ['Aktiver Mod in der Bibliothek grün markiert und oben einsortiert', 'Aktivieren/Deaktivieren direkt auf der Mod-Karte', 'Nach „Mod aus“: Wieder einschalten mit einem Klick']],
@@ -785,6 +832,110 @@ function showSub(sub) {
 $$('.subtabs button').forEach((b) => (b.onclick = () => showSub(b.dataset.sub)));
 $('#verLink').onclick = () => { go('help'); showSub('log'); };
 
+/* ---------- dropdowns: themed replacement for the native <select> popup ---------- */
+// The native select stays in the DOM (hidden) and keeps the value; the button + menu only mirror it.
+let ddOpen = null;
+function enhanceSelect(sel) {
+  let dd = sel.nextElementSibling;
+  if (!dd || !dd.classList.contains('dd')) {
+    dd = document.createElement('div');
+    dd.className = 'dd';
+    dd.innerHTML = `<button type="button" class="dd-btn"><span class="dd-dot"></span><span class="dd-val"></span><span class="dd-sub"></span><svg class="dd-chev"><use href="#i-chevron"/></svg></button>`;
+    sel.after(dd);
+    sel.classList.add('dd-native');
+    $('.dd-btn', dd).onclick = (e) => { e.stopPropagation(); ddOpen && ddOpen.sel === sel ? closeDropdown() : openDropdown(sel, dd); };
+    $('.dd-btn', dd).onkeydown = (e) => {
+      if (!['ArrowDown', 'ArrowUp'].includes(e.key)) return;
+      e.preventDefault();
+      if (!ddOpen) openDropdown(sel, dd);
+    };
+  }
+  dd.classList.toggle('wide', sel.classList.contains('slot-select'));
+  const o = sel.selectedOptions[0];
+  $('.dd-val', dd).textContent = o ? o.textContent : '–';
+  $('.dd-sub', dd).textContent = o && o.dataset.sub ? o.dataset.sub : '';
+  $('.dd-dot', dd).className = `dd-dot ${o && o.dataset.kind ? 'k-' + o.dataset.kind : 'none'}`;
+}
+
+function openDropdown(sel, dd) {
+  closeDropdown();
+  const menu = document.createElement('div');
+  menu.className = 'dd-menu';
+  menu.setAttribute('role', 'listbox');
+  menu.innerHTML = [...sel.options].map((o, i) => `<button type="button" class="dd-opt ${o.selected ? 'sel' : ''}" data-i="${i}" role="option">
+      <span class="dd-dot ${o.dataset.kind ? 'k-' + o.dataset.kind : 'none'}"></span>
+      <span class="dd-txt"><b>${esc(o.textContent)}</b>${o.dataset.sub ? `<small>${esc(o.dataset.sub)}</small>` : ''}</span>
+      ${o.selected ? icon('check') : ''}</button>`).join('');
+  document.body.appendChild(menu);
+  const r = $('.dd-btn', dd).getBoundingClientRect();
+  menu.style.minWidth = `${r.width}px`;
+  menu.style.left = `${r.left}px`;
+  const below = innerHeight - r.bottom - 12, h = Math.min(menu.scrollHeight, 320);
+  if (below < h && r.top > below) { menu.style.bottom = `${innerHeight - r.top + 6}px`; menu.classList.add('up'); }
+  else menu.style.top = `${r.bottom + 6}px`;
+  dd.classList.add('open');
+  ddOpen = { sel, dd, menu };
+  menu.onclick = (e) => {
+    const b = e.target.closest('.dd-opt');
+    if (!b) return;
+    pick(+b.dataset.i);
+  };
+  const pick = (i) => {
+    const changed = sel.selectedIndex !== i;
+    sel.selectedIndex = i;
+    closeDropdown();
+    enhanceSelect(sel);
+    $('.dd-btn', dd).focus();
+    if (changed) sel.dispatchEvent(new Event('change', { bubbles: true }));
+  };
+  menu.onkeydown = (e) => {
+    const opts = $$('.dd-opt', menu), cur = opts.indexOf(document.activeElement);
+    if (e.key === 'ArrowDown') { e.preventDefault(); (opts[cur + 1] || opts[0]).focus(); }
+    if (e.key === 'ArrowUp') { e.preventDefault(); (opts[cur - 1] || opts[opts.length - 1]).focus(); }
+  };
+  ($('.dd-opt.sel', menu) || $('.dd-opt', menu)).focus({ preventScroll: true });
+  ($('.dd-opt.sel', menu) || menu).scrollIntoView({ block: 'nearest' });
+}
+function closeDropdown() {
+  if (!ddOpen) return;
+  ddOpen.dd.classList.remove('open');
+  ddOpen.menu.remove();
+  ddOpen = null;
+}
+document.addEventListener('click', (e) => { if (ddOpen && !e.target.closest('.dd-menu')) closeDropdown(); });
+document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && ddOpen) { const b = $('.dd-btn', ddOpen.dd); closeDropdown(); b.focus(); } }, true);
+$('.main').addEventListener('scroll', closeDropdown);
+addEventListener('resize', closeDropdown);
+
+/* ---------- WoT was updated: the sounds are gone until they are built again ---------- */
+function renderWotUpdate() {
+  const u = S.info.wotUpdate, el = $('#wotBanner');
+  el.hidden = !u;
+  if (!u) return;
+  const names = [...new Set(Object.values(u.aktiv).filter((v) => v && v !== 'original').map(label))];
+  $('#wotSub').textContent = `${u.from} → ${u.to}: Deine Sounds (${names.join(', ')}) sind deshalb gerade aus.`;
+}
+$('#wotReapply').onclick = async () => {
+  const t = toast('Schalte wieder ein …', 'busy', 0);
+  try {
+    const r = await api('/api/reapply', { method: 'POST', json: {} });
+    $('#log').textContent = r.output;
+    t.remove();
+    toast(r.ok ? 'Wieder eingeschaltet. Wirkt ab dem nächsten Gefecht.' : 'Fehler – siehe Protokoll', r.ok ? 'ok' : 'err', 5000);
+  } catch (err) { t.remove(); toast(err.message, 'err'); }
+  await refresh();
+};
+
+/* ---------- start / restart World of Tanks ---------- */
+async function startGame(restart) {
+  const t = toast(restart ? 'Starte WoT neu …' : 'Starte World of Tanks …', 'busy', 0);
+  try { await api('/api/game/start', { method: 'POST', json: { restart: !!restart } }); }
+  catch (err) { toast(err.message, 'err', 6000); }
+  t.remove();
+  setTimeout(() => refresh().catch(() => {}), 8000);
+}
+$('#gameStart').onclick = () => startGame(false);
+
 /* ---------- start ---------- */
 setInterval(() => api('/api/ping', { method: 'POST', json: {} }).catch(() => {}), 10000);
 setInterval(() => { if (!rec.active) refresh(false).catch(() => {}); }, 30000);
@@ -794,9 +945,9 @@ setInterval(() => { if (!rec.active) refresh(false).catch(() => {}); }, 30000);
     if (settings.lang !== I18N.lang) { localStorage.setItem('sc-settings', JSON.stringify(settings)); location.reload(); return; }
     applySettings(settings);
     S.steps = await api('/api/steps');
-    if (I18N.lang === 'en') S.steps = S.steps.map((s) => ({ ...s, ...s.en }));
+    if (I18N.lang !== 'de') S.steps = S.steps.map((s) => ({ ...s, ...(s.tr[I18N.lang] || s.tr.en) }));
     await refresh();
-    checkUpdate(false);
+    checkUpdate(false, true);
   } catch (err) {
     toast('Backend nicht erreichbar. Bitte über „Sound-Mod-Manager.cmd“ starten.', 'err', 0);
   }

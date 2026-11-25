@@ -87,6 +87,27 @@ const I18N = (() => {
     'Ungültiger Name': 'Invalid name', 'Den Namen gibt es schon': 'That name already exists',
     'Es gibt keinen gespeicherten Zustand zum Wiedereinschalten.': 'There is no saved state to turn back on.',
     'Du hast bereits die aktuelle Version.': 'You already have the latest version.', 'Prüfsumme stimmt nicht – Update abgebrochen.': 'Checksum mismatch – update cancelled.',
+    // v6.1: reload button, dropdowns, WoT update, auto update
+    'geändert': 'changed', 'Im Spiel:': 'In game:', 'Original-Sounds von WoT': 'Original WoT sounds', 'Piepton zum Testen': 'Beep for testing',
+    'Änderungen noch nicht übernommen': 'Changes not applied yet', 'Alles übernommen': 'Everything applied', 'Verwerfen': 'Discard', 'Neu laden': 'Reload',
+    'Baut die Sound-Banken mit deiner Auswahl neu. Im Spiel ab dem nächsten Gefecht hörbar.': 'Rebuilds the sound banks with your selection. Audible in game from the next battle.',
+    'World of Tanks wurde aktualisiert': 'World of Tanks was updated', 'Sounds wieder einschalten': 'Turn sounds back on',
+    'Automatische Updates': 'Automatic updates', 'Neue Versionen beim Start sofort installieren statt nur Bescheid zu geben': 'Install new versions right away on start instead of just telling you',
+    'Mehr Sprachen, Neu-laden-Knopf & Update-Warnung': 'More languages, reload button & update warning',
+    'Russisch, Polnisch, Französisch und Spanisch': 'Russian, Polish, French and Spanish',
+    '„Im Spiel aktiv“: blauer Neu-laden-Knopf, leuchtet bei Änderungen': '"Active in Game": blue reload button that lights up on changes',
+    'Eigene Aufklapp-Menüs im Hexcall-Design': 'Own dropdown menus in the Hexcall style',
+    'Warnung bei veralteter Version, auf Wunsch automatische Updates': 'Warning for outdated versions, automatic updates if you like',
+    'Hinweis nach WoT-Updates mit „Sounds wieder einschalten“': 'Notice after WoT updates with "Turn sounds back on"',
+    "WoT starten": "Start WoT",
+    "World of Tanks starten": "Start World of Tanks",
+    "Starte World of Tanks …": "Starting World of Tanks …",
+    "Starte WoT neu …": "Restarting WoT …",
+    "Nur anwenden": "Apply only",
+    "Anwenden & WoT neu starten": "Apply & restart WoT",
+    "WoT lädt die Sounds beim Spielstart. Zuverlässig hörst du die neuen Sounds erst nach einem Neustart des Spiels. Soll Hexcall WoT dafür neu starten? (Nicht mitten im Gefecht!)": "WoT loads its sounds when the game starts. You will reliably hear the new sounds only after restarting the game. Should Hexcall restart WoT for you? (Not in the middle of a battle!)",
+    "World of Tanks konnte nicht gestartet werden (WorldOfTanks.exe fehlt).": "World of Tanks could not be started (WorldOfTanks.exe missing).",
+    "Neu: WoT direkt aus dem Client starten bzw. nach „Neu laden“ neu starten": "New: start WoT from the client, or restart it after \"Reload\"",
     // changelog entries
     'Bereit zum Veröffentlichen': 'Ready for release', 'Anleitung & Sprachliste für Windows': 'Guide & line list for Windows',
     'Aktiver Mod & Wieder einschalten': 'Active mod & turn back on', 'Stabilität & Feinschliff': 'Stability & polish', 'Kleines Changelog': 'Small changelog',
@@ -137,13 +158,19 @@ const I18N = (() => {
     [/^Auf v(.+) aktualisieren\?$/, 'Update to v$1?'],
     [/^v(.+) wird installiert – der Client startet gleich neu\.$/, 'v$1 is being installed – the client restarts in a moment.'],
     [/^Update-Prüfung nicht möglich: (.+)$/, 'Update check not possible: $1'],
+    [/^(d+) Ansagen$/, '$1 lines'],
+    [/^(d+) Effekte$/, '$1 effects'],
+    [/^(.+) → (.+): Deine Sounds ((.+)) sind deshalb gerade aus.$/, '$1 → $2: your sounds ($3) are off because of that.'],
+    [/^Achtung: veraltete Version (v(.+))$/, 'Warning: outdated version (v$1)'],
+    [/^v(.+) ist da. Ohne Update funktioniert der Mod evtl. nicht richtig – deine Mods und Einstellungen bleiben erhalten.$/, "v$1 is out. Without updating, the mod may not work properly – your mods and settings are kept."],
+    [/^Installiere v(.+) automatisch …$/, 'Installing v$1 automatically …'],
   ];
 
   // rich paragraphs (contain <b>/<i>): replaced as a whole
   const HTML = {
     'hero-h1': 'Your tank sounds<br>like <span class="accent">you</span>.',
     'slots-info': 'In WoT under <i>Settings › Sound</i>, toggle <i>national crew voices</i>: <b>off</b> = slot 1, <b>on</b> = slot 2. You will hear the change from the next battle.',
-    'help-1': '<div class="num">1</div><h3>Test</h3><p>Under <b>Active in Game</b>, set everything to <b>Test tone</b> and apply. In the training room you will hear beeps instead of voice, gun and engine – so you know the mod works.</p>',
+    'help-1': '<div class="num">1</div><h3>Test</h3><p>Under <b>Active in Game</b>, set everything to <b>Test tone</b> and click <b>Reload</b>. In the training room you will hear beeps instead of voice, gun and engine – so you know the mod works.</p>',
     'help-2': '<div class="num">2</div><h3>Record</h3><p>Create a new sound mod. The studio walks you through every callout. The <b>space bar</b> starts and stops the microphone. Anything you skip stays original.</p>',
     'help-3': '<div class="num">3</div><h3>Effects</h3><p>Switch to <b>Effects</b> at the top of the studio: gun, engine, turret, tracks, explosions … by microphone or by dropping a sound file.</p>',
     'help-4': '<div class="num">4</div><h3>Activate</h3><p><b>Done – activate in game</b> or pick the slots under <b>Active in Game</b>. Takes effect from the next battle. After a WoT update simply apply again.</p>',
@@ -151,6 +178,10 @@ const I18N = (() => {
     'drop-text': '<b>Drop a file here</b> – WAV, MP3, M4A or OGG<br><span>or click anywhere in this box</span>',
   };
 
+  // further languages (ui/i18n-langs.js): own dictionary, missing texts fall back to English
+  const MORE = (typeof I18N_LANGS !== 'undefined' && I18N_LANGS) || {};
+  const QUOTES = { de: ['„', '“'], en: ['"', '"'], ru: ['«', '»'], pl: ['„', '”'], fr: ['« ', ' »'], es: ['«', '»'] };
+  let L = { dict: {}, patterns: [], html: {} };
   let lang = 'de';
   const original = new WeakMap(); // node -> German text (for elements we replaced as HTML)
 
@@ -158,10 +189,11 @@ const I18N = (() => {
     if (lang === 'de' || typeof s !== 'string') return s;
     const lead = s.match(/^\s*/)[0], trail = s.match(/\s*$/)[0], core = s.trim();
     if (!core) return s;
-    if (EN[core] !== undefined) return lead + EN[core] + trail;
+    const word = (k) => (L.dict[k] !== undefined ? L.dict[k] : EN[k]);
+    if (word(core) !== undefined) return lead + word(core) + trail;
     const q = /^„(.+)“$/.exec(core);
-    if (q && EN[q[1]] !== undefined) return `${lead}"${EN[q[1]]}"${trail}`;
-    for (const [re, rep] of PATTERNS) if (re.test(core)) return lead + core.replace(re, rep) + trail;
+    if (q && word(q[1]) !== undefined) return lead + quote(word(q[1])) + trail;
+    for (const [re, rep] of [...L.patterns, ...PATTERNS]) if (re.test(core)) return lead + core.replace(re, rep) + trail;
     return s;
   }
 
@@ -169,9 +201,10 @@ const I18N = (() => {
     if (lang === 'de') return;
     if (node.nodeType === 3) { const t = tr(node.data); if (t !== node.data) node.data = t; return; }
     if (node.nodeType !== 1) return;
-    if (node.dataset && node.dataset.i18nHtml && HTML[node.dataset.i18nHtml] && !original.has(node)) {
+    const k = node.dataset && node.dataset.i18nHtml, html = k && (L.html[k] || HTML[k]);
+    if (html && !original.has(node)) {
       original.set(node, node.innerHTML);
-      node.innerHTML = HTML[node.dataset.i18nHtml];
+      node.innerHTML = html;
     }
     for (const attr of ['title', 'placeholder']) {
       if (node.hasAttribute && node.hasAttribute(attr)) { const v = node.getAttribute(attr), t = tr(v); if (t !== v) node.setAttribute(attr, t); }
@@ -181,7 +214,8 @@ const I18N = (() => {
   }
 
   function start(l) {
-    lang = l === 'de' ? 'de' : 'en';
+    lang = l === 'de' || MORE[l] ? l : 'en';
+    L = MORE[lang] || { dict: {}, patterns: [], html: {} };
     document.documentElement.lang = lang;
     if (lang === 'de') return;
     translateNode(document.body);
@@ -195,5 +229,7 @@ const I18N = (() => {
     }).observe(document.body, { subtree: true, childList: true, characterData: true, attributes: true, attributeFilter: ['title', 'placeholder'] });
   }
 
-  return { start, tr, get lang() { return lang; } };
+  function quote(t) { const [a, b] = QUOTES[lang] || QUOTES.en; return a + t + b; }
+
+  return { start, tr, quote, get lang() { return lang; } };
 })();

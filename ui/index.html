@@ -33,6 +33,9 @@
     <symbol id="i-beep" viewBox="0 0 24 24"><path d="M4 9.5v5h3.5L12 18.5v-13L7.5 9.5z"/><path d="M15.5 9a4 4 0 0 1 0 6M18 6.5a7.5 7.5 0 0 1 0 11"/></symbol>
     <symbol id="i-swap" viewBox="0 0 24 24"><path d="M4.5 8.5h14l-3.5-3.5M19.5 15.5h-14l3.5 3.5"/></symbol>
     <symbol id="i-settings" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></symbol>
+    <symbol id="i-chevron" viewBox="0 0 24 24"><path d="m7 10 5 5 5-5"/></symbol>
+    <symbol id="i-reload" viewBox="0 0 24 24"><path d="M19.5 12a7.5 7.5 0 1 1-2.2-5.3"/><path d="M19.5 4.5v4.5H15"/></symbol>
+    <symbol id="i-warn" viewBox="0 0 24 24"><path d="M12 4 2.8 19.5h18.4z"/><path d="M12 10v4.5M12 17v.3"/></symbol>
     <symbol id="i-palette" viewBox="0 0 24 24"><path d="M12 3.5a8.5 8.5 0 1 0 0 17c1.2 0 1.8-.8 1.8-1.7 0-1.3-1.2-1.6-1.2-2.8 0-1 .8-1.6 1.8-1.6h2.1a4 4 0 0 0 4-4C20.5 6.6 16.7 3.5 12 3.5z"/><circle cx="7.5" cy="11" r="1"/><circle cx="10" cy="7.5" r="1"/><circle cx="14.5" cy="7.5" r="1"/></symbol>
     <!-- DarkWizard emblem: hooded wizard holding a glowing orb (own design) -->
     <symbol id="emblem" viewBox="0 0 120 120">
@@ -72,7 +75,7 @@
       <button data-page="help"><svg><use href="#i-help"/></svg><span>Hilfe</span></button>
     </nav>
     <div class="side-foot">
-      <div class="game-status" id="gameStatus"><span class="dot"></span><span class="txt">Prüfe Spiel …</span></div>
+      <div class="game-status" id="gameStatus"><span class="dot"></span><span class="txt">Prüfe Spiel …</span><button class="game-start" id="gameStart" hidden title="World of Tanks starten"><svg><use href="#i-play"/></svg>WoT starten</button></div>
       <div class="wot-player" id="wotPlayer" hidden><svg><use href="#i-voice"/></svg><span></span></div>
       <div class="version"><button class="ver-link" id="verLink" title="Was ist neu? – Changelog öffnen">v5.4</button> · <span id="version">WoT –</span></div>
     </div>
@@ -80,11 +83,16 @@
 
   <main class="main">
     <div class="topbanner update" id="updBanner" hidden>
-      <svg><use href="#i-upload"/></svg>
+      <svg><use href="#i-warn"/></svg>
       <div class="tb-text"><b id="updTitle">Update verfügbar</b><span id="updSub"></span></div>
       <a class="btn ghost" id="updNotes" target="_blank" rel="noopener">Was ist neu?</a>
       <button class="btn primary" id="updInstall">Jetzt aktualisieren</button>
       <button class="btn subtle icon" id="updClose" title="Später">✕</button>
+    </div>
+    <div class="topbanner wot" id="wotBanner" hidden>
+      <svg><use href="#i-reload"/></svg>
+      <div class="tb-text"><b>World of Tanks wurde aktualisiert</b><span id="wotSub"></span></div>
+      <button class="btn blue" id="wotReapply"><svg><use href="#i-reload"/></svg>Sounds wieder einschalten</button>
     </div>
     <div class="topbanner warn" id="gameBanner" hidden>
       <svg><use href="#i-help"/></svg>
@@ -269,11 +277,13 @@
       <div class="row apply-row">
         <label class="check"><input type="checkbox" id="muteMissing"><span></span>Fehlende Sätze stumm statt Originalstimme</label>
         <div class="spacer"></div>
-        <button class="btn primary lg" id="applyBtn"><svg><use href="#i-bolt"/></svg>Anwenden</button>
+        <span class="apply-state" id="applyState"><span class="dot"></span><span class="txt">Alles übernommen</span></span>
+        <button class="btn subtle" id="discardBtn" hidden>Verwerfen</button>
+        <button class="btn blue lg" id="applyBtn" disabled title="Baut die Sound-Banken mit deiner Auswahl neu. Im Spiel ab dem nächsten Gefecht hörbar."><svg><use href="#i-reload"/></svg>Neu laden</button>
       </div>
 
       <details class="log" id="logBox">
-        <summary>Protokoll</summary>
+        <summary><span>Protokoll</span><svg class="chev"><use href="#i-chevron"/></svg></summary>
         <pre id="log">–</pre>
       </details>
     </section>
@@ -288,6 +298,10 @@
         <div class="langs">
           <button class="lang-card" data-lang="en"><span class="lc-code">EN</span><span><b>English</b><small>Default</small></span></button>
           <button class="lang-card" data-lang="de"><span class="lc-code">DE</span><span><b>Deutsch</b><small>German</small></span></button>
+          <button class="lang-card" data-lang="ru"><span class="lc-code">RU</span><span><b>Русский</b><small>Russian</small></span></button>
+          <button class="lang-card" data-lang="pl"><span class="lc-code">PL</span><span><b>Polski</b><small>Polish</small></span></button>
+          <button class="lang-card" data-lang="fr"><span class="lc-code">FR</span><span><b>Français</b><small>French</small></span></button>
+          <button class="lang-card" data-lang="es"><span class="lc-code">ES</span><span><b>Español</b><small>Spanish</small></span></button>
         </div>
       </div>
 
@@ -328,6 +342,7 @@
           <div class="sr-text"><b id="appVersion">Hexcall</b><span id="updStatus">Beim Start wird automatisch nach Updates gesucht.</span></div>
           <button class="btn ghost" id="updCheck">Nach Updates suchen</button>
         </div>
+        <label class="card set-row" style="margin-top:10px"><div class="sr-text"><b>Automatische Updates</b><span>Neue Versionen beim Start sofort installieren statt nur Bescheid zu geben</span></div><span class="toggle"><input type="checkbox" id="autoUpdToggle"><span></span></span></label>
         <p class="data-note">Deine Mods und Einstellungen liegen in <code id="dataDir">%APPDATA%\Hexcall</code> und bleiben bei Updates erhalten.</p>
       </div>
 
@@ -351,7 +366,7 @@
       <div class="clog" id="sub-log" hidden></div>
       <div id="sub-guide">
       <div class="help-grid">
-        <div class="help-card" data-i18n-html="help-1"><div class="num">1</div><h3>Testen</h3><p>Unter <b>Im Spiel aktiv</b> alles auf <b>Testton</b> stellen und anwenden. Im Trainingsraum hörst du dann Pieptöne statt Stimme, Kanone und Motor. So weißt du, dass der Mod greift.</p></div>
+        <div class="help-card" data-i18n-html="help-1"><div class="num">1</div><h3>Testen</h3><p>Unter <b>Im Spiel aktiv</b> alles auf <b>Testton</b> stellen und auf <b>Neu laden</b> klicken. Im Trainingsraum hörst du dann Pieptöne statt Stimme, Kanone und Motor. So weißt du, dass der Mod greift.</p></div>
         <div class="help-card" data-i18n-html="help-2"><div class="num">2</div><h3>Aufnehmen</h3><p>Neuen Sound-Mod erstellen. Das Studio zeigt dir Schritt für Schritt jede Ansage. <b>Leertaste</b> startet und stoppt das Mikrofon. Was du überspringst, bleibt original.</p></div>
         <div class="help-card" data-i18n-html="help-3"><div class="num">3</div><h3>Effekte</h3><p>Im Studio oben auf <b>Effekte</b> wechseln: Kanone, Motor, Turm, Ketten, Explosionen … Per Mikrofon oder per Drag &amp; Drop einer Sounddatei.</p></div>
         <div class="help-card" data-i18n-html="help-4"><div class="num">4</div><h3>Aktivieren</h3><p><b>Fertig – im Spiel aktivieren</b> oder unter <b>Im Spiel aktiv</b> die Slots wählen. Wirkt ab dem nächsten Gefecht. Nach einem WoT-Update einfach noch mal anwenden.</p></div>
@@ -379,6 +394,7 @@
 </div>
 
 <div class="toasts" id="toasts"></div>
+<script src="i18n-langs.js"></script>
 <script src="i18n.js"></script>
 <script src="app.js"></script>
 </body>
