@@ -5,6 +5,7 @@
 - **World of Tanks page** with tabs: Sounds (Hexcall, unchanged and with your existing recordings), 3D garage (stickers and 3D parts as a mod), Mods (add/switch off/re-install other mods), mod folders, statistics, replays, hit analysis in 3D, replay → video
 - **osu! page:** all your replays (exported and local) with map, mods, accuracy and background; watch them in osu!; render them with **Hexrender** – the Hexrender website is built right in (render, queue, video page), "Render" in the replay list hands the replay over; on the PC that runs Hexrender there is an Admin tab and a start button
 - Language, theme and updates are now set once for the whole client (6 languages, 3 themes)
+- Hexcall studio: **Listen to original** – plays WoT's own voice line or effect for every step (converted with the free tool vgmstream, downloaded once on request)
 - Your Hexcall sounds and settings stay in %APPDATA%\Hexcall and are used automatically
 
 

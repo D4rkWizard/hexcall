@@ -152,8 +152,18 @@ const I18N = (() => {
     'Eigene Commander-Stimme ohne Wwise, alle Nationen': 'Your own commander voice without Wwise, all nations',
   };
 
+  Object.assign(EN, {
+    'Original anhören': 'Listen to original', 'So klingt es im Spiel ohne Mod': 'This is how it sounds in game without a mod',
+    'Original-Sounds abspielen': 'Play original sounds', 'Herunterladen': 'Download', 'Abbrechen': 'Cancel',
+    'WoT speichert seine Sounds in einem Format, das Hexhub erst umwandeln muss. Dafür wird einmalig das freie Programm vgmstream heruntergeladen (ca. 5 MB, von GitHub).':
+      'WoT stores its sounds in a format Hexhub has to convert first. For that, the free program vgmstream is downloaded once (about 5 MB, from GitHub).',
+    'Lade vgmstream herunter …': 'Downloading vgmstream …', 'vgmstream konnte nicht eingerichtet werden': 'vgmstream could not be set up',
+    'Für diesen Schritt gibt es keinen Original-Sound.': 'There is no original sound for this step.',
+  });
+
   // texts with variable parts
   const PATTERNS = [
+    [/^· (\d+) Varianten$/, '· $1 variants'],
     [/^Mod aktiv: (.+)$/, 'Mod active: $1'],
     [/^Stellt wieder her: (.+)$/, 'Restores: $1'],
     [/^(\d+) Dateien$/, '$1 files'],

@@ -8,6 +8,7 @@ const { spawn, execFile } = require('child_process');
 const EVENTS = require('./events');
 const SFX = require('./sfx');
 const paths = require('./paths');
+const original = require('./original');
 
 paths.migrate();
 const ROOT = paths.APP;
@@ -208,6 +209,15 @@ const routes = {
     return { ok: true };
   },
   'POST /api/ping': async () => ({ ok: true }),
+  // "listen to the original"
+  'GET /api/original/status': async () => original.status(),
+  'POST /api/original/setup': async () => original.install(),
+  'GET /api/original/info': async (q) => {
+    const kind = q.get('kind'), key = q.get('key');
+    GAME = paths.gameDir();
+    if (!GAME || !kindOk(kind) || !KEYS[kind].includes(key)) return { count: 0 };
+    return { ...original.list(GAME, kind, key), ready: original.status().ready };
+  },
   // Start WoT from the client; "restart" closes the running game first (new sound banks load on game start)
   'POST /api/game/start': async (q, body) => {
     const { restart } = JSON.parse(body || '{}');
@@ -335,6 +345,15 @@ async function handle(req, res, url) {
       const f = path.join(MODS, mod, kind, file);
       if (!fs.existsSync(f)) return send(res, 404, { error: 'not found' });
       return send(res, 200, fs.readFileSync(f), 'audio/wav');
+    }
+    // the original WoT sound of a step (converted with vgmstream, see tools/original.js)
+    if (req.method === 'GET' && url.pathname === '/api/original') {
+      const kind = url.searchParams.get('kind'), key = url.searchParams.get('key'), i = Number(url.searchParams.get('i')) || 0;
+      GAME = paths.gameDir();
+      if (!GAME) return send(res, 400, { error: 'World of Tanks wurde nicht gefunden.' });
+      if (!kindOk(kind) || !KEYS[kind].includes(key)) return send(res, 400, { error: 'Ungültige Anfrage' });
+      try { return send(res, 200, await original.wav(GAME, kind, key, i), 'audio/wav'); }
+      catch (e) { return send(res, e.code === 'SETUP' ? 409 : 400, { error: e.message, setup: e.code === 'SETUP' }); }
     }
     const route = routes[`${req.method} ${url.pathname}`];
     if (route) {

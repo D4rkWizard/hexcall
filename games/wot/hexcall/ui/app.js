@@ -408,6 +408,7 @@ function showStep() {
   $('#prevBtn').disabled = S.idx === 0 && S.kind === 'stimme';
   renderTakes();
   clearScope();
+  loadOriginalInfo();
 }
 
 function renderTakes() {
@@ -427,16 +428,66 @@ function renderTakes() {
   });
 }
 
+/* ---------- listen to the original WoT sound of the current step ---------- */
+const ORIG = { step: null, idx: 0, count: 0 };
+async function loadOriginalInfo() {
+  const s = cur(), id = `${s.kind}:${s.key}`;
+  if (ORIG.step === id) return;
+  ORIG.step = id; ORIG.idx = 0; ORIG.count = 0;
+  $('#origCount').textContent = '';
+  try {
+    const r = await api(`api/original/info?kind=${s.kind}&key=${encodeURIComponent(s.key)}`);
+    if (ORIG.step !== id) return;
+    ORIG.count = r.count;
+    $('#origBtn').hidden = !r.count;
+    $('#origCount').textContent = r.count > 1 ? `· ${r.count} Varianten` : '';
+  } catch { $('#origBtn').hidden = true; }
+}
+async function ensureVgmstream() {
+  const st = await api('api/original/status');
+  if (st.ready) return true;
+  const ok = await modal({ title: 'Original-Sounds abspielen',
+    text: 'WoT speichert seine Sounds in einem Format, das Hexhub erst umwandeln muss. Dafür wird einmalig das freie Programm vgmstream heruntergeladen (ca. 5 MB, von GitHub).',
+    buttons: [{ label: 'Abbrechen', value: false }, { label: 'Herunterladen', value: true, cls: 'primary', default: true }] });
+  if (!ok) return false;
+  toast('Lade vgmstream herunter …');
+  const r = await api('api/original/setup', { method: 'POST', json: {} });
+  if (!r.ready) throw new Error((r.setup && r.setup.msg) || 'vgmstream konnte nicht eingerichtet werden');
+  return true;
+}
+$('#origBtn').onclick = async () => {
+  const btn = $('#origBtn'), s = cur();
+  if (playerBtn === btn && player && !player.ended && !player._stopped) return playUrl(null, btn);
+  btn.classList.add('busy');
+  try {
+    if (!(await ensureVgmstream())) return;
+    // voice: next variant on every click; effects (hundreds of tank-specific variants): a random one
+    const i = s.kind === 'effekte' && ORIG.count > 1 ? Math.floor(Math.random() * ORIG.count) : ORIG.idx++;
+    const r = await fetch(`api/original?kind=${s.kind}&key=${encodeURIComponent(s.key)}&i=${i}`);
+    if (!r.ok) throw new Error((await r.json().catch(() => ({}))).error || `Fehler ${r.status}`);
+    const url = URL.createObjectURL(await r.blob());
+    if (ORIG.count > 1) $('#origCount').textContent = `· ${(i % ORIG.count) + 1} / ${ORIG.count}`;
+    playUrl(url, btn, true);
+  } catch (e) { toast(e.message, 'err'); }
+  finally { btn.classList.remove('busy'); }
+};
+
 const audioUrl = (kind, file) => `api/audio?mod=${encodeURIComponent(S.mod)}&kind=${kind}&file=${encodeURIComponent(file)}&v=${Date.now()}`;
 
 let player = null, playerBtn = null;
+// keepLabel: only swap the icon of a button with text (the "Original" button)
+function setPlayIcon(btn, name) {
+  if (!btn) return;
+  const svg = btn.querySelector('svg');
+  if (btn.id === 'origBtn' && svg) svg.outerHTML = icon(name); else btn.innerHTML = icon(name);
+}
 function playUrl(url, btn) {
-  if (player) { player.pause(); if (playerBtn) playerBtn.innerHTML = icon('play'); }
-  if (playerBtn === btn && player && !player.ended && !player._stopped) { player._stopped = true; playerBtn = null; return; }
+  if (player) { player.pause(); setPlayIcon(playerBtn, 'play'); }
+  if (!url || (playerBtn === btn && player && !player.ended && !player._stopped)) { if (player) player._stopped = true; playerBtn = null; return; }
   player = new Audio(url);
   playerBtn = btn;
-  if (btn) btn.innerHTML = icon('stop');
-  player.onended = () => { if (btn) btn.innerHTML = icon('play'); playerBtn = null; };
+  setPlayIcon(btn, 'stop');
+  player.onended = () => { setPlayIcon(btn, 'play'); playerBtn = null; };
   player.play().catch(() => toast('Kann die Datei nicht abspielen', 'err'));
 }
 
