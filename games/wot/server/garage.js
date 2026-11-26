@@ -128,7 +128,7 @@ module.exports = function garage({ DATA, gameDir, gameVersion, modsDir }) {
             for (const pr of bw.kids(mat, 'property')) { const [k, val] = pr.c[0] || []; if (k) props[bw.str(pr)] = { type: k, v: val.v }; }
             const tex = (k) => (props[k] && props[k].type === 'Texture' ? String(props[k].v).trim() : null);
             const i = meshes.length;
-            meshes.push({ verts, idx: ind.idx.subarray(grp.startIndex, grp.startIndex + grp.primitives * 3), part: p.part, diffuse: tex('diffuseMap') });
+            meshes.push({ verts, idx: ind.idx.subarray(grp.startIndex, grp.startIndex + grp.primitives * 3), part: p.part, diffuse: tex('diffuseMap'), mask: tex('excludeMaskAndAOMap') });
             p.meshes.push({
               i, material: bw.str(bw.kid(mat, 'identifier')), diffuse: tex('diffuseMap'), normal: tex('normalMap'),
               alphaTest: props.alphaTestEnable ? !!props.alphaTestEnable.v : false,
@@ -299,6 +299,38 @@ module.exports = function garage({ DATA, gameDir, gameVersion, modsDir }) {
       if (total && shared / total > 0.04) warnings.push(`Auf ${path.basename(texName).replace(/_AM\.dds$/i, '')} teilt sich ein Sticker die Textur mit einer anderen Stelle des Panzers (z. B. der gespiegelten Seite) – er erscheint dort auch. Prüfansicht zeigt es.`);
       results.push({ texName, kind: t.kind, W, H, rgba });
     }
+    // 2D styles (camouflage) are painted over the colour texture by the game. The alpha of excludeMaskAndAOMap is the
+    // camouflage exclude mask (0 = full camouflage, 255 = none; green = ambient occlusion) – measured on the game files:
+    // normal hulls are mostly 0, special variants that take no camouflage are 255. Under every sticker it is raised
+    // according to the sticker's opacity, so the sticker stays visible on tanks with a 2D style.
+    const masks = [];
+    const maskNames = [...new Set(meshes.filter((m) => byPart[m.part] && m.diffuse && m.mask).map((m) => m.mask))];
+    for (const maskName of maskNames) {
+      const src = state.pkg.read(maskName);
+      if (!src) continue;
+      let t;
+      try { t = bw.ddsToRgba(src, 1e9); } catch { continue; }
+      const { width: W, height: H } = t, rgba = t.rgba;
+      let set = 0;
+      for (const m of meshes.filter((x) => x.mask === maskName)) {
+        const st = byPart[m.part];
+        if (!st) continue;
+        rasterize(m, W, H, (x, y, P, N) => {
+          for (const s of st) {
+            const c = decalCoord(s, P, N);
+            if (!c) continue;
+            const col = sample(s.img, s.flip ? 1 - c[0] : c[0], 1 - c[1]);
+            const a = (col[3] / 255) * s.opacity;
+            if (a <= 0.02) continue;
+            const o = (y * W + x) * 4;
+            // DXT1 originals only know on/off alpha
+            const want = t.kind === 'DXT1' ? (a >= 0.5 ? 255 : rgba[o + 3]) : Math.round(rgba[o + 3] + (255 - rgba[o + 3]) * Math.min(1, a * 1.15));
+            if (want > rgba[o + 3]) { rgba[o + 3] = want; set++; }
+          }
+        });
+      }
+      if (set) masks.push({ texName: maskName, kind: t.kind, W, H, rgba });
+    }
     // how many texture pixels each sticker really gets (WoT textures have limited resolution per square metre)
     const resolution = [];
     list.forEach((s0, i) => {
@@ -313,7 +345,7 @@ module.exports = function garage({ DATA, gameDir, gameVersion, modsDir }) {
     const key = String(tankId).split(':')[1].toLowerCase();
     for (const r of results) if (!r.texName.toLowerCase().includes(`/${key}/`))
       warnings.push(`${path.basename(r.texName)} ist eine gemeinsame Textur (z. B. Ketten) – Sticker darauf erscheinen auch auf anderen Panzern, die sie benutzen.`);
-    return { results, warnings, resolution };
+    return { results, masks, warnings, resolution };
   }
 
   // build every applied tank into one .wotmod in mods/<version>/
@@ -335,7 +367,13 @@ module.exports = function garage({ DATA, gameDir, gameVersion, modsDir }) {
         const small = bw.ddsToRgba(dds, 2048);
         fs.writeFileSync(f.replace(/\.dds$/i, '.png'), bw.encodePng(small.width, small.height, small.rgba, true));
       }
-      all.applied[tankId] = { at: new Date().toISOString(), textures: b.results.map((r) => r.texName), count: list.length };
+      // camouflage exclude masks (same format as the originals) – keep 2D styles off the stickers
+      for (const r of b.masks) {
+        const f = path.join(dir, r.texName);
+        fs.mkdirSync(path.dirname(f), { recursive: true });
+        fs.writeFileSync(f, bw.encodeDds(r.W, r.H, r.rgba, r.kind));
+      }
+      all.applied[tankId] = { at: new Date().toISOString(), textures: b.results.map((r) => r.texName), masks: b.masks.map((r) => r.texName), count: list.length };
     } else delete all.applied[tankId];
     writeAll(all);
     const mod = writeMod(all);
@@ -348,7 +386,7 @@ module.exports = function garage({ DATA, gameDir, gameVersion, modsDir }) {
     if (!ver) throw new Error('WoT-Version nicht erkannt');
     const target = path.join(modsDir ? modsDir(ver) : path.join(g, 'mods', ver), MOD_NAME);
     const files = new Map(), clash = [];
-    for (const [id, a] of Object.entries(all.applied)) for (const t of a.textures) {
+    for (const [id, a] of Object.entries(all.applied)) for (const t of [...a.textures, ...(a.masks || [])]) {
       const f = path.join(OUT, safeId(id), t);
       if (!fs.existsSync(f)) continue;
       if (files.has(t.toLowerCase())) clash.push(t);

@@ -69,7 +69,7 @@ I18N.add('en', {
     'Purely visual – hit zones stay original. Applies to every tank of this type you see in battle. No huge parts (fair play). Takes effect after restarting WoT.',
   'Bild wählen, dann auf den Panzer klicken': 'Pick an image, then click on the tank', 'Drehung': 'Rotation', 'Deckkraft': 'Opacity', 'Spiegeln': 'Mirror', 'Prüfansicht': 'Check view',
   'Zeigt die eingebrannte Textur – so sieht es in WoT aus': 'Shows the burnt-in texture – this is how it looks in WoT',
-  'Nur du siehst die Sticker. Tarnungen liegen darüber, bei 3D-Stilen sind sie nicht sichtbar. Wirkt nach WoT-Neustart.': 'Only you see the stickers. Camouflage is drawn on top, with 3D styles they are not visible. Takes effect after restarting WoT.',
+  'Nur du siehst die Sticker. 2D-Stile werden unter den Stickern ausgespart, bei 3D-Stilen sind sie nicht sichtbar. Wirkt nach WoT-Neustart.': 'Only you see the stickers. 2D styles are left out under the stickers, with 3D styles they are not visible. Takes effect after restarting WoT.',
   'Klick auf den Panzer zum Platzieren · Esc bricht ab': 'Click on the tank to place · Esc cancels', 'Teile': 'Parts',
   'Ziehen = drehen · Rechtsklick = verschieben · Mausrad = Zoom': 'Drag = rotate · right-click = pan · wheel = zoom',
   'WebGL2 ist in diesem Fenster nicht verfügbar.': 'WebGL2 is not available in this window.', 'WebGL2 ist in diesem Fenster nicht verfügbar': 'WebGL2 is not available in this window',

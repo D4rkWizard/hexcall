@@ -4,6 +4,7 @@
 - **New name and new client:** Hexhub replaces Hexcall. One window for all games – home page with every game, Play/Close buttons, live "running" status and play time
 - **World of Tanks page** with tabs: Sounds (Hexcall, unchanged and with your existing recordings), 3D garage (stickers and 3D parts as a mod), Mods (add/switch off/re-install other mods), mod folders, statistics, replays, hit analysis in 3D, replay → video
 - **osu! page:** all your replays (exported and local) with map, mods, accuracy and background; watch them in osu!; render them with **Hexrender** – the Hexrender website is built right in (render, queue, video page), "Render" in the replay list hands the replay over; on the PC that runs Hexrender there is an Admin tab and a start button
+- 3D garage: stickers are no longer covered by 2D styles – the camouflage mask is cleared under every sticker
 - Language, theme and updates are now set once for the whole client (6 languages, 3 themes)
 - Hexcall studio: **Listen to original** – plays WoT's own voice line or effect for every step (converted with the free tool vgmstream, downloaded once on request), with a playback volume slider in the studio
 - Hexcall studio: **cut your recordings** – drag start/end on the waveform, listen to the selection, cut silence automatically, save over the take or as a new variant
