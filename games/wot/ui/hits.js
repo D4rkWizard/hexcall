@@ -160,7 +160,9 @@
       }).join('')}</tbody></table></div>` : '';
   }
 
-  document.addEventListener('DOMContentLoaded', () => {
+  // the module is loaded after the page (Hexhub loads it on demand): run right away if the DOM is ready
+  const whenReady = (fn) => (document.readyState === 'loading' ? document.addEventListener('DOMContentLoaded', fn) : fn());
+  whenReady(() => {
     $('#hitSel').addEventListener('change', (e) => open(e.target.value));
     document.querySelector('.hv-tabs').addEventListener('click', (e) => { const b = e.target.closest('[data-tab]'); if (b && H.data) setTab(b.dataset.tab); });
     $('#hitList').addEventListener('click', (e) => { const b = e.target.closest('[data-i]'); if (b) select(Number(b.dataset.i)); });

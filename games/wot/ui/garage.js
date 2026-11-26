@@ -711,7 +711,7 @@
     $('#garNation').innerHTML = '<option value="alle">Alle Nationen</option>' + nations.map(([k, v]) => `<option value="${k}">${esc(v)}</option>`).join('');
     $('#garLevel').innerHTML = '<option value="0">Alle Stufen</option>' + ROMAN.slice(1).map((r, i) => `<option value="${i + 1}">Stufe ${r}</option>`).join('');
     const types = [...new Set(G.tanks.map((t) => t.type))];
-    $('#garType').innerHTML = '<option value="alle">Alle Klassen</option>' + types.map((t) => `<option>${esc(t)}</option>`).join('');
+    $('#garType').innerHTML = '<option value="alle">Alle Klassen</option>' + types.map((t) => `<option value="${esc(t)}">${esc(t)}</option>`).join('');
   }
 
   async function open() {
@@ -728,7 +728,9 @@
     } catch (e) { $('#garList').innerHTML = `<div class="note" style="padding:12px">${esc(e.message)}</div>`; }
   }
 
-  document.addEventListener('DOMContentLoaded', () => {
+  // the module is loaded after the page (Hexhub loads it on demand): run right away if the DOM is ready
+  const whenReady = (fn) => (document.readyState === 'loading' ? document.addEventListener('DOMContentLoaded', fn) : fn());
+  whenReady(() => {
     $('#garSearch').addEventListener('input', (e) => { G.q = e.target.value; renderList(); });
     $('#garNation').addEventListener('change', (e) => { G.nation = e.target.value; renderList(); });
     $('#garLevel').addEventListener('change', (e) => { G.level = Number(e.target.value); renderList(); });
