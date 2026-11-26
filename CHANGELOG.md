@@ -8,6 +8,7 @@
 - 3D garage: collapse the tank list, minimise the panels, hide all panels (H) or switch to a full view of only the model (F, Esc exits) – remembered
 - 3D garage: stickers are objects in the 3D view – click and drag them over the tank, corner handles for size, a knob to rotate (Ctrl/Alt + wheel too), and **crop** the image section
 - 3D garage: stickers are no longer covered by 2D styles – based on WoT's tank shader the style pattern and paint are switched off under every sticker, it behaves like matte paint and the baked shadows are lifted
+- 3D garage: **Farbkasten** – paint on the tank with a brush (palette, own colour, size, hardness, opacity, eraser, undo); baked below the stickers with the same 2D-style handling and high resolution
 - 3D garage: small stickers stay sharp – mipmapped, gamma-correct filtering with gentle sharpening, and the tank texture is written at 2x/4x resolution (max 4096) when a sticker would get only few pixels
 - 3D garage: per sticker brightness, colour strength and contrast (live preview, baked the same way)
 - "Play" for World of Tanks starts the Wargaming Game Center first if it is not running (otherwise WoT is not signed in) – also for Hexcall's restart button and replays

@@ -155,6 +155,9 @@ module.exports = {
       'POST /garage/placements': async ({ tank, list }) => garage.savePlacements(String(tank), list),
       'POST /garage/model/remove': async ({ id }) => garage.removeModel(String(id)),
       'POST /garage/apply-models': async ({ tank }) => garage.applyModels(String(tank)),
+      // brush paint layers (Farbkasten)
+      'GET /garage/paint': async (q) => garage.paintList(String(q.get('tank'))),
+      'POST /garage/paint/clear': async ({ tank, tex }) => garage.clearPaint(String(tank), tex ? String(tex) : null),
       // game folder (shared with Hexcall)
       'GET /folders': async () => ({ current: gameDir(), found: gamePaths.findGames() }),
       'POST /pickfolder': async () => {
@@ -206,6 +209,11 @@ module.exports = {
         return ctx.send(res, 200, garage.texture(q.get('p'), tank), 'image/png', { 'Cache-Control': tank ? 'no-store' : 'max-age=86400' });
       }
       if (req.method === 'GET' && p === '/garage/sticker-image') return ctx.send(res, 200, garage.image(q.get('id')), 'image/png', { 'Cache-Control': 'max-age=86400' });
+      if (req.method === 'GET' && p === '/garage/paint-image') return ctx.send(res, 200, garage.paintImage(String(q.get('tank')), String(q.get('tex'))), 'image/png');
+      if (req.method === 'POST' && p === '/garage/paint-image') {
+        if (!localPost(req)) return ctx.send(res, 403, { error: 'forbidden' });
+        return ctx.send(res, 200, garage.savePaint(String(q.get('tank')), String(q.get('tex')), await readRaw(req, 64 * 1024 * 1024)));
+      }
       if (req.method === 'GET' && p === '/garage/model-bin') return ctx.send(res, 200, garage.modelBin(q.get('id')), 'application/octet-stream');
       if (req.method === 'GET' && p === '/garage/model-tex') return ctx.send(res, 200, garage.modelTex(q.get('id'), q.get('g')), 'image/png', { 'Cache-Control': 'max-age=86400' });
       if (req.method === 'POST' && p === '/garage/model') {

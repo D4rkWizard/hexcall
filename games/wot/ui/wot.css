@@ -197,3 +197,14 @@ body.wait,body.wait *{cursor:progress!important}
 .stk-acts .chk-row{flex:1 0 auto}
 .stk-acts #stkDel{margin-left:auto}
 .stk{overflow-x:hidden}
+
+/* 3D garage – Farbkasten (paint) */
+.stk-tabs{grid-template-columns:repeat(3,1fr)}
+.pnt-palette{display:grid;grid-template-columns:repeat(8,1fr);gap:5px}
+.pnt-sw{aspect-ratio:1;border-radius:7px;border:2px solid rgba(255,255,255,.12);padding:0;cursor:pointer}
+.pnt-sw:hover{border-color:rgba(255,255,255,.45)}
+.pnt-sw.active{border-color:#fff;box-shadow:0 0 0 2px var(--accent)}
+.pnt-color{width:44px;height:30px;padding:0;border:1px solid var(--line2);border-radius:7px;background:none;cursor:pointer}
+.pnt-tools{display:flex;gap:4px;margin-left:auto}
+.pnt-tools .btn.active{border-color:var(--accent-line);color:var(--accent-hi);background:var(--accent-soft)}
+#pntApply{flex:1}

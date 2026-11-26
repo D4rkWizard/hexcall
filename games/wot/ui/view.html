@@ -126,7 +126,21 @@
               <button class="btn sm ghost" id="garFull" title="Vollbild: nur das Modell (F) · Esc beendet"><svg><use href="#i-expand"/></svg><span>Vollbild</span></button>
             </div>
             <div class="stk">
-              <div class="stk-top"><div class="stk-tabs"><button class="active" data-tab="stk">Sticker</button><button data-tab="mdl">Anbauten (3D)</button></div><button class="pan-min" id="stkMin" title="Panel minimieren"><svg><use href="#i-minus"/></svg></button></div>
+              <div class="stk-top"><div class="stk-tabs"><button class="active" data-tab="stk">Sticker</button><button data-tab="pnt">Malen</button><button data-tab="mdl">Anbauten (3D)</button></div><button class="pan-min" id="stkMin" title="Panel minimieren"><svg><use href="#i-minus"/></svg></button></div>
+              <div class="stk-page" id="tab-pnt" hidden>
+                <div class="stk-head"><span class="sub">Farbe wählen und mit gedrückter linker Maustaste auf den Panzer malen · rechte Maustaste = drehen · Strg+Z = rückgängig</span></div>
+                <div class="pnt-palette" id="pntPalette"></div>
+                <div class="gar-row"><span class="lbl">Farbe</span><input type="color" id="pntColor" class="pnt-color"><span class="pnt-tools"><button class="btn sm ghost active" id="pntBrush" title="Pinsel">Pinsel</button><button class="btn sm ghost" id="pntErase" title="Radierer">Radierer</button></span></div>
+                <div class="gar-row"><span class="lbl">Größe</span><input type="range" id="pntSize" min="1" max="80" step="1"><span class="val" id="pntSizeV"></span></div>
+                <div class="gar-row"><span class="lbl">Härte</span><input type="range" id="pntHard" min="0" max="100" step="1"><span class="val" id="pntHardV"></span></div>
+                <div class="gar-row"><span class="lbl">Deckkraft</span><input type="range" id="pntOp" min="5" max="100" step="1"><span class="val" id="pntOpV"></span></div>
+                <div class="stk-acts"><button class="btn sm ghost" id="pntUndo" title="Rückgängig (Strg+Z)"><svg><use href="#i-reset"/></svg>Rückgängig</button><button class="btn sm ghost" id="pntClear" title="Gesamte Malerei auf diesem Panzer löschen"><svg><use href="#i-trash"/></svg>Alles löschen</button></div>
+                <div class="stk-foot">
+                  <button class="btn primary" id="pntApply"><svg><use href="#i-upload"/></svg>Anwenden (in WoT einbauen)</button>
+                  <div class="stk-status" id="pntStatus"></div>
+                  <div class="note" style="margin-top:6px;font-size:11.5px">Nur du siehst die Malerei. Wird zusammen mit den Stickern eingebaut, 2D-Stile werden darunter ausgespart. Wirkt nach WoT-Neustart.</div>
+                </div>
+              </div>
               <div class="stk-page" id="tab-mdl" hidden>
                 <div class="stk-head"><span class="sub">.glb, .gltf oder .obj importieren, dann „Anbauen“ und auf den Panzer klicken</span></div>
                 <label class="btn sm ghost" style="width:100%"><input type="file" id="mdlFile" accept=".glb,.gltf,.obj,.mtl,image/*" multiple hidden><svg><use href="#i-upload"/></svg>3D-Modell importieren</label>

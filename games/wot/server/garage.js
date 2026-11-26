@@ -237,7 +237,7 @@ module.exports = function garage({ DATA, gameDir, gameVersion, modsDir }) {
     const all = readAll();
     let modOnDisk = false;
     try { load(); const f = stickerModPath(); modOnDisk = !!f && fs.existsSync(f); } catch {}
-    return { images: all.images, stickers: all.tanks[tankId] || [], applied: all.applied[tankId] || null, modOnDisk };
+    return { images: all.images, stickers: all.tanks[tankId] || [], applied: all.applied[tankId] || null, modOnDisk, paint: Object.keys(paintIndex(tankId)) };
   }
   function saveStickers(tankId, list) {
     tank(tankId); // validates the id
@@ -254,32 +254,50 @@ module.exports = function garage({ DATA, gameDir, gameVersion, modsDir }) {
   }
 
   // paint the stickers of one tank into copies of its colour textures (full resolution)
-  function bake(tankId, list) {
+  function bake(tankId, list, paint = new Map()) {
     tank(tankId);
     const { meshes } = tankCache.get(tankId);
     const imgs = new Map();
     const getImg = (id) => { if (!imgs.has(id)) imgs.set(id, bw.decodePng(image(id))); return imgs.get(id); };
     const byPart = {};
     for (const s of list) (byPart[s.part] = byPart[s.part] || []).push({ ...s, img: getImg(s.image), rr: dot(s.r, s.r), uu: dot(s.u, s.u), depth: Math.max(Math.hypot(...s.r), Math.hypot(...s.u)) * 0.6 });
-    const texNames = [...new Set(meshes.filter((m) => byPart[m.part] && m.diffuse).map((m) => m.diffuse))];
+    const ownDiffuse = new Set(meshes.map((m) => m.diffuse).filter(Boolean));
+    for (const k of [...paint.keys()]) if (!ownDiffuse.has(k)) paint.delete(k);
+    const texNames = [...new Set([...meshes.filter((m) => byPart[m.part] && m.diffuse).map((m) => m.diffuse), ...paint.keys()])];
     const results = [], warnings = [];
+    // enlargement factor: small stickers get 2x / 4x, a paint layer at least its own resolution (max 4096)
+    const factorFor = (counts, w, h, paintW) => {
+      let f = 1, minW = Infinity;
+      for (const [st, n] of counts) minW = Math.min(minW, Math.sqrt(n * (Math.hypot(...st.r) / (Math.hypot(...st.u) || 1))));
+      if (minW < 70) f = 4; else if (minW < 160) f = 2;
+      if (paintW) while (w * f < paintW && f < 8) f *= 2;
+      while (f > 1 && Math.max(w, h) * f > 4096) f /= 2;
+      return f;
+    };
     for (const texName of texNames) {
       const src = state.pkg.read(texName);
       if (!src) { warnings.push(`Textur fehlt: ${texName}`); continue; }
       let t;
       try { t = bw.ddsToRgba(src, 1e9); } catch (e) { warnings.push(`${path.basename(texName)}: ${e.message}`); continue; }
       const group = meshes.filter((m) => m.diffuse === texName);
+      const pimg = paint.get(texName);
       // A small sticker only gets a few texels of the tank texture. The texture is written anyway, so it can be
       // written at 2x / 4x resolution (max 4096, like HD mods): the original surface is enlarged bilinearly –
-      // looks the same in game – and only the sticker gains the extra detail.
+      // looks the same in game – and only the sticker / the paint gains the extra detail.
       const counts = computeLods(group, byPart, t.width, t.height);
-      let f = 1, minW = Infinity;
-      for (const [st, n] of counts) minW = Math.min(minW, Math.sqrt(n * (Math.hypot(...st.r) / (Math.hypot(...st.u) || 1))));
-      if (minW < 70) f = 4; else if (minW < 160) f = 2;
-      while (f > 1 && Math.max(t.width, t.height) * f > 4096) f /= 2;
+      const f = factorFor(counts, t.width, t.height, pimg && pimg.width);
       if (f > 1) { t = { ...t, ...upscaleRgba(t.rgba, t.width, t.height, f) }; computeLods(group, byPart, t.width, t.height); }
       const { width: W, height: H } = t, rgba = t.rgba, painted = new Uint8Array(W * H);
-      // pass 1: paint
+      // pass 0: the paint layer (painted with the brush in UV space) – below the stickers
+      if (pimg) {
+        for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
+          const c = sample(pimg, (x + 0.5) / W, (y + 0.5) / H), a = c[3] / 255;
+          if (a <= 0.003) continue;
+          const o = (y * W + x) * 4;
+          rgba[o] = rgba[o] * (1 - a) + c[0] * a; rgba[o + 1] = rgba[o + 1] * (1 - a) + c[1] * a; rgba[o + 2] = rgba[o + 2] * (1 - a) + c[2] * a;
+        }
+      }
+      // pass 1: stickers
       for (const m of group) {
         const st = byPart[m.part];
         if (!st) continue;
@@ -311,31 +329,35 @@ module.exports = function garage({ DATA, gameDir, gameVersion, modsDir }) {
       if (total && shared / total > 0.04) warnings.push(`Auf ${path.basename(texName).replace(/_AM\.dds$/i, '')} teilt sich ein Sticker die Textur mit einer anderen Stelle des Panzers (z. B. der gespiegelten Seite) – er erscheint dort auch. Prüfansicht zeigt es.`);
       results.push({ texName, kind: t.kind, W, H, rgba });
     }
-    // Keep 2D styles off the stickers – read from WoT's tank shader (PBS_tank_colourised):
+    // Keep 2D styles off stickers and paint – read from WoT's tank shader (PBS_tank_colourised):
     //  * excludeMaskAndAOMap: alpha × 5 switches the style pattern (tintMap) on, red blocks projection decals
     //    (emblems/inscriptions), green = ambient occlusion
     //  * metallicGlossMap: blue = how strongly the style's paint colours are mixed over the colour texture
-    // Under every sticker (by its opacity): pattern off (alpha 0), paint off (GMM blue 0), matte (GMM metallic 0, less
-    // gloss), no emblems on top (red 255).
+    // Under every sticker / paint stroke (by its opacity): pattern off (alpha 0), paint off (GMM blue 0), matte
+    // (GMM metallic 0, less gloss), no emblems on top (red 255).
     const masks = [];
     const editTexture = (field, fn) => {
-      const names = [...new Set(meshes.filter((m) => byPart[m.part] && m.diffuse && m[field]).map((m) => m[field]))];
+      const names = [...new Set(meshes.filter((m) => m.diffuse && m[field] && (byPart[m.part] || paint.has(m.diffuse))).map((m) => m[field]))];
       for (const texName of names) {
         const src = state.pkg.read(texName);
         if (!src) continue;
         let t;
         try { t = bw.ddsToRgba(src, 1e9); } catch { continue; }
-        // same enlargement rule as for the colour texture, so the edges around a small sticker stay clean
+        // same enlargement rule as for the colour texture, so the edges stay clean
         const grp = meshes.filter((x) => x[field] === texName);
+        const linked = [...new Set(grp.map((m) => m.diffuse).filter((d) => paint.has(d)))].map((d) => paint.get(d));
         const cnt = computeLods(grp, byPart, t.width, t.height);
-        let f = 1, minW = Infinity;
-        for (const [st, n] of cnt) minW = Math.min(minW, Math.sqrt(n * (Math.hypot(...st.r) / (Math.hypot(...st.u) || 1))));
-        if (minW < 70) f = 4; else if (minW < 160) f = 2;
-        while (f > 1 && Math.max(t.width, t.height) * f > 4096) f /= 2;
+        const f = factorFor(cnt, t.width, t.height, linked.length ? Math.max(...linked.map((p) => p.width)) / 2 : 0);
         if (f > 1) { t = { ...t, ...upscaleRgba(t.rgba, t.width, t.height, f) }; computeLods(grp, byPart, t.width, t.height); }
         const { width: W, height: H } = t, rgba = t.rgba;
         let set = 0;
-        for (const m of meshes.filter((x) => x[field] === texName)) {
+        // paint layers use the same UVs as the colour texture
+        if (linked.length) for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
+          let a = 0;
+          for (const p of linked) a = Math.max(a, sample(p, (x + 0.5) / W, (y + 0.5) / H)[3] / 255);
+          if (a > 0.02 && fn(rgba, (y * W + x) * 4, Math.min(1, a * 1.15), t.kind)) set++;
+        }
+        for (const m of grp) {
           const st = byPart[m.part];
           if (!st) continue;
           rasterize(m, W, H, (x, y, P, N) => {
@@ -383,6 +405,57 @@ module.exports = function garage({ DATA, gameDir, gameVersion, modsDir }) {
     return { results, masks, warnings, resolution };
   }
 
+  /* ================= brush paint layers ("Farbkasten") =================
+     One PNG per colour texture of a tank, in the texture's UV space (painted in the browser, baked by bake()). */
+  const PAINT = path.join(DATA, 'paint');
+  const paintDir = (tankId) => path.join(PAINT, safeId(tankId));
+  const paintIndex = (tankId) => readJson(path.join(paintDir(tankId), 'index.json'), {});
+  const writePaintIndex = (tankId, idx) => { fs.mkdirSync(paintDir(tankId), { recursive: true }); fs.writeFileSync(path.join(paintDir(tankId), 'index.json'), JSON.stringify(idx, null, 1)); };
+  const paintFile = (tex) => `${require('crypto').createHash('sha1').update(String(tex).toLowerCase()).digest('hex').slice(0, 16)}.png`;
+  function diffuseOf(tankId, tex) {
+    tank(tankId);
+    const own = tankCache.get(tankId).meshes.some((m) => m.diffuse === tex);
+    if (!own) throw new Error('Diese Textur gehört nicht zu diesem Panzer');
+    return tex;
+  }
+  function paintList(tankId) { tank(tankId); return { layers: Object.keys(paintIndex(tankId)) }; }
+  function paintImage(tankId, tex) {
+    const idx = paintIndex(tankId);
+    if (!idx[tex]) throw new Error('Keine Malschicht');
+    return fs.readFileSync(path.join(paintDir(tankId), idx[tex]));
+  }
+  function savePaint(tankId, tex, buf) {
+    diffuseOf(tankId, tex);
+    if (!buf || buf.length > 64 * 1024 * 1024) throw new Error('Malschicht zu groß');
+    const img = bw.decodePng(buf); // validates
+    if (img.width > 4096 || img.height > 4096) throw new Error('Malschicht zu groß');
+    const idx = paintIndex(tankId), file = paintFile(tex);
+    fs.mkdirSync(paintDir(tankId), { recursive: true });
+    fs.writeFileSync(path.join(paintDir(tankId), file), buf);
+    idx[tex] = file;
+    writePaintIndex(tankId, idx);
+    return { ok: true, layers: Object.keys(idx) };
+  }
+  function clearPaint(tankId, tex) {
+    tank(tankId);
+    const idx = paintIndex(tankId);
+    for (const t of tex ? [tex] : Object.keys(idx)) {
+      if (!idx[t]) continue;
+      try { fs.unlinkSync(path.join(paintDir(tankId), idx[t])); } catch {}
+      delete idx[t];
+    }
+    writePaintIndex(tankId, idx);
+    return { ok: true, layers: Object.keys(idx) };
+  }
+  // decoded paint layers of a tank: Map(colour texture name -> image)
+  function loadPaint(tankId) {
+    const out = new Map(), idx = paintIndex(tankId);
+    for (const [tex, file] of Object.entries(idx)) {
+      try { out.set(tex, bw.decodePng(fs.readFileSync(path.join(paintDir(tankId), file)))); } catch {}
+    }
+    return out;
+  }
+
   // build every applied tank into one .wotmod in mods/<version>/
   function apply(tankId) {
     load();
@@ -391,8 +464,9 @@ module.exports = function garage({ DATA, gameDir, gameVersion, modsDir }) {
     const dir = path.join(OUT, safeId(tankId));
     fs.rmSync(dir, { recursive: true, force: true });
     let warnings = [], resolution = [];
-    if (list.length) {
-      const b = bake(tankId, list);
+    const paint = loadPaint(tankId);
+    if (list.length || paint.size) {
+      const b = bake(tankId, list, paint);
       warnings = b.warnings; resolution = b.resolution;
       for (const r of b.results) {
         const dds = bw.encodeDds(r.W, r.H, r.rgba, r.kind);
@@ -408,7 +482,7 @@ module.exports = function garage({ DATA, gameDir, gameVersion, modsDir }) {
         fs.mkdirSync(path.dirname(f), { recursive: true });
         fs.writeFileSync(f, bw.encodeDds(r.W, r.H, r.rgba, r.kind));
       }
-      all.applied[tankId] = { at: new Date().toISOString(), textures: b.results.map((r) => r.texName), masks: b.masks.map((r) => r.texName), count: list.length };
+      all.applied[tankId] = { at: new Date().toISOString(), textures: b.results.map((r) => r.texName), masks: b.masks.map((r) => r.texName), count: list.length, painted: paint.size };
     } else delete all.applied[tankId];
     const mod = writeMod(all); // throws if the file is locked – then the stored state stays as it was
     if (all.applied[tankId]) all.applied[tankId].resolution = resolution;
@@ -694,7 +768,7 @@ module.exports = function garage({ DATA, gameDir, gameVersion, modsDir }) {
     return out;
   }
 
-  return { tanks, tank, mesh, texture, moduleNames, partGeometry, addImage, image, removeImage, stickers, saveStickers, apply,
+  return { tanks, tank, mesh, texture, moduleNames, partGeometry, addImage, image, removeImage, stickers, saveStickers, apply, paintList, paintImage, savePaint, clearPaint,
     addModel, modelBin, modelTex, removeModel, placements, savePlacements, applyModels };
 };
 

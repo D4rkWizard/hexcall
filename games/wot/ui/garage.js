@@ -59,12 +59,14 @@
   precision highp float; in vec3 vN; in vec3 vW; in vec2 vUv; in vec3 vL; in vec3 vNL;
   uniform sampler2D uTex; uniform float uHasTex, uAlphaRef, uHi; uniform vec3 uEye; out vec4 o;
   uniform int uDC; uniform vec3 uDP[${MAX_DECALS}], uDR[${MAX_DECALS}], uDU[${MAX_DECALS}], uDN[${MAX_DECALS}]; uniform vec4 uDX[${MAX_DECALS}], uDK[${MAX_DECALS}]; uniform vec3 uDA[${MAX_DECALS}];
-  uniform sampler2D uD0, uD1, uD2, uD3, uD4, uD5;
+  uniform sampler2D uD0, uD1, uD2, uD3, uD4, uD5; uniform sampler2D uPaint; uniform float uHasPaint;
   vec4 dtex(int i, vec2 uv){ if(i==0) return texture(uD0,uv); if(i==1) return texture(uD1,uv); if(i==2) return texture(uD2,uv); if(i==3) return texture(uD3,uv); if(i==4) return texture(uD4,uv); return texture(uD5,uv); }
   void main(){
     vec4 t = uHasTex > 0.5 ? texture(uTex, vUv) : vec4(0.55,0.55,0.55,1.0);
     if (uAlphaRef > 0.0 && t.a < uAlphaRef) discard;
     vec3 base = t.rgb;
+    // brush paint layer (Farbkasten) – below the stickers, same order as the bake
+    if (uHasPaint > 0.5) { vec4 pp = texture(uPaint, vUv); base = mix(base, pp.rgb, pp.a); }
     // live sticker preview – same projection as the bake on the server
     for (int i = 0; i < ${MAX_DECALS}; i++) {
       if (i >= uDC) break;
@@ -189,7 +191,7 @@
     gl.bindVertexArray(null);
     let lo = [Infinity, Infinity, Infinity], hi = [-Infinity, -Infinity, -Infinity];
     for (let i = 0; i < n; i++) for (let k = 0; k < 3; k++) { const v = f[i * 3 + k]; if (v < lo[k]) lo[k] = v; if (v > hi[k]) hi[k] = v; }
-    return { vao, count: m, bufs: [...bufs, ib], lo, hi, pos, nrm, idx }; // pos/nrm/idx stay for picking
+    return { vao, count: m, bufs: [...bufs, ib], lo, hi, pos, nrm, idx, uv: f.subarray(n * 6, n * 8) }; // pos/nrm/idx stay for picking, uv for painting
   }
   function clearMeshes() {
     const gl = R.gl;
@@ -266,6 +268,9 @@
         const t = ds[i] && stickerTex(ds[i].image);
         gl.bindTexture(gl.TEXTURE_2D, t && t.ready ? t.t : R.blank);
       }
+      const PL = !ST.review && m.diffuse ? PT.layers.get(m.diffuse) : null;
+      gl.activeTexture(gl.TEXTURE7); gl.bindTexture(gl.TEXTURE_2D, PL ? layerTexture(PL) : R.blank);
+      gl.uniform1i(P.u.uPaint, 7); gl.uniform1f(P.u.uHasPaint, PL ? 1 : 0);
       gl.activeTexture(gl.TEXTURE0);
       const t = (ST.review && m.texBaked) || m.tex;
       const ready = t && t.ready ? t : m.tex && m.tex.ready ? m.tex : null;
@@ -277,7 +282,7 @@
       gl.drawElements(gl.TRIANGLES, m.count, gl.UNSIGNED_INT, 0);
     }
     // imported models (preview of the placements)
-    gl.uniform1i(P.u.uDC, 0);
+    gl.uniform1i(P.u.uDC, 0); gl.uniform1f(P.u.uHasPaint, 0);
     gl.uniform1f(P.u.uAlphaRef, 0);
     for (const inst of MD.list) {
       if (R.hidden.has(inst.part)) continue;
@@ -364,6 +369,7 @@
   // corners + rotation handle of the selected sticker, drawn as SVG over the canvas
   function drawGizmo(vp) {
     const g = $('#stkGizmo'), s = selSticker();
+    if (paintActive()) { R.gz = null; return; } // the brush outline lives in the same layer
     if (!s || ST.review || ST.place || MD.place || R.hidden.has(s.part) || $('#tab-stk').hidden) { if (g.innerHTML) g.innerHTML = ''; R.gz = null; return; }
     const P = (v) => toScreen(s.part, v, vp);
     const c = [V.add(V.sub(s.p, s.r), s.u), V.add(V.add(s.p, s.r), s.u), V.sub(V.add(s.p, s.r), s.u), V.sub(V.sub(s.p, s.r), s.u)].map(P);
@@ -519,11 +525,225 @@
     applyLayout();
   }
 
+  /* ---------------- Farbkasten: paint on the tank with a brush ----------------
+     Every colour texture gets a paint layer (RGBA, 2048 px) in the same UV space as the texture. A dab finds the
+     triangles of the part near the brush (3D distance), rasterises them in UV space and paints the texels inside
+     the brush radius. The preview shader shows the layer on top of the texture; "Anwenden" bakes it like stickers. */
+  const PAINT_RES = 2048;
+  const PT = { layers: new Map(), color: [180, 108, 255], size: 0.12, hard: 0.6, opacity: 0.9, erase: false, undo: [], stroke: null, saveTimer: 0, last: null, hover: null };
+  const hexToRgb = (h) => [1, 3, 5].map((i) => parseInt(h.slice(i, i + 2), 16));
+  function layerOf(tex, create) {
+    let L = PT.layers.get(tex);
+    if (!L && create) {
+      L = { tex, w: PAINT_RES, h: PAINT_RES, data: new Uint8ClampedArray(PAINT_RES * PAINT_RES * 4), gl: null, dirty: null, unsaved: false };
+      PT.layers.set(tex, L);
+    }
+    return L;
+  }
+  function layerTexture(L) {
+    const gl = R.gl;
+    if (!L.gl) {
+      L.gl = gl.createTexture(); gl.bindTexture(gl.TEXTURE_2D, L.gl);
+      gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, L.w, L.h, 0, gl.RGBA, gl.UNSIGNED_BYTE, new Uint8Array(L.data.buffer));
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+      L.dirty = null;
+    } else if (L.dirty) {
+      // only the changed rectangle goes to the GPU
+      const [x0, y0, x1, y1] = L.dirty;
+      gl.bindTexture(gl.TEXTURE_2D, L.gl);
+      gl.pixelStorei(gl.UNPACK_ROW_LENGTH, L.w); gl.pixelStorei(gl.UNPACK_SKIP_PIXELS, x0); gl.pixelStorei(gl.UNPACK_SKIP_ROWS, y0);
+      gl.texSubImage2D(gl.TEXTURE_2D, 0, x0, y0, x1 - x0 + 1, y1 - y0 + 1, gl.RGBA, gl.UNSIGNED_BYTE, new Uint8Array(L.data.buffer));
+      gl.pixelStorei(gl.UNPACK_ROW_LENGTH, 0); gl.pixelStorei(gl.UNPACK_SKIP_PIXELS, 0); gl.pixelStorei(gl.UNPACK_SKIP_ROWS, 0);
+      L.dirty = null;
+    }
+    return L.gl;
+  }
+  const markDirty = (L, x0, y0, x1, y1) => { L.dirty = L.dirty ? [Math.min(L.dirty[0], x0), Math.min(L.dirty[1], y0), Math.max(L.dirty[2], x1), Math.max(L.dirty[3], y1)] : [x0, y0, x1, y1]; };
+  function dab(part, c, n) {
+    const r = PT.size / 2, r2 = r * r, hard = PT.hard, op = PT.opacity, col = PT.color;
+    for (const m of R.meshes) {
+      if (m.part !== part || !m.diffuse || !m.uv) continue;
+      const L = layerOf(m.diffuse, true);
+      if (PT.stroke && !PT.stroke.saved.has(L)) { PT.stroke.saved.set(L, L.data.slice()); }
+      const { pos, idx, uv } = m, W = L.w, H = L.h;
+      for (let t = 0; t < idx.length; t += 3) {
+        const i0 = idx[t], i1 = idx[t + 1], i2 = idx[t + 2];
+        // quick reject: triangle bounding box vs brush sphere
+        let skip = false;
+        for (let k = 0; k < 3 && !skip; k++) {
+          const a = pos[i0 * 3 + k], b = pos[i1 * 3 + k], d = pos[i2 * 3 + k];
+          if (Math.min(a, b, d) > c[k] + r || Math.max(a, b, d) < c[k] - r) skip = true;
+        }
+        if (skip) continue;
+        // only surfaces facing roughly the same way as the clicked one (no painting through plates)
+        const e1 = [pos[i1 * 3] - pos[i0 * 3], pos[i1 * 3 + 1] - pos[i0 * 3 + 1], pos[i1 * 3 + 2] - pos[i0 * 3 + 2]];
+        const e2 = [pos[i2 * 3] - pos[i0 * 3], pos[i2 * 3 + 1] - pos[i0 * 3 + 1], pos[i2 * 3 + 2] - pos[i0 * 3 + 2]];
+        const tn = V.norm(V.cross(e1, e2));
+        if (Math.abs(V.dot(tn, n)) < 0.25) continue;
+        // rasterise the triangle in UV space
+        const ax = uv[i0 * 2] * W, ay = uv[i0 * 2 + 1] * H, bx = uv[i1 * 2] * W, by = uv[i1 * 2 + 1] * H, cx = uv[i2 * 2] * W, cy = uv[i2 * 2 + 1] * H;
+        const den = (by - cy) * (ax - cx) + (cx - bx) * (ay - cy);
+        if (Math.abs(den) < 1e-9) continue;
+        const x0 = Math.max(0, Math.floor(Math.min(ax, bx, cx))), x1 = Math.min(W - 1, Math.ceil(Math.max(ax, bx, cx)));
+        const y0 = Math.max(0, Math.floor(Math.min(ay, by, cy))), y1 = Math.min(H - 1, Math.ceil(Math.max(ay, by, cy)));
+        if (x1 - x0 > 1500 || y1 - y0 > 1500) continue; // broken UVs
+        let touched = false;
+        for (let y = y0; y <= y1; y++) for (let x = x0; x <= x1; x++) {
+          const px = x + 0.5, py = y + 0.5;
+          const w0 = ((by - cy) * (px - cx) + (cx - bx) * (py - cy)) / den, w1 = ((cy - ay) * (px - cx) + (ax - cx) * (py - cy)) / den, w2 = 1 - w0 - w1;
+          const eps = -0.02;
+          if (w0 < eps || w1 < eps || w2 < eps) continue;
+          const P0 = pos[i0 * 3] * w0 + pos[i1 * 3] * w1 + pos[i2 * 3] * w2 - c[0];
+          const P1 = pos[i0 * 3 + 1] * w0 + pos[i1 * 3 + 1] * w1 + pos[i2 * 3 + 1] * w2 - c[1];
+          const P2 = pos[i0 * 3 + 2] * w0 + pos[i1 * 3 + 2] * w1 + pos[i2 * 3 + 2] * w2 - c[2];
+          const d2 = P0 * P0 + P1 * P1 + P2 * P2;
+          if (d2 > r2) continue;
+          const tt = Math.sqrt(d2) / r;
+          const a = op * (tt <= hard ? 1 : 1 - (tt - hard) / Math.max(0.001, 1 - hard));
+          if (a <= 0.004) continue;
+          const o = (y * W + x) * 4, D = L.data, ea = D[o + 3] / 255;
+          if (PT.erase) { D[o + 3] = Math.round(D[o + 3] * (1 - a)); }
+          else {
+            const na = a + ea * (1 - a);
+            for (let k = 0; k < 3; k++) D[o + k] = Math.round((col[k] * a + D[o + k] * ea * (1 - a)) / na);
+            D[o + 3] = Math.round(na * 255);
+          }
+          touched = true;
+        }
+        if (touched) { markDirty(L, x0, y0, x1, y1); L.unsaved = true; }
+      }
+    }
+    R.dirty = true;
+  }
+  // stroke: dabs along the way, spaced by a third of the brush radius
+  function strokeTo(hit) {
+    if (!hit) { PT.last = null; return; }
+    const step = Math.max(0.004, PT.size * 0.18);
+    if (PT.last && PT.last.part === hit.part) {
+      const d = V.sub(hit.p, PT.last.p), len = Math.hypot(...d);
+      if (len < step) return;
+      const nSteps = Math.min(40, Math.ceil(len / step));
+      for (let i = 1; i <= nSteps; i++) dab(hit.part, V.add(PT.last.p, V.scale(d, i / nSteps)), hit.n);
+    } else dab(hit.part, hit.p, hit.n);
+    PT.last = hit;
+  }
+  const paintActive = () => !$('#tab-pnt').hidden && !ST.review;
+  function startStroke(e) {
+    PT.stroke = { saved: new Map() };
+    PT.last = null;
+    strokeTo(pick(e.clientX, e.clientY));
+    let raf = 0, lastEv = e;
+    const move = (ev) => { lastEv = ev; if (!raf) raf = requestAnimationFrame(() => { raf = 0; strokeTo(pick(lastEv.clientX, lastEv.clientY)); }); };
+    const up = () => {
+      window.removeEventListener('pointermove', move); window.removeEventListener('pointerup', up);
+      if (PT.stroke.saved.size) { PT.undo.push(PT.stroke.saved); if (PT.undo.length > 8) PT.undo.shift(); }
+      PT.stroke = null; PT.last = null;
+      paintChanged();
+    };
+    window.addEventListener('pointermove', move); window.addEventListener('pointerup', up);
+  }
+  function undoPaint() {
+    const step = PT.undo.pop();
+    if (!step) return toast('Nichts zum Rückgängigmachen.');
+    for (const [L, data] of step) { L.data.set(data); markDirty(L, 0, 0, L.w - 1, L.h - 1); L.unsaved = true; }
+    R.dirty = true; paintChanged();
+  }
+  function paintChanged() {
+    ST.dirty = true; syncApply(); renderPaint();
+    clearTimeout(PT.saveTimer);
+    PT.saveTimer = setTimeout(savePaintLayers, 700);
+  }
+  const layerEmpty = (L) => { for (let i = 3; i < L.data.length; i += 4) if (L.data[i]) return false; return true; };
+  async function savePaintLayers() {
+    const tank = G.current;
+    for (const L of PT.layers.values()) {
+      if (!L.unsaved) continue;
+      L.unsaved = false;
+      try {
+        if (layerEmpty(L)) { await fetch('/api/wot/garage/paint/clear', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ tank, tex: L.tex }) }); continue; }
+        const cv = document.createElement('canvas'); cv.width = L.w; cv.height = L.h;
+        cv.getContext('2d').putImageData(new ImageData(L.data, L.w, L.h), 0, 0);
+        const blob = await new Promise((ok) => cv.toBlob(ok, 'image/png'));
+        const r = await fetch(`/api/wot/garage/paint-image?tank=${encodeURIComponent(tank)}&tex=${encodeURIComponent(L.tex)}`, { method: 'POST', body: blob });
+        const d = await r.json(); if (!r.ok) throw new Error(d.error);
+      } catch (e) { L.unsaved = true; toast(e.message, true); }
+    }
+  }
+  async function loadPaint(id) {
+    for (const L of PT.layers.values()) if (L.gl) R.gl.deleteTexture(L.gl);
+    PT.layers.clear(); PT.undo = [];
+    let list = [];
+    try { list = (await (await fetch(`/api/wot/garage/paint?tank=${encodeURIComponent(id)}`)).json()).layers || []; } catch {}
+    for (const tex of list) {
+      try {
+        const img = new Image(); img.src = `/api/wot/garage/paint-image?tank=${encodeURIComponent(id)}&tex=${encodeURIComponent(tex)}&v=${Date.now()}`;
+        await img.decode();
+        if (G.current !== id) return;
+        const cv = document.createElement('canvas'); cv.width = PAINT_RES; cv.height = PAINT_RES;
+        const cx = cv.getContext('2d'); cx.drawImage(img, 0, 0, PAINT_RES, PAINT_RES);
+        const L = layerOf(tex, true); L.data.set(cx.getImageData(0, 0, PAINT_RES, PAINT_RES).data); L.unsaved = false;
+      } catch {}
+    }
+    R.dirty = true; renderPaint();
+  }
+  const hasPaint = () => [...PT.layers.values()].some((L) => !layerEmpty(L));
+  async function clearAllPaint() {
+    if (!confirm('Die gesamte Malerei auf diesem Panzer löschen?')) return;
+    const step = new Map();
+    for (const L of PT.layers.values()) { step.set(L, L.data.slice()); L.data.fill(0); markDirty(L, 0, 0, L.w - 1, L.h - 1); L.unsaved = true; }
+    if (step.size) PT.undo.push(step);
+    R.dirty = true; paintChanged();
+  }
+  const PALETTE = ['#ffffff', '#111111', '#7a7f86', '#b46cff', '#7c3aed', '#ff3b6b', '#e2342b', '#f2a33a', '#ffd23f', '#4cc38a', '#2f7d4f', '#3a8dde', '#1e3a8a', '#8b5a2b', '#556b2f', '#c9b38a'];
+  function renderPaint() {
+    const hex = '#' + PT.color.map((v) => v.toString(16).padStart(2, '0')).join('');
+    $('#pntPalette').innerHTML = PALETTE.map((c) => `<button class="pnt-sw ${c === hex && !PT.erase ? 'active' : ''}" data-col="${c}" style="background:${c}" title="${c}"></button>`).join('');
+    $('#pntColor').value = hex;
+    $('#pntSize').value = Math.round(PT.size * 100); $('#pntSizeV').textContent = `${Math.round(PT.size * 100)} cm`;
+    $('#pntHard').value = Math.round(PT.hard * 100); $('#pntHardV').textContent = `${Math.round(PT.hard * 100)} %`;
+    $('#pntOp').value = Math.round(PT.opacity * 100); $('#pntOpV').textContent = `${Math.round(PT.opacity * 100)} %`;
+    $('#pntBrush').classList.toggle('active', !PT.erase); $('#pntErase').classList.toggle('active', PT.erase);
+    $('#pntUndo').disabled = !PT.undo.length;
+  }
+  // brush outline under the mouse (drawn into the sticker handle layer)
+  function drawBrushCursor(e) {
+    const g = $('#stkGizmo');
+    if (!paintActive() || !e) { if (g.dataset.brush) { g.innerHTML = ''; delete g.dataset.brush; } return; }
+    const hit = pick(e.clientX, e.clientY);
+    if (!hit) { g.innerHTML = ''; return; }
+    const { vp } = camera(), c = toScreen(hit.part, hit.p, vp);
+    const side = V.norm(V.cross(hit.n, Math.abs(hit.n[1]) > 0.9 ? [1, 0, 0] : [0, 1, 0]));
+    const e2 = toScreen(hit.part, V.add(hit.p, V.scale(side, PT.size / 2)), vp);
+    if (!c || !e2) return;
+    const rr = Math.max(2, Math.hypot(e2[0] - c[0], e2[1] - c[1]));
+    g.dataset.brush = '1';
+    g.innerHTML = `<circle cx="${c[0]}" cy="${c[1]}" r="${rr}" fill="none" stroke="#fff" stroke-width="1.5" stroke-opacity=".9"/><circle cx="${c[0]}" cy="${c[1]}" r="${rr}" fill="none" stroke="#000" stroke-width="1" stroke-opacity=".5" stroke-dasharray="3 3"/>`;
+  }
+  function bindPaint() {
+    $('#pntPalette').addEventListener('click', (e) => { const b = e.target.closest('[data-col]'); if (!b) return; PT.color = hexToRgb(b.dataset.col); PT.erase = false; renderPaint(); });
+    $('#pntColor').addEventListener('input', (e) => { PT.color = hexToRgb(e.target.value); PT.erase = false; renderPaint(); });
+    $('#pntSize').addEventListener('input', (e) => { PT.size = Number(e.target.value) / 100; renderPaint(); });
+    $('#pntHard').addEventListener('input', (e) => { PT.hard = Number(e.target.value) / 100; renderPaint(); });
+    $('#pntOp').addEventListener('input', (e) => { PT.opacity = Number(e.target.value) / 100; renderPaint(); });
+    $('#pntBrush').addEventListener('click', () => { PT.erase = false; renderPaint(); });
+    $('#pntErase').addEventListener('click', () => { PT.erase = true; renderPaint(); });
+    $('#pntUndo').addEventListener('click', undoPaint);
+    $('#pntClear').addEventListener('click', clearAllPaint);
+    $('#pntApply').addEventListener('click', applyStickers);
+    let hoverRaf = 0, hoverEv = null;
+    $('#garCanvas').addEventListener('pointermove', (e) => { hoverEv = e; if (!hoverRaf) hoverRaf = requestAnimationFrame(() => { hoverRaf = 0; drawBrushCursor(hoverEv); }); });
+    $('#garCanvas').addEventListener('pointerleave', () => drawBrushCursor(null));
+    renderPaint();
+  }
+
   /* ---------------- input ---------------- */
   function bindInput() {
     const c = R.canvas;
     c.addEventListener('contextmenu', (e) => e.preventDefault());
     c.addEventListener('pointerdown', (e) => {
+      // Farbkasten: left mouse paints (right mouse turns the camera, Shift + right pans)
+      if (e.button === 0 && paintActive()) { e.preventDefault(); R.auto = false; syncAuto(); startStroke(e); return; }
       // a sticker under the mouse: select it and drag it over the tank (instead of turning the camera)
       if (e.button === 0 && !e.shiftKey && !ST.place && !MD.place && !ST.review && !$('#tab-stk').hidden) {
         const found = stickerAt(pick(e.clientX, e.clientY));
@@ -536,7 +756,7 @@
         }
       }
       c.setPointerCapture(e.pointerId);
-      R.drag = { x: e.clientX, y: e.clientY, sx: e.clientX, sy: e.clientY, pan: e.button === 2 || e.shiftKey, button: e.button };
+      R.drag = { x: e.clientX, y: e.clientY, sx: e.clientX, sy: e.clientY, pan: paintActive() ? e.button === 2 && e.shiftKey : e.button === 2 || e.shiftKey, button: e.button };
       R.auto = false; syncAuto();
     });
     c.addEventListener('pointermove', (e) => {
@@ -633,14 +853,17 @@
   function syncApply() {
     const a = ST.applied;
     const note = $('#stkStatus');
-    if (ST.dirty && (ST.list.length || a)) note.innerHTML = '<span class="warn">Noch nicht in WoT – „Anwenden“ drücken.</span>';
+    if (ST.dirty && (ST.list.length || a || hasPaint())) note.innerHTML = '<span class="warn">Noch nicht in WoT – „Anwenden“ drücken.</span>';
     else if (a) note.innerHTML = `In WoT eingebaut: ${a.count} Sticker · ${new Date(a.at).toLocaleString('de-DE', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}`;
     else if (!ST.list.length && ST.modOnDisk) note.innerHTML = '<span class="warn">Im Spielordner liegt noch eine Sticker-Mod – „Sticker aus WoT entfernen“ drücken.</span>';
-    else note.textContent = ST.list.length ? '' : 'Noch keine Sticker auf diesem Panzer.';
+    else note.textContent = ST.list.length || hasPaint() ? '' : 'Noch keine Sticker auf diesem Panzer.';
     // a sticker mod may still be in the game folder although nothing is stored here (e.g. removal failed while WoT ran)
-    const removable = !ST.list.length && (a || ST.modOnDisk);
-    $('#stkApply').disabled = !ST.list.length && !removable;
+    const any = ST.list.length || hasPaint();
+    const removable = !any && (a || ST.modOnDisk);
+    $('#stkApply').disabled = !any && !removable;
     $('#stkApply').lastChild.textContent = removable ? 'Sticker aus WoT entfernen' : 'Anwenden (in WoT einbauen)';
+    $('#pntApply').disabled = $('#stkApply').disabled; $('#pntApply').lastChild.textContent = removable ? 'Malerei aus WoT entfernen' : 'Anwenden (in WoT einbauen)';
+    $('#pntStatus').innerHTML = note.innerHTML;
     $('#stkReview').disabled = !a || ST.dirty;
     $('#stkReview').classList.toggle('active', ST.review);
   }
@@ -845,7 +1068,9 @@
   }
   function showTab(t) {
     document.querySelectorAll('.stk-tabs button').forEach((b) => b.classList.toggle('active', b.dataset.tab === t));
-    $('#tab-stk').hidden = t !== 'stk'; $('#tab-mdl').hidden = t !== 'mdl';
+    $('#tab-stk').hidden = t !== 'stk'; $('#tab-mdl').hidden = t !== 'mdl'; $('#tab-pnt').hidden = t !== 'pnt';
+    if (t !== 'pnt') drawBrushCursor(null);
+    R.dirty = true;
     if (t === 'stk') MD.place = null; else ST.place = null;
     renderStickers(); renderModels();
   }
@@ -868,7 +1093,7 @@
         const buf = await (await fetch(`/api/wot/garage/mesh?id=${encodeURIComponent(id)}&i=${m.i}`)).arrayBuffer();
         msg.textContent = `Lade Modell … ${++done}/${all.length}`;
         return { m, buf };
-      })), loadStickers(id), loadPlacements(id)]);
+      })), loadStickers(id), loadPlacements(id), loadPaint(id)]);
       if (G.current !== id) return;
       clearMeshes();
       R.offsets = Object.fromEntries(info.parts.map((p) => [p.part, p.offset]));
@@ -977,6 +1202,7 @@
       renderStickers();
     });
     bindCrop();
+    bindPaint();
     bindLayout();
     $('#stkList').addEventListener('click', (e) => { const b = e.target.closest('[data-stk]'); if (!b) return; ST.sel = ST.sel === b.dataset.stk ? null : b.dataset.stk; ST.place = null; renderStickers(); R.dirty = true; });
     const edit = (fn) => () => { const s = ST.list.find((q) => q.id === ST.sel); if (!s) return; fn(s); orient(s); changed(); };
@@ -1021,6 +1247,7 @@
     document.addEventListener('keydown', (e) => {
       if (!$('#page-garage').classList.contains('active') || /INPUT|SELECT|TEXTAREA/.test(document.activeElement.tagName)) return;
       if (e.key === 'Escape' && CR.s) { closeCrop(false); return; }
+      if (paintActive() && (e.ctrlKey || e.metaKey) && (e.key === 'z' || e.key === 'Z')) { e.preventDefault(); undoPaint(); return; }
       if (e.key === 'Escape' && document.documentElement.classList.contains('garage-full') && !ST.place && !MD.place) { setFull(false); return; }
       if (!e.ctrlKey && !e.altKey && !e.metaKey && (e.key === 'f' || e.key === 'F')) { setFull(!document.documentElement.classList.contains('garage-full')); return; }
       if (!e.ctrlKey && !e.altKey && !e.metaKey && (e.key === 'h' || e.key === 'H')) { LAY.off = !LAY.off; applyLayout(); return; }
