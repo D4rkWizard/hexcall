@@ -305,7 +305,8 @@ module.exports = function garage({ DATA, gameDir, gameVersion, modsDir }) {
     //  * excludeMaskAndAOMap: alpha × 5 switches the style pattern (tintMap) on, red blocks projection decals
     //    (emblems/inscriptions), green = ambient occlusion
     //  * metallicGlossMap: blue = how strongly the style's paint colours are mixed over the colour texture
-    // Under every sticker (by its opacity): pattern off (alpha 0), paint off (GMM blue 0), no emblems on top (red 255).
+    // Under every sticker (by its opacity): pattern off (alpha 0), paint off (GMM blue 0), matte (GMM metallic 0, less
+    // gloss), no emblems on top (red 255).
     const masks = [];
     const editTexture = (field, fn) => {
       const names = [...new Set(meshes.filter((m) => byPart[m.part] && m.diffuse && m[field]).map((m) => m[field]))];
@@ -338,10 +339,12 @@ module.exports = function garage({ DATA, gameDir, gameVersion, modsDir }) {
       if (r === px[o] && al === px[o + 3]) return false;
       px[o] = r; px[o + 3] = al; return true;
     });
+    // GMM: red = gloss, green = metallic (brightens the albedo and mirrors the surroundings – the "milky" look),
+    // blue = style paint. A sticker behaves like matte paint: no metal, less gloss, no style paint.
     editTexture('gmm', (px, o, k) => {
-      const b = Math.round(px[o + 2] * (1 - k));
-      if (b === px[o + 2]) return false;
-      px[o + 2] = b; return true;
+      const r = Math.round(px[o] * (1 - 0.35 * k)), g = Math.round(px[o + 1] * (1 - k)), b = Math.round(px[o + 2] * (1 - k));
+      if (r === px[o] && g === px[o + 1] && b === px[o + 2]) return false;
+      px[o] = r; px[o + 1] = g; px[o + 2] = b; return true;
     });
     // how many texture pixels each sticker really gets (WoT textures have limited resolution per square metre)
     const resolution = [];
