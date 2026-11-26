@@ -153,7 +153,11 @@ const I18N = (() => {
   };
 
   Object.assign(EN, {
-    'Original anhören': 'Listen to original', 'Lautstärke beim Anhören (ändert nichts im Spiel)': 'Playback volume (does not change anything in game)', 'So klingt es im Spiel ohne Mod': 'This is how it sounds in game without a mod',
+    'Original anhören': 'Listen to original', 'Schneiden': 'Cut', 'Aufnahme schneiden': 'Cut recording', 'Start': 'Start', 'Ende': 'End', 'Länge': 'Length',
+    'Griffe ziehen oder in die Wellenform klicken · Leertaste = anhören': 'Drag the handles or click into the waveform · space = listen',
+    'Auswahl anhören': 'Play selection', 'Stopp': 'Stop', 'Stille wegschneiden': 'Cut silence', 'Stille am Anfang und Ende markieren': 'Select everything except silence at start and end',
+    'Zurücksetzen': 'Reset', 'Als neue Variante speichern (Original behalten)': 'Save as a new variant (keep the original)', 'Schneiden & speichern': 'Cut & save',
+    'Die Aufnahme lässt sich nicht öffnen': 'The recording cannot be opened', 'Aufnahme nicht gefunden': 'Recording not found', 'Lautstärke beim Anhören (ändert nichts im Spiel)': 'Playback volume (does not change anything in game)', 'So klingt es im Spiel ohne Mod': 'This is how it sounds in game without a mod',
     'Original-Sounds abspielen': 'Play original sounds', 'Herunterladen': 'Download', 'Abbrechen': 'Cancel',
     'WoT speichert seine Sounds in einem Format, das Hexhub erst umwandeln muss. Dafür wird einmalig das freie Programm vgmstream heruntergeladen (ca. 5 MB, von GitHub).':
       'WoT stores its sounds in a format Hexhub has to convert first. For that, the free program vgmstream is downloaded once (about 5 MB, from GitHub).',
@@ -164,6 +168,7 @@ const I18N = (() => {
   // texts with variable parts
   const PATTERNS = [
     [/^· (\d+) Varianten$/, '· $1 variants'],
+    [/^Geschnitten: (.+)$/, 'Cut: $1'],
     [/^Mod aktiv: (.+)$/, 'Mod active: $1'],
     [/^Stellt wieder her: (.+)$/, 'Restores: $1'],
     [/^(\d+) Dateien$/, '$1 files'],

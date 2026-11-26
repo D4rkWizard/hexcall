@@ -584,3 +584,17 @@ a.btn { text-decoration: none; color: inherit; }
 .vol svg { width: 15px; height: 15px; }
 .vol input { width: 110px; accent-color: var(--accent); }
 .vol span { width: 38px; text-align: right; }
+
+/* ===== cut a recording ===== */
+.cut-card { width: min(760px, 94vw); display: flex; flex-direction: column; gap: 12px; }
+.cut-card h3 { margin: 0; }
+.cut-file { color: var(--muted); font-size: 12.5px; margin-top: -6px; }
+.cut-wave { position: relative; border-radius: 12px; border: 1px solid var(--line2); background: var(--scope); overflow: hidden; }
+.cut-wave canvas { display: block; width: 100%; height: 150px; cursor: crosshair; touch-action: none; }
+.cut-info { display: flex; gap: 18px; align-items: center; font-size: 13px; color: var(--muted); flex-wrap: wrap; }
+.cut-info b { color: var(--text); font-weight: 600; }
+.cut-tip { font-size: 12px; color: var(--dim); }
+.cut-tools { display: flex; gap: 8px; flex-wrap: wrap; }
+.take .btn.icon.cut { color: var(--muted); }
+.take .btn.icon.cut:hover { color: var(--accent); border-color: var(--accent-line); }
+.take { grid-template-columns: 34px 1fr 140px 34px 34px; }

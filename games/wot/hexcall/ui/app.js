@@ -419,14 +419,147 @@ function renderTakes() {
   box.innerHTML = files.map((f) => `<div class="take ${f === S.fresh ? 'new' : ''}" data-file="${esc(f)}">
       <button class="btn icon play" title="Anhören">${icon('play')}</button>
       <div class="tname">${esc(f)}</div><canvas width="280" height="56"></canvas>
+      <button class="btn icon ghost cut" title="Schneiden">${icon('cut')}</button>
       <button class="btn icon ghost del" title="Löschen">${icon('trash')}</button></div>`).join('');
   $$('.take', box).forEach((row) => {
     const url = audioUrl(s.kind, row.dataset.file);
     drawPeaks($('canvas', row), url);
     $('.play', row).onclick = () => playUrl(url, $('.play', row));
     $('.del', row).onclick = () => deleteTake(s, row.dataset.file);
+    $('.cut', row).onclick = () => openCutter(s, row.dataset.file);
   });
 }
+
+/* ---------- cut a recording: waveform with start/end handles, preview, save (replace or new variant) ---------- */
+const CUT = { s: null, file: null, buf: null, a: 0, b: 0, drag: null, src: null, t0: 0, raf: 0, peaks: null };
+let cutCtx = null;
+const cutDur = () => (CUT.buf ? CUT.buf.duration : 0);
+async function openCutter(s, file) {
+  if (rec.active) return;
+  if (player) playUrl(null, playerBtn);
+  try {
+    cutCtx = cutCtx || new AudioContext({ sampleRate: REC_RATE });
+    const ab = await (await fetch(audioUrl(s.kind, file))).arrayBuffer();
+    CUT.buf = await cutCtx.decodeAudioData(ab);
+  } catch { return toast('Die Aufnahme lässt sich nicht öffnen', 'err'); }
+  Object.assign(CUT, { s, file, a: 0, b: cutDur(), drag: null });
+  $('#cutFile').textContent = file;
+  $('#cutAsVariant').checked = false;
+  CUT.peaks = null;
+  $('#cutter').hidden = false;
+  drawCut();
+}
+function cutPeaks(W) {
+  if (CUT.peaks && CUT.peaks.length === W) return CUT.peaks;
+  const d = CUT.buf.getChannelData(0), step = d.length / W, out = new Float32Array(W);
+  let max = 0.001;
+  for (let x = 0; x < W; x++) { let p = 0; for (let i = Math.floor(x * step), e = Math.floor((x + 1) * step); i < e && i < d.length; i++) p = Math.max(p, Math.abs(d[i])); out[x] = p; max = Math.max(max, p); }
+  for (let x = 0; x < W; x++) out[x] /= max;
+  return (CUT.peaks = out);
+}
+function drawCut(playPos) {
+  const cv = $('#cutCanvas'), c = cv.getContext('2d'), W = cv.width, H = cv.height, dur = cutDur();
+  const px = (t) => (t / dur) * W;
+  const peaks = cutPeaks(W);
+  c.clearRect(0, 0, W, H);
+  const xa = px(CUT.a), xb = px(CUT.b);
+  c.fillStyle = cssVar('--accent-soft'); c.fillRect(xa, 0, xb - xa, H);
+  for (let x = 0; x < W; x++) {
+    const h = Math.max(2, peaks[x] * (H - 30));
+    c.fillStyle = x >= xa && x <= xb ? cssVar('--accent-hi') : cssVar('--line2');
+    c.fillRect(x, (H - h) / 2, 1, h);
+  }
+  // handles
+  for (const x of [xa, xb]) {
+    c.fillStyle = cssVar('--accent'); c.fillRect(Math.round(x) - 2, 0, 4, H);
+    c.beginPath(); c.arc(x, 14, 11, 0, Math.PI * 2); c.fill();
+    c.beginPath(); c.arc(x, H - 14, 11, 0, Math.PI * 2); c.fill();
+  }
+  if (playPos != null) { c.fillStyle = '#fff'; c.fillRect(px(playPos) - 1, 0, 2, H); }
+  $('#cutStart').textContent = `${CUT.a.toFixed(2)} s`;
+  $('#cutEnd').textContent = `${CUT.b.toFixed(2)} s`;
+  $('#cutLen').textContent = `${(CUT.b - CUT.a).toFixed(2)} s`;
+}
+function cutTimeAt(e) {
+  const r = $('#cutCanvas').getBoundingClientRect();
+  return Math.max(0, Math.min(cutDur(), ((e.clientX - r.left) / r.width) * cutDur()));
+}
+$('#cutCanvas').addEventListener('pointerdown', (e) => {
+  const t = cutTimeAt(e), r = $('#cutCanvas').getBoundingClientRect(), tol = (12 / r.width) * cutDur();
+  // grab the nearer handle; clicking elsewhere moves the nearer handle there
+  CUT.drag = Math.abs(t - CUT.a) <= Math.abs(t - CUT.b) ? 'a' : 'b';
+  if (Math.abs(t - CUT[CUT.drag]) > tol) moveHandle(CUT.drag, t);
+  e.target.setPointerCapture(e.pointerId);
+});
+$('#cutCanvas').addEventListener('pointermove', (e) => { if (CUT.drag) moveHandle(CUT.drag, cutTimeAt(e)); });
+$('#cutCanvas').addEventListener('pointerup', () => { CUT.drag = null; });
+function moveHandle(h, t) {
+  const min = 0.05; // at least 50 ms selected
+  if (h === 'a') CUT.a = Math.min(t, CUT.b - min); else CUT.b = Math.max(t, CUT.a + min);
+  CUT.a = Math.max(0, CUT.a); CUT.b = Math.min(cutDur(), CUT.b);
+  stopCutPlay(); drawCut();
+}
+function stopCutPlay() {
+  if (CUT.src) { CUT.src.onended = null; try { CUT.src.stop(); } catch {} CUT.src = null; }
+  cancelAnimationFrame(CUT.raf);
+  $('#cutPlay').innerHTML = `${icon('play')}Auswahl anhören`;
+}
+function cutPlay() {
+  if (CUT.src) { stopCutPlay(); drawCut(); return; }
+  const src = cutCtx.createBufferSource(), gain = cutCtx.createGain();
+  src.buffer = CUT.buf; gain.gain.value = playVolume();
+  src.connect(gain).connect(cutCtx.destination);
+  src.start(0, CUT.a, CUT.b - CUT.a);
+  CUT.src = src; CUT.t0 = cutCtx.currentTime;
+  $('#cutPlay').innerHTML = `${icon('stop')}Stopp`;
+  src.onended = () => { CUT.src = null; stopCutPlay(); drawCut(); };
+  const tick = () => { if (!CUT.src) return; drawCut(CUT.a + (cutCtx.currentTime - CUT.t0)); CUT.raf = requestAnimationFrame(tick); };
+  tick();
+}
+$('#cutPlay').onclick = cutPlay;
+$('#cutReset').onclick = () => { CUT.a = 0; CUT.b = cutDur(); stopCutPlay(); drawCut(); };
+// mark everything between the first and last sound above a threshold (plus a little air)
+$('#cutTrim').onclick = () => {
+  const d = CUT.buf.getChannelData(0), rate = CUT.buf.sampleRate;
+  let peak = 0; for (let i = 0; i < d.length; i++) peak = Math.max(peak, Math.abs(d[i]));
+  const thr = Math.max(0.01, peak * 0.06);
+  let i0 = 0, i1 = d.length - 1;
+  while (i0 < d.length && Math.abs(d[i0]) < thr) i0++;
+  while (i1 > i0 && Math.abs(d[i1]) < thr) i1--;
+  CUT.a = Math.max(0, i0 / rate - 0.04); CUT.b = Math.min(cutDur(), i1 / rate + 0.1);
+  stopCutPlay(); drawCut();
+};
+function closeCutter() { stopCutPlay(); $('#cutter').hidden = true; }
+$('#cutCancel').onclick = closeCutter;
+$('#cutSave').onclick = async () => {
+  const { s, file, buf } = CUT, rate = buf.sampleRate;
+  const i0 = Math.floor(CUT.a * rate), i1 = Math.min(buf.length, Math.ceil(CUT.b * rate));
+  const out = buf.getChannelData(0).slice(i0, i1);
+  // short fades so the cut does not click
+  const fi = Math.min(out.length, Math.floor(rate * 0.005)), fo = Math.min(out.length, Math.floor(rate * 0.012));
+  for (let i = 0; i < fi; i++) out[i] *= i / fi;
+  for (let i = 0; i < fo; i++) out[out.length - 1 - i] *= i / fo;
+  const wav = encodeWav(out, rate);
+  try {
+    let saved = file;
+    if ($('#cutAsVariant').checked) {
+      const r = await api(`api/take?mod=${encodeURIComponent(S.mod)}&kind=${s.kind}&key=${s.key}&variant=1`, { method: 'POST', body: wav });
+      saved = r.file;
+    } else {
+      await api(`api/take/replace?mod=${encodeURIComponent(S.mod)}&kind=${s.kind}&file=${encodeURIComponent(file)}`, { method: 'POST', body: wav });
+    }
+    closeCutter();
+    S.fresh = saved;
+    await loadFiles(); renderStepList(); showStep();
+    toast(`Geschnitten: ${saved}`);
+  } catch (e) { toast(e.message, 'err'); }
+};
+document.addEventListener('keydown', (e) => {
+  if ($('#cutter').hidden) return;
+  if (e.code === 'Space') { e.preventDefault(); cutPlay(); }
+  if (e.key === 'Escape') closeCutter();
+  if (e.key === 'Enter') $('#cutSave').click();
+});
 
 /* ---------- playback volume in the studio (only for listening, not for the game) ---------- */
 function playVolume() { const v = Number($('#playVol').value); return isNaN(v) ? 0.8 : v / 100; }
@@ -743,7 +876,7 @@ async function drawPeaks(canvas, url) {
 
 $('#recBtn').onclick = () => (rec.active ? stopRecording() : startRecording());
 document.addEventListener('keydown', (e) => {
-  if (e.code !== 'Space' || S.page !== 'studio' || !S.mod || !$('#modal').hidden) return;
+  if (e.code !== 'Space' || S.page !== 'studio' || !S.mod || !$('#modal').hidden || !$('#cutter').hidden) return;
   if (['INPUT', 'SELECT', 'TEXTAREA'].includes(document.activeElement.tagName)) return;
   e.preventDefault();
   rec.active ? stopRecording() : startRecording();

@@ -154,6 +154,16 @@ const routes = {
     fs.writeFileSync(path.join(dir, file), body);
     return { file };
   },
+  // a recording cut in the studio replaces the file (same name)
+  'POST /api/take/replace': async (q, body) => {
+    const mod = q.get('mod'), kind = q.get('kind'), file = q.get('file');
+    if (!safeName(mod) || !kindOk(kind) || !safeFile(file)) throw new Error('Ungültige Anfrage');
+    if (body.toString('latin1', 0, 4) !== 'RIFF' || body.toString('latin1', 8, 12) !== 'WAVE') throw new Error('Keine WAV-Daten');
+    const f = path.join(MODS, mod, kind, file);
+    if (!fs.existsSync(f)) throw new Error('Aufnahme nicht gefunden');
+    fs.writeFileSync(f, body);
+    return { file };
+  },
   'POST /api/take/delete': async (q, body) => {
     const { mod, kind, file } = JSON.parse(body || '{}');
     if (!safeName(mod) || !kindOk(kind) || !safeFile(file)) throw new Error('Ungültige Anfrage');
@@ -359,7 +369,7 @@ async function handle(req, res, url) {
     if (route) {
       if (req.method === 'POST' && req.headers.origin && !/^http:\/\/(127\.0\.0\.1|localhost):\d+$/.test(req.headers.origin)) return send(res, 403, { error: 'forbidden' });
       const body = req.method === 'POST' ? await readBody(req) : null;
-      const isWav = url.pathname === '/api/take';
+      const isWav = url.pathname === '/api/take' || url.pathname === '/api/take/replace';
       return send(res, 200, await route(url.searchParams, isWav ? body : body && body.toString('utf8')));
     }
     if (req.method !== 'GET') return send(res, 404, { error: 'not found' });
