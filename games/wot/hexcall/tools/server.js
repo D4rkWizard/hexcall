@@ -9,6 +9,9 @@ const EVENTS = require('./events');
 const SFX = require('./sfx');
 const paths = require('./paths');
 const original = require('./original');
+// inside Hexhub: start the Wargaming Game Center before WoT (otherwise WoT is not signed in)
+let wgc = null;
+try { wgc = require(path.join(__dirname, '..', '..', 'server', 'wgc.js')); } catch {}
 
 paths.migrate();
 const ROOT = paths.APP;
@@ -258,8 +261,10 @@ const routes = {
       if (await gameRunning()) await new Promise((r) => execFile('taskkill', ['/F', '/IM', 'WorldOfTanks.exe'], { windowsHide: true }, () => r()));
       await new Promise((r) => setTimeout(r, 1500));
     } else if (await gameRunning()) return { ok: true, already: true };
+    let launcher = false;
+    if (wgc) { try { launcher = (await wgc.ensure()).started; } catch {} }
     spawn(exe, [], { cwd: GAME, detached: true, stdio: 'ignore' }).unref();
-    return { ok: true };
+    return { ok: true, launcher };
   },
   'GET /api/games': async () => ({ current: paths.gameDir(), found: paths.findGames() }),
   'POST /api/pickfolder': async () => {

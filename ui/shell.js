@@ -158,8 +158,8 @@ const Hexhub = (() => {
     try {
       if (act === 'launch') {
         btn && (btn.disabled = true);
-        await api('/api/core/game/launch', { id });
-        toast(`${g.name} wird gestartet …`);
+        const r = await api('/api/core/game/launch', { id });
+        toast(r.note || `${g.name} wird gestartet …`);
       }
       if (act === 'close') {
         if (!confirm(`${g.name} wirklich schließen? Nicht gespeicherter Fortschritt kann verloren gehen.`)) return;

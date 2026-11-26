@@ -6,6 +6,7 @@ const path = require('path');
 const { spawn } = require('child_process');
 
 const HEXCALL = path.join(__dirname, 'hexcall');
+const wgc = require('./server/wgc');
 
 module.exports = {
   id: 'wot',
@@ -121,8 +122,7 @@ module.exports = {
       'POST /replay/play': async ({ file }) => {
         const p = replayPath(file);
         if (await gameRunning()) throw new Error('WoT läuft bereits – Replays lassen sich nur starten, wenn das Spiel geschlossen ist.');
-        ctx.watcher().launch(path.join(gameDir(), 'WorldOfTanks.exe'), [p], gameDir());
-        return { ok: true };
+        return startWot([p]);
       },
       // replay -> video
       'GET /render/status': async () => renderer.status(),
@@ -181,6 +181,14 @@ module.exports = {
       dirCache.at = 0;
     }
 
+    // WoT only signs in while the Wargaming Game Center runs: start it first if needed (in the background)
+    async function startWot(args) {
+      const g = gameDir(), exe = path.join(g, 'WorldOfTanks.exe');
+      if (await wgc.isRunning() || !wgc.findWgc()) return ctx.watcher().launch(exe, args, g);
+      wgc.launchWithLauncher(() => ctx.watcher().launch(exe, args, g));
+      return { ok: true, launcher: true, note: 'Wargaming Game Center wird gestartet – World of Tanks startet danach automatisch.' };
+    }
+
     // binary and large uploads
     async function raw(req, res, url) {
       const p = url.pathname, q = url.searchParams;
@@ -233,7 +241,7 @@ module.exports = {
         const g = gameDir();
         const exe = g && path.join(g, 'WorldOfTanks.exe');
         if (!exe || !fs.existsSync(exe)) throw new Error('World of Tanks wurde nicht gefunden. Bitte in den Einstellungen den Spielordner wählen.');
-        return ctx.watcher().launch(exe, [], g);
+        return startWot([]);
       },
     };
   },

@@ -108,6 +108,7 @@ I18N.add('en', {
   // mod folders
   'Pro WoT-Version legt das Spiel eigene Ordner an. Alte Versionen werden nicht mehr geladen.': 'The game creates its own folders per WoT version. Old versions are no longer loaded.',
   'aktuell': 'current', 'alt – wird nicht geladen': 'old – not loaded', 'leer': 'empty', 'Keine Mod-Ordner gefunden.': 'No mod folders found.',
+  'Wargaming Game Center wird gestartet – World of Tanks startet danach automatisch.': 'Starting the Wargaming Game Center – World of Tanks starts automatically afterwards.',
   // settings
   'Spielordner (gilt auch für Hexcall)': 'Game folder (also used by Hexcall)', 'Spielordner gespeichert': 'Game folder saved',
   // server messages
