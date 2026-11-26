@@ -344,8 +344,8 @@ async function loadFiles() {
 /* ---------- in-game volume: per kind (whole mod) and per recording, applied when the sounds are built ---------- */
 const takeVol = (kind, file) => (S.vol && S.vol.takes[`${kind}/${file}`]) ?? 100;
 const kindVol = (kind) => (S.vol ? S.vol[kind] : 100);
-// listening in the studio follows the in-game volume (louder than 100 % can only be heard in game)
-const gameGain = (kind, file) => Math.min(1, (kindVol(kind) / 100) * (takeVol(kind, file) / 100));
+// listening in the studio follows the in-game volume, also above 100 % (see setPlayerGain)
+const gameGain = (kind, file) => (kindVol(kind) / 100) * (takeVol(kind, file) / 100);
 function renderModVol() {
   if (!S.vol) return;
   $('#modVolLbl').textContent = `Lautstärke im Spiel · ${S.kind === 'stimme' ? 'Stimme' : 'Effekte'}`;
@@ -458,7 +458,7 @@ function renderTakes() {
   $$('.take', box).forEach((row) => {
     const url = audioUrl(s.kind, row.dataset.file);
     drawPeaks($('canvas', row), url);
-    $('.play', row).onclick = () => { playUrl(url, $('.play', row)); if (player) { player._gain = gameGain(s.kind, row.dataset.file); player.volume = playVolume() * player._gain; } };
+    $('.play', row).onclick = () => { playUrl(url, $('.play', row)); setPlayerGain(gameGain(s.kind, row.dataset.file)); };
     $('.del', row).onclick = () => deleteTake(s, row.dataset.file);
     $('.cut', row).onclick = () => openCutter(s, row.dataset.file);
     const tv = $('.tvol input', row);
@@ -467,7 +467,7 @@ function renderTakes() {
       if (v === 100) delete S.vol.takes[`${s.kind}/${f}`]; else S.vol.takes[`${s.kind}/${f}`] = v;
       $('.tvol b', row).textContent = `${v} %`;
       $('.tvol', row).classList.toggle('changed', v !== 100);
-      if (player && playerBtn === $('.play', row)) { player._gain = gameGain(s.kind, f); player.volume = playVolume() * player._gain; }
+      if (player && playerBtn === $('.play', row)) setPlayerGain(gameGain(s.kind, f));
       saveVolume({ kind: s.kind, file: f, value: v });
     };
   });
@@ -550,8 +550,11 @@ function stopCutPlay() {
 function cutPlay() {
   if (CUT.src) { stopCutPlay(); drawCut(); return; }
   const src = cutCtx.createBufferSource(), gain = cutCtx.createGain();
-  src.buffer = CUT.buf; gain.gain.value = playVolume();
-  src.connect(gain).connect(cutCtx.destination);
+  src.buffer = CUT.buf; gain.gain.value = playVolume() * gameGain(CUT.s.kind, CUT.file);
+  // same limiter as the normal playback / the game
+  const half = cutCtx.createGain(), shaper = cutCtx.createWaveShaper();
+  half.gain.value = 0.5; pbCurve = pbCurve || limiterCurve(); shaper.curve = pbCurve;
+  src.connect(gain).connect(half).connect(shaper).connect(cutCtx.destination);
   src.start(0, CUT.a, CUT.b - CUT.a);
   CUT.src = src; CUT.t0 = cutCtx.currentTime;
   $('#cutPlay').innerHTML = `${icon('stop')}Stopp`;
@@ -613,7 +616,7 @@ function playVolume() { const v = Number($('#playVol').value); return isNaN(v) ?
   el.value = v; out.textContent = `${v} %`;
   el.oninput = () => {
     out.textContent = `${el.value} %`;
-    if (player) player.volume = playVolume() * (player._gain ?? 1); // also while something is playing
+    if (player) setPlayerGain(player._gain ?? 1); // also while something is playing
     try { localStorage.setItem('hexcall-play-vol', el.value); } catch {}
   };
 })();
@@ -671,11 +674,42 @@ function setPlayIcon(btn, name) {
   const svg = btn.querySelector('svg');
   if (btn.id === 'origBtn' && svg) svg.outerHTML = icon(name); else btn.innerHTML = icon(name);
 }
+// Playback runs through Web Audio: a gain (studio volume × in-game volume, may be above 100 %) and the same
+// soft limiter build.js uses – so what you hear in the studio is as loud as it will be in game.
+let pbCtx = null, pbCurve = null;
+function limiterCurve() {
+  // the shaper only sees -1…1, so the signal is halved before it: curve index k stands for the level 2k
+  const n = 2049, c = new Float32Array(n);
+  for (let i = 0; i < n; i++) {
+    const x = ((i / (n - 1)) * 2 - 1) * 2, a = Math.abs(x);
+    c[i] = a > 0.9 ? Math.sign(x) * (0.9 + 0.099 * Math.tanh((a - 0.9) / 0.099)) : x;
+  }
+  return c;
+}
+function routePlayer(audio) {
+  try {
+    pbCtx = pbCtx || new AudioContext();
+    if (pbCtx.state === 'suspended') pbCtx.resume();
+    pbCurve = pbCurve || limiterCurve();
+    const src = pbCtx.createMediaElementSource(audio), gain = pbCtx.createGain(), half = pbCtx.createGain(), shaper = pbCtx.createWaveShaper();
+    half.gain.value = 0.5; shaper.curve = pbCurve;
+    src.connect(gain).connect(half).connect(shaper).connect(pbCtx.destination);
+    audio._gainNode = gain;
+  } catch { /* fall back to plain playback */ }
+  audio._gain = 1;
+  setPlayerGain(1, audio);
+}
+function setPlayerGain(g, audio = player) {
+  if (!audio) return;
+  audio._gain = g;
+  const v = playVolume() * g;
+  if (audio._gainNode) { audio.volume = 1; audio._gainNode.gain.value = v; } else audio.volume = Math.min(1, v);
+}
 function playUrl(url, btn) {
   if (player) { player.pause(); setPlayIcon(playerBtn, 'play'); }
   if (!url || (playerBtn === btn && player && !player.ended && !player._stopped)) { if (player) player._stopped = true; playerBtn = null; return; }
   player = new Audio(url);
-  player.volume = playVolume();
+  routePlayer(player);
   playerBtn = btn;
   setPlayIcon(btn, 'stop');
   player.onended = () => { setPlayIcon(btn, 'play'); playerBtn = null; };
