@@ -1,0 +1,212 @@
+    <!-- HOME -->
+    <section class="page active" data-tab="home" id="page-home">
+      <div class="grid g4" id="homeKpis"></div>
+      <div class="section-head"><h2>Letzte Gefechte</h2><button class="link" data-goto="wot:replays">Alle Replays <svg><use href="#i-right"/></svg></button></div>
+      <div class="recent" id="homeRecent"></div>
+      <div class="section-head"><h2>Module</h2></div>
+      <div class="grid g3">
+        <div class="card module" data-goto="wot:sounds"><div class="m-ico"><svg><use href="#i-voice"/></svg></div><h3>Sounds (Hexcall)</h3><p>Eigene Commander-Stimme und Effekte aufnehmen und mit einem Klick ins Spiel bringen.</p></div>
+        <div class="card module" data-goto="wot:garage"><div class="m-ico"><svg><use href="#i-tank"/></svg></div><h3>3D-Garage</h3><p>Jeder Panzer als 3D-Modell – mit eigenen Stickern und 3D-Anbauten, direkt als Mod eingebaut.</p></div>
+        <div class="card module" data-goto="wot:mods"><div class="m-ico"><svg><use href="#i-upload"/></svg></div><h3>Mods</h3><p>Fremde Mods reinziehen, aus- und einschalten und nach WoT-Updates neu einspielen.</p></div>
+        <div class="card module" data-goto="wot:stats"><div class="m-ico"><svg><use href="#i-chart"/></svg></div><h3>Statistik</h3><p>Siegquote, Schaden und EP pro Panzer, Karte und Modus – aus deinen Replays.</p></div>
+        <div class="card module" data-goto="wot:hits"><div class="m-ico"><svg><use href="#i-cross"/></svg></div><h3>Trefferanalyse</h3><p>Wen du wo getroffen hast – mit Granate und Flugbahn in 3D.</p></div>
+        <div class="card module" data-goto="wot:video"><div class="m-ico"><svg><use href="#i-video"/></svg></div><h3>Replay → Video</h3><p>Replay reinziehen, MP4 kommt raus – aufgenommen auf einem unsichtbaren Monitor.</p></div>
+      </div>
+    </section>
+
+    <!-- STATS -->
+    <section class="page" data-tab="stats" id="page-stats">
+      <div class="page-head"><div><div class="eyebrow">Gefechte</div><h1>Statistik</h1><div class="sub" id="statsSub">Aus deinen Replay-Dateien</div></div></div>
+      <div class="toolbar"><div class="chips" id="modeChips"></div><div class="chips" id="rangeChips"></div></div>
+      <div class="grid g4" id="statKpis"></div>
+      <div class="card" style="margin-top:16px"><div class="row" style="display:flex;justify-content:space-between"><h3>Schaden pro Gefecht (letzte 40)</h3><span class="sub" style="margin:0">lila = Sieg</span></div><div class="spark" id="spark" style="margin-top:14px"></div></div>
+      <div class="grid g2" style="margin-top:16px">
+        <div><div class="section-head" style="margin-top:0"><h2>Panzer</h2></div><div class="table-wrap" style="max-height:420px"><table class="table" id="tankTable"></table></div></div>
+        <div><div class="section-head" style="margin-top:0"><h2>Karten</h2></div><div class="table-wrap" style="max-height:420px"><table class="table" id="mapTable"></table></div></div>
+      </div>
+    </section>
+
+    <!-- REPLAYS -->
+    <section class="page" data-tab="replays" id="page-replays">
+      <div class="page-head"><div><div class="eyebrow">Gefechte</div><h1>Replays</h1><div class="sub" id="repSub">–</div></div>
+        <button class="btn ghost" id="openReplays"><svg><use href="#i-folder"/></svg>Ordner öffnen</button></div>
+      <div class="toolbar"><input class="input" id="repSearch" placeholder="Panzer, Karte oder Modus suchen …"><div class="chips" id="resChips"></div></div>
+      <div class="table-wrap"><table class="table" id="repTable"></table></div>
+    </section>
+
+    <!-- HIT ANALYSIS -->
+    <section class="page wide" data-tab="hits" id="page-hits">
+      <div class="page-head"><div><div class="eyebrow">Gefechte</div><h1>Trefferanalyse</h1>
+        <div class="sub" id="hitSub">Wen du wo getroffen hast – und wer dich wo getroffen hat. Aus deinen Replays.</div></div>
+        <select class="input" id="hitSel" style="max-width:440px"></select></div>
+      <div class="hit-kpis" id="hitKpis"></div>
+      <div class="hv">
+        <div class="hv-side">
+          <div class="hv-tabs"><button data-tab="out" class="active" title="Deine Treffer auf Gegner">GEGNER <span id="hvOut">0</span></button><button data-tab="in" title="Treffer, die du erhalten hast">ICH <span id="hvIn">0</span></button></div>
+          <div class="hv-head" id="hitHead"></div>
+          <div id="hitOnly"></div>
+          <div class="hv-list" id="hitList"></div>
+        </div>
+        <div class="hv-view">
+          <canvas id="hitCanvas"></canvas>
+          <div class="hv-msg" id="hvMsg" hidden></div>
+          <div class="hv-tools"><button class="btn sm ghost" id="hvShot" title="Kamera zurück zum Treffer">Treffer</button><button class="btn sm ghost" id="hvOverview" title="Ganzen Panzer zeigen">Übersicht</button></div>
+          <div class="hv-legend"><span><i style="background:#ff5a5f"></i>Schaden</span><span><i style="background:#ffb020"></i>Kritisch</span><span><i style="background:#8cbcff"></i>Treffer ohne Schaden</span><span><i style="background:#5aa7ff"></i>Nicht durchschlagen</span><span><i style="background:#c9bfe0"></i>Abpraller</span></div>
+        </div>
+        <div class="hv-info" id="hitInfo"></div>
+      </div>
+      <div class="hit-sec"><h2>Gegnerübersicht</h2><span class="sub" style="margin:0">Summen aus der Gefechtsauswertung</span></div>
+      <div id="hitEnemies"></div>
+    </section>
+
+    <!-- VIDEO -->
+    <section class="page" data-tab="video" id="page-video">
+      <div class="page-head"><div><div class="eyebrow">Gefechte</div><h1>Replay → Video</h1>
+        <div class="sub">Replay reinziehen, MP4 kommt raus. WoT spielt das Replay unsichtbar auf einem Nebenmonitor ab und wird dort aufgenommen.</div></div>
+        <button class="btn ghost" id="vidOpenDir"><svg><use href="#i-folder"/></svg>Video-Ordner</button></div>
+      <div class="vid-warn" id="vidWarn" hidden></div>
+      <label class="drop" id="vidDrop">
+        <input type="file" id="vidFile" accept=".wotreplay" multiple hidden>
+        <svg><use href="#i-upload"/></svg>
+        <b>.wotreplay hier ablegen</b><span>oder klicken zum Auswählen · mehrere gehen in die Warteschlange · aus „Replays“ geht es auch per <svg class="inl"><use href="#i-video"/></svg></span>
+      </label>
+      <div class="section-head"><h2>Warteschlange</h2><button class="link" id="vidClear">Erledigte entfernen</button></div>
+      <div class="card" style="padding:4px 0" id="vidJobs"></div>
+      <div class="section-head"><h2>Einrichtung</h2></div>
+      <div class="grid g2">
+        <div class="card setup">
+          <h3>Zielmonitor</h3>
+          <p class="sub">Dort läuft WoT während der Aufnahme. Am besten ein <b>virtueller Monitor</b> – den sieht niemand, du kannst am PC normal weitermachen.</p>
+          <div class="row"><select class="input" id="vidMon"></select><button class="btn sm ghost" id="vidMonRefresh" title="Neu suchen">Neu suchen</button></div>
+          <div class="note" id="vidMonNote"></div>
+        </div>
+        <div class="card setup">
+          <h3>Aufnahme</h3>
+          <div class="row"><span class="lbl">Bildrate</span><div class="chips" id="vidFps"></div></div>
+          <div class="row"><span class="lbl">Qualität</span><div class="chips" id="vidQ"></div></div>
+          <div class="row"><span class="lbl">Ton</span><select class="input" id="vidAudio"></select></div>
+          <div class="note" id="vidAudioNote" style="margin-top:6px"></div>
+          <label class="row chk-row" id="vidMuteRow"><input type="checkbox" id="vidMute"> WoT während der Aufnahme stumm schalten</label>
+          <div class="row"><span class="lbl">Ordner</span><input class="input" id="vidOut" style="flex:1"></div>
+          <div class="row"><span class="lbl">ffmpeg</span><span id="vidFf" class="sub" style="margin:0;flex:1"></span><button class="btn sm ghost" id="vidFfGet">Herunterladen</button></div>
+        </div>
+      </div>
+      <div class="note">Hinweise: Die Aufnahme läuft in Echtzeit, aber genau so lang wie das Replay (die Länge liest der Hub aus der Datei). Während der Aufnahme kannst du nicht selbst WoT spielen,
+        den PC aber normal benutzen – WoT bekommt keinen Fokus und keine Maus. WoT spielt nur Replays der installierten Spielversion ab.</div>
+    </section>
+
+    <!-- 3D GARAGE -->
+    <section class="page full" data-tab="garage" id="page-garage">
+      <div class="gar">
+        <div class="gar-side">
+          <div class="eyebrow" style="margin:0 0 4px">Mods</div>
+          <h2 style="font-size:22px">3D-Garage</h2>
+          <div class="sub" style="margin:2px 0 12px">Jeder Panzer aus deiner Installation</div>
+          <input class="input" id="garSearch" placeholder="Panzer suchen …">
+          <div class="gar-filters"><select class="input" id="garNation"></select><select class="input" id="garLevel"></select><select class="input" id="garType"></select></div>
+          <div class="gar-count" id="garCount"></div>
+          <div class="gar-list" id="garList"></div>
+        </div>
+        <div class="gar-view">
+          <canvas id="garCanvas"></canvas>
+          <div class="gar-msg" id="garMsg" hidden></div>
+          <div class="gar-hud" id="garHud" hidden>
+            <div class="gar-head"><h1 id="garTitle"></h1><div class="sub" id="garMeta"></div></div>
+            <div class="gar-tools">
+              <button class="btn sm ghost active-able" id="garAuto" title="Automatisch drehen"><svg><use href="#i-orbit"/></svg>Drehen</button>
+              <button class="btn sm ghost" id="garReset" title="Ansicht zurücksetzen (Doppelklick)"><svg><use href="#i-reset"/></svg>Ansicht</button>
+            </div>
+            <div class="stk">
+              <div class="stk-tabs"><button class="active" data-tab="stk">Sticker</button><button data-tab="mdl">Anbauten (3D)</button></div>
+              <div class="stk-page" id="tab-mdl" hidden>
+                <div class="stk-head"><span class="sub">.glb, .gltf oder .obj importieren, dann „Anbauen“ und auf den Panzer klicken</span></div>
+                <label class="btn sm ghost" style="width:100%"><input type="file" id="mdlFile" accept=".glb,.gltf,.obj,.mtl,image/*" multiple hidden><svg><use href="#i-upload"/></svg>3D-Modell importieren</label>
+                <div class="mdl-lib" id="mdlLib"></div>
+                <div class="stk-list" id="mdlList"></div>
+                <div class="stk-edit" id="mdlEdit" hidden>
+                  <div class="gar-row"><span class="lbl">Größe</span><input type="range" id="mdlScale" min="-4.6" max="3.9" step="0.01"><span class="val" id="mdlScaleV"></span></div>
+                  <div class="gar-row"><span class="lbl">← →</span><input type="range" id="mdlX" min="-1.5" max="1.5" step="0.005"><span class="val" id="mdlXV"></span></div>
+                  <div class="gar-row"><span class="lbl">↓ ↑</span><input type="range" id="mdlY" min="-1.5" max="1.5" step="0.005"><span class="val" id="mdlYV"></span></div>
+                  <div class="gar-row"><span class="lbl">vor/zurück</span><input type="range" id="mdlZ" min="-1.5" max="1.5" step="0.005"><span class="val" id="mdlZV"></span></div>
+                  <div class="gar-row"><span class="lbl">Drehen</span><input type="range" id="mdlRY" min="-180" max="180" step="1"><span class="val" id="mdlRYV"></span></div>
+                  <div class="gar-row"><span class="lbl">Kippen</span><input type="range" id="mdlRX" min="-180" max="180" step="1"><span class="val" id="mdlRXV"></span></div>
+                  <div class="gar-row"><span class="lbl">Rollen</span><input type="range" id="mdlRZ" min="-180" max="180" step="1"><span class="val" id="mdlRZV"></span></div>
+                  <div class="stk-acts">
+                    <span class="sub" id="mdlInfo" style="flex:1;margin:0;font-size:12px"></span>
+                    <button class="btn sm ghost" id="mdlMove">Neu setzen</button>
+                    <button class="btn sm ghost icon" id="mdlDel" title="Anbau entfernen (Entf)"><svg><use href="#i-trash"/></svg></button>
+                  </div>
+                </div>
+                <div class="stk-foot">
+                  <button class="btn primary" id="mdlApply"><svg><use href="#i-upload"/></svg>Anwenden (in WoT einbauen)</button>
+                  <div class="stk-status" id="mdlStatus"></div>
+                  <div class="note" style="margin-top:6px;font-size:11.5px">Rein optisch – die Trefferzonen bleiben original. Gilt für jeden Panzer dieses Typs, den du im Gefecht siehst. Keine riesigen Anbauten (Fair Play). Wirkt nach WoT-Neustart.</div>
+                </div>
+              </div>
+              <div class="stk-page" id="tab-stk">
+              <div class="stk-head"><span class="sub">Bild wählen, dann auf den Panzer klicken</span></div>
+              <div class="stk-images" id="stkImages"></div>
+              <div class="stk-list" id="stkList"></div>
+              <div class="stk-edit" id="stkEdit" hidden>
+                <div class="gar-row"><span class="lbl">Größe</span><input type="range" id="stkSize" min="0.1" max="4" step="0.02"><span class="val" id="stkSizeV"></span></div>
+                <div class="gar-row"><span class="lbl">Drehung</span><input type="range" id="stkRot" min="-180" max="180" step="1"><span class="val" id="stkRotV"></span></div>
+                <div class="gar-row"><span class="lbl">Deckkraft</span><input type="range" id="stkOp" min="10" max="100" step="1"><span class="val" id="stkOpV"></span></div>
+                <div class="stk-acts">
+                  <label class="chk-row"><input type="checkbox" id="stkFlip"> Spiegeln</label>
+                  <button class="btn sm ghost" id="stkMove">Neu setzen</button>
+                  <button class="btn sm ghost icon" id="stkDel" title="Sticker entfernen (Entf)"><svg><use href="#i-trash"/></svg></button>
+                </div>
+              </div>
+              <div class="stk-foot">
+                <button class="btn primary" id="stkApply"><svg><use href="#i-upload"/></svg>Anwenden (in WoT einbauen)</button>
+                <button class="btn sm ghost" id="stkReview" title="Zeigt die eingebrannte Textur – so sieht es in WoT aus">Prüfansicht</button>
+                <div class="stk-status" id="stkStatus"></div>
+                <div class="note" style="margin-top:6px;font-size:11.5px">Nur du siehst die Sticker. Tarnungen liegen darüber, bei 3D-Stilen sind sie nicht sichtbar. Wirkt nach WoT-Neustart.</div>
+              </div>
+              </div>
+            </div>
+            <div class="stk-hint" id="stkPlaceHint" hidden>Klick auf den Panzer zum Platzieren · Esc bricht ab</div>
+            <div class="gar-panel">
+              <div class="gar-row"><span class="lbl">Teile</span><div class="chips" id="garParts"></div></div>
+              <div class="gar-row"><span class="lbl">Turm</span><input type="range" id="garYaw" min="-180" max="180" value="0"></div>
+              <div class="gar-row"><span class="lbl">Kanone</span><input type="range" id="garPitch" min="-10" max="25" value="0"></div>
+              <div class="gar-foot"><span id="garStats"></span><span>Ziehen = drehen · Rechtsklick = verschieben · Mausrad = Zoom</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- SOUNDS -->
+    <section class="page full" data-tab="sounds" id="page-sounds">
+      <iframe class="embed" id="hxFrame" title="Hexcall"></iframe>
+    </section>
+
+    <!-- MODS -->
+    <section class="page" data-tab="mods" id="page-mods">
+      <div class="page-head"><div><div class="eyebrow">Mods</div><h1>Mods hinzufügen</h1>
+        <div class="sub">Mod von jemand anderem heruntergeladen? Hier reinziehen – der Hub legt die Dateien in die richtigen Ordner der aktuellen WoT-Version und merkt sich, was dazugehört.</div></div>
+        <button class="btn ghost" id="modOpenDir"><svg><use href="#i-folder"/></svg>mods-Ordner</button></div>
+      <label class="drop" id="modDrop">
+        <input type="file" id="modFile" accept=".wotmod,.zip,.7z,.rar" multiple hidden>
+        <svg><use href="#i-upload"/></svg>
+        <b>.wotmod, .zip, .7z oder .rar hier ablegen</b><span>oder klicken zum Auswählen · WoT muss dafür geschlossen sein</span>
+      </label>
+      <div id="modDlWrap" hidden>
+        <div class="section-head"><h2>In deinen Downloads gefunden</h2></div>
+        <div class="card" style="padding:4px 0" id="modDl"></div>
+      </div>
+      <div class="section-head"><h2>Deine Mods</h2></div>
+      <div class="card" style="padding:4px 0" id="modList"></div>
+      <div class="note">Hinweise: Der Hub erkennt Archive mit den Ordnern <b>mods</b> oder <b>res_mods</b> (die Versionsnummer darin wird auf deine WoT-Version umgestellt) und lose <b>.wotmod</b>-Dateien.
+        Dateien, die eine Mod überschreibt, werden vorher gesichert und beim Entfernen zurückgelegt. Mods mit eigenem Installationsprogramm (.exe) musst du selbst installieren.
+        Mods enthalten Programmcode – nur Mods aus Quellen installieren, denen du vertraust.</div>
+    </section>
+
+    <!-- FOLDERS -->
+    <section class="page" data-tab="folders" id="page-folders">
+      <div class="page-head"><div><div class="eyebrow">Mods</div><h1>Mod-Ordner</h1><div class="sub">Pro WoT-Version legt das Spiel eigene Ordner an. Alte Versionen werden nicht mehr geladen.</div></div></div>
+      <div class="card" style="padding:4px 0" id="folderList"></div>
+      <div class="note" id="folderNote"></div>
+    </section>
+

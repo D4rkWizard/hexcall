@@ -1,5 +1,6 @@
 {
-  "name": "Hexcall",
-  "version": "6.2.0",
-  "repo": "D4rkWizard/hexcall"
+  "name": "Hexhub",
+  "version": "1.0.0",
+  "repo": "D4rkWizard/hexhub",
+  "services": "https://d4rkwizard.github.io/hexhub/services.json"
 }

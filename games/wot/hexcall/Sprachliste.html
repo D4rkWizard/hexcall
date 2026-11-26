@@ -1,0 +1,162 @@
+<!doctype html>
+<html lang="de"><head><meta charset="utf-8"><title>Sprachliste – Hexcall</title>
+<meta name="viewport" content="width=device-width, initial-scale=1"><style>
+:root { --bg:#0d0915; --panel:#181126; --panel2:#201732; --line:#33264e; --text:#f0eafb; --text2:#cfc3e6; --muted:#9d8fbf;
+  --accent:#b46cff; --accent2:#7c3aed; --hi:#cf9bff; --soft:rgba(180,108,255,.14); --ok:#4cc38a; --head:"Bahnschrift","Segoe UI",sans-serif; }
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--text); font: 15.5px/1.65 "Segoe UI", system-ui, sans-serif; }
+body::before { content: ""; position: fixed; inset: 0; pointer-events: none; background: radial-gradient(900px 480px at 90% -10%, rgba(124,58,237,.25), transparent 70%); }
+.wrap { max-width: 980px; margin: 0 auto; padding: 40px 32px 70px; position: relative; }
+header { display: flex; align-items: center; gap: 18px; margin-bottom: 8px; }
+.emblem { width: 62px; height: 62px; filter: drop-shadow(0 6px 18px rgba(180,108,255,.45)); flex: none; }
+.eyebrow { font-family: var(--head); color: var(--accent); letter-spacing: .2em; text-transform: uppercase; font-size: 12px; }
+h1 { font-family: var(--head); font-size: 34px; margin: 0; line-height: 1.15; }
+h2 { font-family: var(--head); font-size: 22px; margin: 38px 0 12px; display: flex; align-items: center; gap: 10px; }
+h2 .n { width: 30px; height: 30px; border-radius: 9px; display: inline-grid; place-items: center; background: var(--soft); color: var(--hi); font-size: 15px; }
+h3 { font-family: var(--head); font-size: 17px; margin: 22px 0 8px; }
+p { color: var(--text2); margin: 0 0 12px; }
+.lead { font-size: 16.5px; color: var(--text2); max-width: 720px; margin: 10px 0 22px; }
+a { color: var(--hi); }
+b, strong { color: var(--text); }
+.toc { display: flex; flex-wrap: wrap; gap: 8px; margin: 0 0 8px; }
+.toc a { text-decoration: none; padding: 6px 12px; border-radius: 20px; border: 1px solid var(--line); background: var(--panel); color: var(--text2); font-size: 13.5px; }
+.toc a:hover { border-color: var(--accent); color: var(--text); }
+.cards { display: grid; grid-template-columns: repeat(2, 1fr); gap: 14px; }
+.card { background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 16px 18px; }
+.card h3 { margin-top: 0; }
+.card p:last-child { margin-bottom: 0; }
+.steps { counter-reset: s; list-style: none; padding: 0; margin: 0 0 12px; display: grid; gap: 10px; }
+.steps li { counter-increment: s; position: relative; padding: 12px 16px 12px 56px; background: var(--panel); border: 1px solid var(--line); border-radius: 12px; color: var(--text2); }
+.steps li::before { content: counter(s); position: absolute; left: 14px; top: 11px; width: 28px; height: 28px; border-radius: 8px; display: grid; place-items: center; background: linear-gradient(180deg, var(--hi), var(--accent2)); color: #fff; font: 700 14px var(--head); }
+ul.dots { padding-left: 20px; color: var(--text2); margin: 0 0 12px; }
+ul.dots li { margin: 4px 0; }
+table { width: 100%; border-collapse: collapse; background: var(--panel); border: 1px solid var(--line); border-radius: 12px; overflow: hidden; margin: 0 0 14px; }
+th, td { text-align: left; padding: 10px 14px; border-bottom: 1px solid var(--line); vertical-align: top; }
+th { font-family: var(--head); font-size: 12.5px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); background: var(--panel2); }
+tr:last-child td { border-bottom: 0; }
+td { color: var(--text2); }
+code, kbd { font-family: "Cascadia Mono", Consolas, monospace; font-size: 13px; background: var(--panel2); border: 1px solid var(--line); border-radius: 6px; padding: 1px 6px; color: var(--hi); white-space: nowrap; }
+kbd { color: var(--text); }
+.note { border-left: 3px solid var(--accent); background: var(--soft); padding: 10px 14px; border-radius: 0 10px 10px 0; color: var(--text2); margin: 0 0 14px; }
+.warn { border-left-color: #e5484d; background: rgba(229,72,77,.1); }
+.bar { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin: 6px 0 18px; }
+.search { flex: 1; min-width: 240px; height: 40px; border-radius: 10px; border: 1px solid var(--line); background: var(--panel); color: var(--text); padding: 0 14px; font: inherit; outline: none; }
+.search:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--soft); }
+.btn { height: 40px; padding: 0 16px; border-radius: 10px; border: 1px solid var(--accent); background: linear-gradient(180deg, var(--hi), var(--accent2)); color: #fff; font: 600 14px "Segoe UI", sans-serif; cursor: pointer; }
+.btn.ghost { background: transparent; color: var(--hi); border-color: var(--line); }
+.file { font-family: "Cascadia Mono", Consolas, monospace; font-size: 12.5px; color: var(--hi); overflow-wrap: anywhere; }
+.copy { border: 0; background: none; color: var(--muted); cursor: pointer; font-size: 13px; padding: 0 0 0 6px; }
+.copy:hover { color: var(--hi); }
+.line { color: #f2dcff; font-style: italic; }
+.grp td { background: var(--panel2); font: 600 12px var(--head); letter-spacing: .12em; text-transform: uppercase; color: var(--accent); }
+.count { color: var(--muted); font-size: 13px; }
+footer { margin-top: 40px; color: var(--muted); font-size: 13px; text-align: center; }
+@media (max-width: 760px) { .cards { grid-template-columns: 1fr; } }
+@media print {
+  :root { --bg:#fff; --panel:#fff; --panel2:#f3f0f8; --line:#d9d2e6; --text:#111; --text2:#333; --muted:#666; --hi:#6d28d9; --soft:#f3ecff; }
+  body::before, .bar, .toc, .copy, .noprint { display: none !important; }
+  .wrap { padding: 0; max-width: none; }
+  h2 { break-after: avoid; } tr, .card, .steps li { break-inside: avoid; }
+  .line { color: #333; }
+}</style></head>
+<body><div class="wrap">
+<header><svg viewBox="0 0 120 120" class="emblem" aria-hidden="true"><defs>
+<radialGradient id="o" cx=".5" cy=".5" r=".5"><stop offset="0" stop-color="#fff"/><stop offset=".35" stop-color="#cf9bff"/><stop offset="1" stop-color="#7c3aed" stop-opacity="0"/></radialGradient>
+<linearGradient id="h" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#cf9bff"/><stop offset="1" stop-color="#7c3aed"/></linearGradient></defs>
+<path fill="url(#h)" d="M60 6 C46 6 36 14 31 26 L22 14 L24 36 C19 45 17 55 17 64 C17 82 23 96 30 108 L47 100 C41 88 39 76 40 63 C42 43 50 33 60 33 C70 33 78 43 80 63 C81 76 79 88 73 100 L90 108 C97 96 103 82 103 64 C103 55 101 45 96 36 L98 14 L89 26 C84 14 74 6 60 6Z"/>
+<path fill="#0b0613" d="M60 33 C50 33 42 43 40 63 C42 77 50 86 60 88 C70 86 78 77 80 63 C78 43 70 33 60 33Z"/>
+<path fill="#cf9bff" d="M47 59 L56 62 L55 65 L48 63Z M73 59 L64 62 L65 65 L72 63Z"/>
+<circle cx="60" cy="98" r="21" fill="url(#o)" opacity=".55"/><circle cx="60" cy="98" r="10" fill="url(#o)"/>
+<path fill="url(#h)" d="M38 104 C40 94 46 88 52 88 L50 100 C48 106 44 110 38 110Z M82 104 C80 94 74 88 68 88 L70 100 C72 106 76 110 82 110Z"/></svg><div><div class="eyebrow">Was du aufnehmen kannst</div><h1>Sprachliste</h1></div></header>
+
+<p class="lead">Alle 55 Ansagen und 12 Effekte. Am einfachsten nimmst du sie direkt im <b>Aufnahme-Studio</b> des Clients auf – diese Liste hilft beim Vorbereiten oder wenn du fertige Sounddateien selbst in den Mod-Ordner legst.</p>
+<p class="count"><a href="Lines.html">English version</a></p>
+<div class="note">Dateien gehören nach <code>%APPDATA%\Hexcall\mods\&lt;Name&gt;\stimme</code> bzw. <code>…\effekte</code> (im Client: Meine Mods → Ordner-Symbol). Varianten: <span class="file">name_2.wav</span>, <span class="file">name_3.wav</span> … – das Spiel wählt zufällig. Was fehlt, bleibt original. Die Beispielsätze sind nur Vorschläge.</div>
+<div class="bar"><input class="search" id="q" placeholder="Suchen, z. B. „Kette“, „Feuer“, „Durchschlag“ …"><button class="btn ghost" onclick="window.print()">Drucken / als PDF</button></div>
+<nav class="toc"><a href="#voice">Stimme (55)</a><a href="#effects">Effekte (12)</a></nav>
+
+<h2 id="voice"><span class="n">1</span>Stimme <span class="count">(55 Ansagen)</span></h2>
+<table id="t1"><tr><th style="width:30%">Wann</th><th style="width:32%">Beispielsatz</th><th>Dateiname</th></tr><tr class="grp"><td colspan="3">Gefechtsbeginn</td></tr><tr data-s="start_battle gefechtsbeginn los geht's, männer! volle fahrt voraus!"><td>Gefechtsbeginn</td><td class="line">„Los geht's, Männer! Volle Fahrt voraus!“</td>
+    <td><span class="file">start_battle.wav</span><button class="copy" data-c="start_battle.wav" title="Dateiname kopieren">⧉</button></td></tr><tr class="grp"><td colspan="3">Deine Treffer</td></tr><tr data-s="enemy_hp_damaged_by_projectile_by_player dein schuss hat durchschlagen durchschlag!"><td>Dein Schuss hat durchschlagen</td><td class="line">„Durchschlag!“</td>
+    <td><span class="file">enemy_hp_damaged_by_projectile_by_player.wav</span><button class="copy" data-c="enemy_hp_damaged_by_projectile_by_player.wav" title="Dateiname kopieren">⧉</button></td></tr><tr data-s="enemy_hp_damaged_by_explosion_at_direct_hit_by_player treffer mit he, schaden verursacht volltreffer!"><td>Treffer mit HE, Schaden verursacht</td><td class="line">„Volltreffer!“</td>
+    <td><span class="file">enemy_hp_damaged_by_explosion_at_direct_hit_by_player.wav</span><button class="copy" data-c="enemy_hp_damaged_by_explosion_at_direct_hit_by_player.wav" title="Dateiname kopieren">⧉</button></td></tr><tr data-s="damage_by_near_explosion_by_player schaden durch splitter (he knapp daneben) splitter haben ihn erwischt!"><td>Schaden durch Splitter (HE knapp daneben)</td><td class="line">„Splitter haben ihn erwischt!“</td>
+    <td><span class="file">damage_by_near_explosion_by_player.wav</span><button class="copy" data-c="damage_by_near_explosion_by_player.wav" title="Dateiname kopieren">⧉</button></td></tr><tr data-s="enemy_hp_damaged_by_projectile_and_chassis_damaged_by_player durchschlag + gegner-kette beschädigt durchschlag, kette ist runter!"><td>Durchschlag + Gegner-Kette beschädigt</td><td class="line">„Durchschlag, Kette ist runter!“</td>
+    <td><span class="file">enemy_hp_damaged_by_projectile_and_chassis_damaged_by_player.wav</span><button class="copy" data-c="enemy_hp_damaged_by_projectile_and_chassis_damaged_by_player.wav" title="Dateiname kopieren">⧉</button></td></tr><tr data-s="enemy_hp_damaged_by_projectile_and_gun_damaged_by_player durchschlag + gegner-kanone beschädigt durchschlag, seine kanone ist hin!"><td>Durchschlag + Gegner-Kanone beschädigt</td><td class="line">„Durchschlag, seine Kanone ist hin!“</td>
+    <td><span class="file">enemy_hp_damaged_by_projectile_and_gun_damaged_by_player.wav</span><button class="copy" data-c="enemy_hp_damaged_by_projectile_and_gun_damaged_by_player.wav" title="Dateiname kopieren">⧉</button></td></tr><tr data-s="armor_not_pierced_by_player kein durchschlag nicht durchgekommen!"><td>Kein Durchschlag</td><td class="line">„Nicht durchgekommen!“</td>
+    <td><span class="file">armor_not_pierced_by_player.wav</span><button class="copy" data-c="armor_not_pierced_by_player.wav" title="Dateiname kopieren">⧉</button></td></tr><tr data-s="armor_ricochet_by_player abpraller abgeprallt!"><td>Abpraller</td><td class="line">„Abgeprallt!“</td>
+    <td><span class="file">armor_ricochet_by_player.wav</span><button class="copy" data-c="armor_ricochet_by_player.wav" title="Dateiname kopieren">⧉</button></td></tr><tr data-s="enemy_no_hp_damage_at_attempt_and_chassis_damaged_by_player kein durchschlag, aber kette getroffen kein schaden, aber die kette ist ab!"><td>Kein Durchschlag, aber Kette getroffen</td><td class="line">„Kein Schaden, aber die Kette ist ab!“</td>
+    <td><span class="file">enemy_no_hp_damage_at_attempt_and_chassis_damaged_by_player.wav</span><button class="copy" data-c="enemy_no_hp_damage_at_attempt_and_chassis_damaged_by_player.wav" title="Dateiname kopieren">⧉</button></td></tr><tr data-s="enemy_no_hp_damage_at_attempt_and_gun_damaged_by_player kein durchschlag, aber kanone beschädigt kein schaden, aber seine kanone ist beschädigt!"><td>Kein Durchschlag, aber Kanone beschädigt</td><td class="line">„Kein Schaden, aber seine Kanone ist beschädigt!“</td>
+    <td><span class="file">enemy_no_hp_damage_at_attempt_and_gun_damaged_by_player.wav</span><button class="copy" data-c="enemy_no_hp_damage_at_attempt_and_gun_damaged_by_player.wav" title="Dateiname kopieren">⧉</button></td></tr><tr data-s="enemy_no_hp_damage_at_no_attempt_by_player treffer ohne schaden (z. b. kette/schürze) treffer, aber kein schaden."><td>Treffer ohne Schaden (z. B. Kette/Schürze)</td><td class="line">„Treffer, aber kein Schaden.“</td>
+    <td><span class="file">enemy_no_hp_damage_at_no_attempt_by_player.wav</span><button class="copy" data-c="enemy_no_hp_damage_at_no_attempt_by_player.wav" title="Dateiname kopieren">⧉</button></td></tr><tr data-s="enemy_no_hp_damage_at_no_attempt_and_chassis_damaged_by_player kette getroffen, kein schaden kette getroffen!"><td>Kette getroffen, kein Schaden</td><td class="line">„Kette getroffen!“</td>
+    <td><span class="file">enemy_no_hp_damage_at_no_attempt_and_chassis_damaged_by_player.wav</span><button class="copy" data-c="enemy_no_hp_damage_at_no_attempt_and_chassis_damaged_by_player.wav" title="Dateiname kopieren">⧉</button></td></tr><tr data-s="enemy_no_hp_damage_at_no_attempt_and_gun_damaged_by_player kanone getroffen, kein schaden seine kanone ist beschädigt!"><td>Kanone getroffen, kein Schaden</td><td class="line">„Seine Kanone ist beschädigt!“</td>
+    <td><span class="file">enemy_no_hp_damage_at_no_attempt_and_gun_damaged_by_player.wav</span><button class="copy" data-c="enemy_no_hp_damage_at_no_attempt_and_gun_damaged_by_player.wav" title="Dateiname kopieren">⧉</button></td></tr><tr data-s="enemy_fire_started_by_player du hast den gegner in brand gesetzt er brennt!"><td>Du hast den Gegner in Brand gesetzt</td><td class="line">„Er brennt!“</td>
+    <td><span class="file">enemy_fire_started_by_player.wav</span><button class="copy" data-c="enemy_fire_started_by_player.wav" title="Dateiname kopieren">⧉</button></td></tr><tr data-s="enemy_killed_by_player du hast einen gegner zerstört ziel zerstört!"><td>Du hast einen Gegner zerstört</td><td class="line">„Ziel zerstört!“</td>
+    <td><span class="file">enemy_killed_by_player.wav</span><button class="copy" data-c="enemy_killed_by_player.wav" title="Dateiname kopieren">⧉</button></td></tr><tr data-s="enemy_killed ein gegner wurde zerstört (nicht von dir) einer weniger!"><td>Ein Gegner wurde zerstört (nicht von dir)</td><td class="line">„Einer weniger!“</td>
+    <td><span class="file">enemy_killed.wav</span><button class="copy" data-c="enemy_killed.wav" title="Dateiname kopieren">⧉</button></td></tr><tr data-s="ally_killed_by_player du hast einen verbündeten zerstört was machst du denn?! das war einer von uns!"><td>Du hast einen Verbündeten zerstört</td><td class="line">„Was machst du denn?! Das war einer von uns!“</td>
+    <td><span class="file">ally_killed_by_player.wav</span><button class="copy" data-c="ally_killed_by_player.wav" title="Dateiname kopieren">⧉</button></td></tr><tr class="grp"><td colspan="3">Zielerfassung</td></tr><tr data-s="target_captured ziel aufgeschaltet (autoaim) ziel erfasst."><td>Ziel aufgeschaltet (Autoaim)</td><td class="line">„Ziel erfasst.“</td>
+    <td><span class="file">target_captured.wav</span><button class="copy" data-c="target_captured.wav" title="Dateiname kopieren">⧉</button></td></tr><tr data-s="target_lost ziel verloren ziel verloren."><td>Ziel verloren</td><td class="line">„Ziel verloren.“</td>
+    <td><span class="file">target_lost.wav</span><button class="copy" data-c="target_lost.wav" title="Dateiname kopieren">⧉</button></td></tr><tr data-s="target_unlocked zielaufschaltung gelöst ziel freigegeben."><td>Zielaufschaltung gelöst</td><td class="line">„Ziel freigegeben.“</td>
+    <td><span class="file">target_unlocked.wav</span><button class="copy" data-c="target_unlocked.wav" title="Dateiname kopieren">⧉</button></td></tr><tr class="grp"><td colspan="3">Schäden am Panzer</td></tr><tr data-s="fire_started dein panzer brennt feuer! wir brennen!"><td>Dein Panzer brennt</td><td class="line">„Feuer! Wir brennen!“</td>
+    <td><span class="file">fire_started.wav</span><button class="copy" data-c="fire_started.wav" title="Dateiname kopieren">⧉</button></td></tr><tr data-s="fire_stopped feuer gelöscht feuer ist aus."><td>Feuer gelöscht</td><td class="line">„Feuer ist aus.“</td>
+    <td><span class="file">fire_stopped.wav</span><button class="copy" data-c="fire_stopped.wav" title="Dateiname kopieren">⧉</button></td></tr><tr data-s="ammo_bay_damaged munitionslager beschädigt munitionslager getroffen!"><td>Munitionslager beschädigt</td><td class="line">„Munitionslager getroffen!“</td>
+    <td><span class="file">ammo_bay_damaged.wav</span><button class="copy" data-c="ammo_bay_damaged.wav" title="Dateiname kopieren">⧉</button></td></tr><tr data-s="fuel_tank_damaged treibstofftank beschädigt tank ist leck!"><td>Treibstofftank beschädigt</td><td class="line">„Tank ist leck!“</td>
+    <td><span class="file">fuel_tank_damaged.wav</span><button class="copy" data-c="fuel_tank_damaged.wav" title="Dateiname kopieren">⧉</button></td></tr><tr data-s="engine_damaged motor beschädigt motor beschädigt!"><td>Motor beschädigt</td><td class="line">„Motor beschädigt!“</td>
+    <td><span class="file">engine_damaged.wav</span><button class="copy" data-c="engine_damaged.wav" title="Dateiname kopieren">⧉</button></td></tr><tr data-s="engine_destroyed motor zerstört motor ist hin!"><td>Motor zerstört</td><td class="line">„Motor ist hin!“</td>
+    <td><span class="file">engine_destroyed.wav</span><button class="copy" data-c="engine_destroyed.wav" title="Dateiname kopieren">⧉</button></td></tr><tr data-s="engine_functional motor repariert motor läuft wieder."><td>Motor repariert</td><td class="line">„Motor läuft wieder.“</td>
+    <td><span class="file">engine_functional.wav</span><button class="copy" data-c="engine_functional.wav" title="Dateiname kopieren">⧉</button></td></tr><tr data-s="gun_damaged kanone beschädigt kanone beschädigt!"><td>Kanone beschädigt</td><td class="line">„Kanone beschädigt!“</td>
+    <td><span class="file">gun_damaged.wav</span><button class="copy" data-c="gun_damaged.wav" title="Dateiname kopieren">⧉</button></td></tr><tr data-s="gun_destroyed kanone zerstört kanone zerstört!"><td>Kanone zerstört</td><td class="line">„Kanone zerstört!“</td>
+    <td><span class="file">gun_destroyed.wav</span><button class="copy" data-c="gun_destroyed.wav" title="Dateiname kopieren">⧉</button></td></tr><tr data-s="gun_functional kanone repariert kanone wieder einsatzbereit."><td>Kanone repariert</td><td class="line">„Kanone wieder einsatzbereit.“</td>
+    <td><span class="file">gun_functional.wav</span><button class="copy" data-c="gun_functional.wav" title="Dateiname kopieren">⧉</button></td></tr><tr data-s="track_damaged kette beschädigt kette beschädigt!"><td>Kette beschädigt</td><td class="line">„Kette beschädigt!“</td>
+    <td><span class="file">track_damaged.wav</span><button class="copy" data-c="track_damaged.wav" title="Dateiname kopieren">⧉</button></td></tr><tr data-s="track_destroyed kette zerstört (bewegungsunfähig) kette ist ab, wir stehen!"><td>Kette zerstört (bewegungsunfähig)</td><td class="line">„Kette ist ab, wir stehen!“</td>
+    <td><span class="file">track_destroyed.wav</span><button class="copy" data-c="track_destroyed.wav" title="Dateiname kopieren">⧉</button></td></tr><tr data-s="track_functional kette repariert kette repariert."><td>Kette repariert</td><td class="line">„Kette repariert.“</td>
+    <td><span class="file">track_functional.wav</span><button class="copy" data-c="track_functional.wav" title="Dateiname kopieren">⧉</button></td></tr><tr data-s="track_functional_can_move kette repariert, wieder fahrbereit wir können wieder fahren!"><td>Kette repariert, wieder fahrbereit</td><td class="line">„Wir können wieder fahren!“</td>
+    <td><span class="file">track_functional_can_move.wav</span><button class="copy" data-c="track_functional_can_move.wav" title="Dateiname kopieren">⧉</button></td></tr><tr data-s="turret_rotator_damaged turmdrehkranz beschädigt turmdrehkranz beschädigt!"><td>Turmdrehkranz beschädigt</td><td class="line">„Turmdrehkranz beschädigt!“</td>
+    <td><span class="file">turret_rotator_damaged.wav</span><button class="copy" data-c="turret_rotator_damaged.wav" title="Dateiname kopieren">⧉</button></td></tr><tr data-s="turret_rotator_destroyed turmdrehkranz zerstört turm klemmt!"><td>Turmdrehkranz zerstört</td><td class="line">„Turm klemmt!“</td>
+    <td><span class="file">turret_rotator_destroyed.wav</span><button class="copy" data-c="turret_rotator_destroyed.wav" title="Dateiname kopieren">⧉</button></td></tr><tr data-s="turret_rotator_functional turmdrehkranz repariert turm dreht wieder."><td>Turmdrehkranz repariert</td><td class="line">„Turm dreht wieder.“</td>
+    <td><span class="file">turret_rotator_functional.wav</span><button class="copy" data-c="turret_rotator_functional.wav" title="Dateiname kopieren">⧉</button></td></tr><tr data-s="surveying_devices_damaged optik beschädigt optik beschädigt!"><td>Optik beschädigt</td><td class="line">„Optik beschädigt!“</td>
+    <td><span class="file">surveying_devices_damaged.wav</span><button class="copy" data-c="surveying_devices_damaged.wav" title="Dateiname kopieren">⧉</button></td></tr><tr data-s="surveying_devices_destroyed optik zerstört optik ist hin, wir sind blind!"><td>Optik zerstört</td><td class="line">„Optik ist hin, wir sind blind!“</td>
+    <td><span class="file">surveying_devices_destroyed.wav</span><button class="copy" data-c="surveying_devices_destroyed.wav" title="Dateiname kopieren">⧉</button></td></tr><tr data-s="surveying_devices_functional optik repariert optik repariert."><td>Optik repariert</td><td class="line">„Optik repariert.“</td>
+    <td><span class="file">surveying_devices_functional.wav</span><button class="copy" data-c="surveying_devices_functional.wav" title="Dateiname kopieren">⧉</button></td></tr><tr data-s="radio_damaged funkgerät beschädigt funk ist ausgefallen!"><td>Funkgerät beschädigt</td><td class="line">„Funk ist ausgefallen!“</td>
+    <td><span class="file">radio_damaged.wav</span><button class="copy" data-c="radio_damaged.wav" title="Dateiname kopieren">⧉</button></td></tr><tr class="grp"><td colspan="3">Besatzung</td></tr><tr data-s="commander_killed kommandant ausgefallen der kommandant ist verwundet!"><td>Kommandant ausgefallen</td><td class="line">„Der Kommandant ist verwundet!“</td>
+    <td><span class="file">commander_killed.wav</span><button class="copy" data-c="commander_killed.wav" title="Dateiname kopieren">⧉</button></td></tr><tr data-s="driver_killed fahrer ausgefallen fahrer ausgefallen!"><td>Fahrer ausgefallen</td><td class="line">„Fahrer ausgefallen!“</td>
+    <td><span class="file">driver_killed.wav</span><button class="copy" data-c="driver_killed.wav" title="Dateiname kopieren">⧉</button></td></tr><tr data-s="gunner_killed richtschütze ausgefallen richtschütze ausgefallen!"><td>Richtschütze ausgefallen</td><td class="line">„Richtschütze ausgefallen!“</td>
+    <td><span class="file">gunner_killed.wav</span><button class="copy" data-c="gunner_killed.wav" title="Dateiname kopieren">⧉</button></td></tr><tr data-s="loader_killed ladeschütze ausgefallen ladeschütze ausgefallen!"><td>Ladeschütze ausgefallen</td><td class="line">„Ladeschütze ausgefallen!“</td>
+    <td><span class="file">loader_killed.wav</span><button class="copy" data-c="loader_killed.wav" title="Dateiname kopieren">⧉</button></td></tr><tr data-s="radioman_killed funker ausgefallen funker ausgefallen!"><td>Funker ausgefallen</td><td class="line">„Funker ausgefallen!“</td>
+    <td><span class="file">radioman_killed.wav</span><button class="copy" data-c="radioman_killed.wav" title="Dateiname kopieren">⧉</button></td></tr><tr data-s="crew_deactivated gesamte besatzung ausgefallen alle ausgefallen…"><td>Gesamte Besatzung ausgefallen</td><td class="line">„Alle ausgefallen…“</td>
+    <td><span class="file">crew_deactivated.wav</span><button class="copy" data-c="crew_deactivated.wav" title="Dateiname kopieren">⧉</button></td></tr><tr data-s="vehicle_destroyed dein panzer wurde zerstört wir sind erledigt!"><td>Dein Panzer wurde zerstört</td><td class="line">„Wir sind erledigt!“</td>
+    <td><span class="file">vehicle_destroyed.wav</span><button class="copy" data-c="vehicle_destroyed.wav" title="Dateiname kopieren">⧉</button></td></tr><tr class="grp"><td colspan="3">Zug</td></tr><tr data-s="dp_platoon_created zug erstellt (im gefecht) zug gebildet."><td>Zug erstellt (im Gefecht)</td><td class="line">„Zug gebildet.“</td>
+    <td><span class="file">dp_platoon_created.wav</span><button class="copy" data-c="dp_platoon_created.wav" title="Dateiname kopieren">⧉</button></td></tr><tr data-s="dp_platoon_joined du bist einem zug beigetreten wir sind jetzt im zug."><td>Du bist einem Zug beigetreten</td><td class="line">„Wir sind jetzt im Zug.“</td>
+    <td><span class="file">dp_platoon_joined.wav</span><button class="copy" data-c="dp_platoon_joined.wav" title="Dateiname kopieren">⧉</button></td></tr><tr data-s="dp_player_joined_platoon spieler ist deinem zug beigetreten verstärkung im zug!"><td>Spieler ist deinem Zug beigetreten</td><td class="line">„Verstärkung im Zug!“</td>
+    <td><span class="file">dp_player_joined_platoon.wav</span><button class="copy" data-c="dp_player_joined_platoon.wav" title="Dateiname kopieren">⧉</button></td></tr><tr data-s="dp_left_platoon spieler hat den zug verlassen er hat den zug verlassen."><td>Spieler hat den Zug verlassen</td><td class="line">„Er hat den Zug verlassen.“</td>
+    <td><span class="file">dp_left_platoon.wav</span><button class="copy" data-c="dp_left_platoon.wav" title="Dateiname kopieren">⧉</button></td></tr><tr data-s="dp_been_excluded_platoon du wurdest aus dem zug entfernt wir wurden rausgeworfen."><td>Du wurdest aus dem Zug entfernt</td><td class="line">„Wir wurden rausgeworfen.“</td>
+    <td><span class="file">dp_been_excluded_platoon.wav</span><button class="copy" data-c="dp_been_excluded_platoon.wav" title="Dateiname kopieren">⧉</button></td></tr><tr data-s="dp_platoon_dismissed zug aufgelöst zug aufgelöst."><td>Zug aufgelöst</td><td class="line">„Zug aufgelöst.“</td>
+    <td><span class="file">dp_platoon_dismissed.wav</span><button class="copy" data-c="dp_platoon_dismissed.wav" title="Dateiname kopieren">⧉</button></td></tr><tr data-s="dp_assistance_been_requested zugkamerad bittet um hilfe unser zugkamerad braucht hilfe!"><td>Zugkamerad bittet um Hilfe</td><td class="line">„Unser Zugkamerad braucht Hilfe!“</td>
+    <td><span class="file">dp_assistance_been_requested.wav</span><button class="copy" data-c="dp_assistance_been_requested.wav" title="Dateiname kopieren">⧉</button></td></tr></table>
+
+<h2 id="effects"><span class="n">2</span>Effekte <span class="count">(12)</span></h2>
+<table id="t2"><tr><th style="width:30%">Effekt</th><th style="width:40%">So klingt es gut</th><th>Dateiname</th></tr><tr data-s="kanone_eigen kanone (dein panzer) dein schuss kurzer, kräftiger knall, z. b. „bumm!“ oder klatschen ins mikro (0,5–2 s)"><td><b>Kanone (dein Panzer)</b><br>Dein Schuss</td><td>Kurzer, kräftiger Knall, z. B. „Bumm!“ oder Klatschen ins Mikro (0,5–2 s)</td>
+    <td><span class="file">kanone_eigen.wav</span><button class="copy" data-c="kanone_eigen.wav" title="Dateiname kopieren">⧉</button></td></tr><tr data-s="kanone_gegner kanone (andere panzer) schüsse von gegnern und verbündeten wie oben, gern etwas dumpfer"><td><b>Kanone (andere Panzer)</b><br>Schüsse von Gegnern und Verbündeten</td><td>Wie oben, gern etwas dumpfer</td>
+    <td><span class="file">kanone_gegner.wav</span><button class="copy" data-c="kanone_gegner.wav" title="Dateiname kopieren">⧉</button></td></tr><tr data-s="autokanone_eigen schnellfeuerkanone (dein panzer) schüsse von autokanonen sehr kurzer knall (unter 0,3 s), wird schnell wiederholt"><td><b>Schnellfeuerkanone (dein Panzer)</b><br>Schüsse von Autokanonen</td><td>Sehr kurzer Knall (unter 0,3 s), wird schnell wiederholt</td>
+    <td><span class="file">autokanone_eigen.wav</span><button class="copy" data-c="autokanone_eigen.wav" title="Dateiname kopieren">⧉</button></td></tr><tr data-s="autokanone_gegner schnellfeuerkanone (andere) autokanonen anderer panzer sehr kurzer knall"><td><b>Schnellfeuerkanone (andere)</b><br>Autokanonen anderer Panzer</td><td>Sehr kurzer Knall</td>
+    <td><span class="file">autokanone_gegner.wav</span><button class="copy" data-c="autokanone_gegner.wav" title="Dateiname kopieren">⧉</button></td></tr><tr data-s="motor_eigen motor (dein panzer) motorgeräusch, läuft in schleife gleichmäßiges brummen ohne anfang/ende, 2–4 s. die tonhöhe ändert das spiel selbst"><td><b>Motor (dein Panzer)</b><br>Motorgeräusch, läuft in Schleife</td><td>Gleichmäßiges Brummen ohne Anfang/Ende, 2–4 s. Die Tonhöhe ändert das Spiel selbst</td>
+    <td><span class="file">motor_eigen.wav</span><button class="copy" data-c="motor_eigen.wav" title="Dateiname kopieren">⧉</button></td></tr><tr data-s="motor_gegner motor (andere panzer) motoren anderer panzer gleichmäßiges brummen, 2–4 s"><td><b>Motor (andere Panzer)</b><br>Motoren anderer Panzer</td><td>Gleichmäßiges Brummen, 2–4 s</td>
+    <td><span class="file">motor_gegner.wav</span><button class="copy" data-c="motor_gegner.wav" title="Dateiname kopieren">⧉</button></td></tr><tr data-s="turm turm drehen während der turm sich dreht (schleife) gleichmäßiges surren, 1–3 s"><td><b>Turm drehen</b><br>Während der Turm sich dreht (Schleife)</td><td>Gleichmäßiges Surren, 1–3 s</td>
+    <td><span class="file">turm.wav</span><button class="copy" data-c="turm.wav" title="Dateiname kopieren">⧉</button></td></tr><tr data-s="ketten ketten / fahrwerk rasseln der ketten beim fahren (schleife) rasseln oder klappern, 2–3 s"><td><b>Ketten / Fahrwerk</b><br>Rasseln der Ketten beim Fahren (Schleife)</td><td>Rasseln oder Klappern, 2–3 s</td>
+    <td><span class="file">ketten.wav</span><button class="copy" data-c="ketten.wav" title="Dateiname kopieren">⧉</button></td></tr><tr data-s="einschlag_he he-einschlag explosion von sprenggranaten in der nähe dumpfer knall, 1–2 s"><td><b>HE-Einschlag</b><br>Explosion von Sprenggranaten in der Nähe</td><td>Dumpfer Knall, 1–2 s</td>
+    <td><span class="file">einschlag_he.wav</span><button class="copy" data-c="einschlag_he.wav" title="Dateiname kopieren">⧉</button></td></tr><tr data-s="munitionsexplosion munitionsexplosion ein panzer fliegt in die luft (munition/treibstoff) großer knall, 1–3 s"><td><b>Munitionsexplosion</b><br>Ein Panzer fliegt in die Luft (Munition/Treibstoff)</td><td>Großer Knall, 1–3 s</td>
+    <td><span class="file">munitionsexplosion.wav</span><button class="copy" data-c="munitionsexplosion.wav" title="Dateiname kopieren">⧉</button></td></tr><tr data-s="zerstoert panzer zerstört ein panzer wird zerstört (ohne explosion) krachen, ächzen, 1–2 s"><td><b>Panzer zerstört</b><br>Ein Panzer wird zerstört (ohne Explosion)</td><td>Krachen, Ächzen, 1–2 s</td>
+    <td><span class="file">zerstoert.wav</span><button class="copy" data-c="zerstoert.wav" title="Dateiname kopieren">⧉</button></td></tr><tr data-s="feuer feuer am panzer ein panzer brennt (schleife) knistern, rauschen, 2–3 s"><td><b>Feuer am Panzer</b><br>Ein Panzer brennt (Schleife)</td><td>Knistern, Rauschen, 2–3 s</td>
+    <td><span class="file">feuer.wav</span><button class="copy" data-c="feuer.wav" title="Dateiname kopieren">⧉</button></td></tr></table>
+
+<footer>Hexcall · a DarkWizard production · erstellt am 26.11.2026</footer>
+</div><script>
+const q = document.getElementById('q');
+q.addEventListener('input', () => {
+  const v = q.value.trim().toLowerCase();
+  document.querySelectorAll('tr[data-s]').forEach((r) => (r.style.display = !v || r.dataset.s.includes(v) ? '' : 'none'));
+  document.querySelectorAll('tr.grp').forEach((g) => { let n = g.nextElementSibling, any = false; while (n && !n.classList.contains('grp')) { if (n.style.display !== 'none') any = true; n = n.nextElementSibling; } g.style.display = any ? '' : 'none'; });
+});
+document.addEventListener('click', (e) => {
+  const b = e.target.closest('.copy'); if (!b) return;
+  navigator.clipboard.writeText(b.dataset.c).then(() => { b.textContent = '✓'; setTimeout(() => (b.textContent = '⧉'), 1200); });
+});</script></body></html>

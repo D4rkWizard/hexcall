@@ -1,0 +1,23 @@
+/* osu! module */
+.page.wide { max-width: 1500px; }
+.olist { display: flex; flex-direction: column; gap: 8px; }
+.orep { display: grid; grid-template-columns: 120px 1fr auto auto; gap: 16px; align-items: center; padding: 8px 12px 8px 8px; border-radius: 12px; background: var(--panel2); border: 1px solid var(--line); position: relative; overflow: hidden; }
+.orep:hover { border-color: color-mix(in srgb, var(--g) 45%, var(--line)); }
+.orep .thumb { width: 120px; height: 62px; border-radius: 8px; background: linear-gradient(135deg, color-mix(in srgb, var(--g) 35%, #1a1028), #0c0814) center/cover no-repeat; position: relative; }
+.orep .thumb .stars { position: absolute; left: 6px; bottom: 5px; font: 600 11px var(--head); color: #fff; background: rgba(0,0,0,.55); border-radius: 6px; padding: 0 6px; }
+.orep .main { min-width: 0; }
+.orep .t { font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.orep .t small { color: var(--muted); font-weight: 400; }
+.orep .m { color: var(--muted); font-size: 12.5px; display: flex; gap: 10px; flex-wrap: wrap; align-items: center; margin-top: 2px; }
+.orep .nums { display: flex; gap: 18px; font-variant-numeric: tabular-nums; text-align: right; }
+.orep .nums div { display: flex; flex-direction: column; font-size: 11px; color: var(--muted); min-width: 52px; }
+.orep .nums b { font: 600 15px var(--head); color: var(--text); }
+.orep .nums .miss { color: var(--bad); }
+.orep .acts { display: flex; gap: 6px; }
+.mods { display: inline-flex; gap: 3px; }
+.mods i { font: 700 10.5px var(--head); font-style: normal; letter-spacing: .04em; padding: 1px 6px; border-radius: 5px; background: color-mix(in srgb, var(--g) 20%, transparent); color: color-mix(in srgb, var(--g) 70%, #fff); border: 1px solid color-mix(in srgb, var(--g) 40%, transparent); }
+.src { font: 600 10px var(--head); letter-spacing: .1em; text-transform: uppercase; padding: 1px 6px; border-radius: 5px; border: 1px solid var(--line2); color: var(--dim); }
+.grade { font: 800 15px var(--head); width: 22px; text-align: center; }
+.grade.SS, .grade.X { color: #ffe27a; } .grade.S { color: #ffcf5a; } .grade.A { color: #7ee08a; } .grade.B { color: #6cb8ff; } .grade.C { color: #c48cff; } .grade.D { color: #ff7b7b; }
+
+@media (max-width: 1250px) { .orep .nums div:nth-child(n+3) { display: none; } }

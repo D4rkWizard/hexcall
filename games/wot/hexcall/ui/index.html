@@ -1,0 +1,401 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<title>Hexcall – WoT Sound-Mods</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="app.css">
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <symbol id="i-home" viewBox="0 0 24 24"><path d="M3 11.5 12 4l9 7.5"/><path d="M5.5 10v9.5h13V10"/><path d="M10 19.5v-5h4v5"/></symbol>
+    <symbol id="i-mods" viewBox="0 0 24 24"><rect x="3.5" y="3.5" width="7" height="7" rx="1.5"/><rect x="13.5" y="3.5" width="7" height="7" rx="1.5"/><rect x="3.5" y="13.5" width="7" height="7" rx="1.5"/><path d="M17 13.5v7M13.5 17h7"/></symbol>
+    <symbol id="i-mic" viewBox="0 0 24 24"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5.5 11a6.5 6.5 0 0 0 13 0"/><path d="M12 17.5V21M8.5 21h7"/></symbol>
+    <symbol id="i-sliders" viewBox="0 0 24 24"><path d="M4 7h10M18 7h2M4 17h4M12 17h8"/><circle cx="16" cy="7" r="2"/><circle cx="10" cy="17" r="2"/></symbol>
+    <symbol id="i-help" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><path d="M9.6 9.3a2.5 2.5 0 1 1 3.4 2.4c-.6.3-1 .8-1 1.5v.6"/><path d="M12 16.6v.4"/></symbol>
+    <symbol id="i-play" viewBox="0 0 24 24"><path d="M8 5.5v13l10.5-6.5z"/></symbol>
+    <symbol id="i-stop" viewBox="0 0 24 24"><rect x="6.5" y="6.5" width="11" height="11" rx="1.5"/></symbol>
+    <symbol id="i-trash" viewBox="0 0 24 24"><path d="M4.5 7h15M9.5 7V4.5h5V7M6.5 7l1 12.5h9l1-12.5"/><path d="M10.5 10.5v6M13.5 10.5v6"/></symbol>
+    <symbol id="i-left" viewBox="0 0 24 24"><path d="M14.5 6 8.5 12l6 6"/></symbol>
+    <symbol id="i-right" viewBox="0 0 24 24"><path d="m9.5 6 6 6-6 6"/></symbol>
+    <symbol id="i-skip" viewBox="0 0 24 24"><path d="m6 6 6 6-6 6M13 6l6 6-6 6"/></symbol>
+    <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+    <symbol id="i-folder" viewBox="0 0 24 24"><path d="M3.5 7.5a2 2 0 0 1 2-2h4l2 2h7a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2h-13a2 2 0 0 1-2-2z"/></symbol>
+    <symbol id="i-check" viewBox="0 0 24 24"><path d="m5 12.5 4.5 4.5L19 7.5"/></symbol>
+    <symbol id="i-upload" viewBox="0 0 24 24"><path d="M12 15.5V4.5M7.5 9 12 4.5 16.5 9"/><path d="M4.5 15v3.5a2 2 0 0 0 2 2h11a2 2 0 0 0 2-2V15"/></symbol>
+    <symbol id="i-power" viewBox="0 0 24 24"><path d="M12 3.5v8"/><path d="M7 6.5a7.5 7.5 0 1 0 10 0"/></symbol>
+    <symbol id="i-bolt" viewBox="0 0 24 24"><path d="M13 3 5.5 13.5H12L11 21l7.5-10.5H12z"/></symbol>
+    <symbol id="i-gun" viewBox="0 0 24 24"><path d="M2.5 10h12.5v3H2.5z"/><path d="M15 8.5h3.5l3 3-3 3H15z"/><path d="M6 13v3"/></symbol>
+    <symbol id="i-voice" viewBox="0 0 24 24"><path d="M4 10v4M8 7v10M12 4.5v15M16 7v10M20 10v4"/></symbol>
+    <symbol id="i-edit" viewBox="0 0 24 24"><path d="M4.5 19.5h4l10-10-4-4-10 10z"/><path d="m13 7 4 4"/></symbol>
+    <symbol id="i-beep" viewBox="0 0 24 24"><path d="M4 9.5v5h3.5L12 18.5v-13L7.5 9.5z"/><path d="M15.5 9a4 4 0 0 1 0 6M18 6.5a7.5 7.5 0 0 1 0 11"/></symbol>
+    <symbol id="i-swap" viewBox="0 0 24 24"><path d="M4.5 8.5h14l-3.5-3.5M19.5 15.5h-14l3.5 3.5"/></symbol>
+    <symbol id="i-settings" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></symbol>
+    <symbol id="i-chevron" viewBox="0 0 24 24"><path d="m7 10 5 5 5-5"/></symbol>
+    <symbol id="i-reload" viewBox="0 0 24 24"><path d="M19.5 12a7.5 7.5 0 1 1-2.2-5.3"/><path d="M19.5 4.5v4.5H15"/></symbol>
+    <symbol id="i-warn" viewBox="0 0 24 24"><path d="M12 4 2.8 19.5h18.4z"/><path d="M12 10v4.5M12 17v.3"/></symbol>
+    <symbol id="i-palette" viewBox="0 0 24 24"><path d="M12 3.5a8.5 8.5 0 1 0 0 17c1.2 0 1.8-.8 1.8-1.7 0-1.3-1.2-1.6-1.2-2.8 0-1 .8-1.6 1.8-1.6h2.1a4 4 0 0 0 4-4C20.5 6.6 16.7 3.5 12 3.5z"/><circle cx="7.5" cy="11" r="1"/><circle cx="10" cy="7.5" r="1"/><circle cx="14.5" cy="7.5" r="1"/></symbol>
+    <!-- DarkWizard emblem: hooded wizard holding a glowing orb (own design) -->
+    <symbol id="emblem" viewBox="0 0 120 120">
+      <defs>
+        <radialGradient id="orbG" cx=".5" cy=".5" r=".5">
+          <stop offset="0" style="stop-color:#fff"/><stop offset=".35" style="stop-color:var(--accent-hi)"/><stop offset="1" style="stop-color:var(--accent2);stop-opacity:0"/>
+        </radialGradient>
+        <linearGradient id="hoodG" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" style="stop-color:var(--accent-hi)"/><stop offset="1" style="stop-color:var(--accent2)"/>
+        </linearGradient>
+      </defs>
+      <path fill="url(#hoodG)" d="M60 6 C46 6 36 14 31 26 L22 14 L24 36 C19 45 17 55 17 64 C17 82 23 96 30 108 L47 100 C41 88 39 76 40 63 C42 43 50 33 60 33 C70 33 78 43 80 63 C81 76 79 88 73 100 L90 108 C97 96 103 82 103 64 C103 55 101 45 96 36 L98 14 L89 26 C84 14 74 6 60 6Z"/>
+      <path fill="#0b0613" d="M60 33 C50 33 42 43 40 63 C42 77 50 86 60 88 C70 86 78 77 80 63 C78 43 70 33 60 33Z"/>
+      <path fill="var(--accent-hi)" d="M47 59 L56 62 L55 65 L48 63Z M73 59 L64 62 L65 65 L72 63Z"/>
+      <circle cx="60" cy="98" r="21" fill="url(#orbG)" opacity=".55"/>
+      <circle cx="60" cy="98" r="10" fill="url(#orbG)"/>
+      <path fill="url(#hoodG)" d="M38 104 C40 94 46 88 52 88 L50 100 C48 106 44 110 38 110Z M82 104 C80 94 74 88 68 88 L70 100 C72 106 76 110 82 110Z"/>
+    </symbol>
+  </defs>
+</svg>
+
+<div class="app">
+  <aside class="side">
+    <div class="brand">
+      <svg class="emblem"><use href="#emblem"/></svg>
+      <div>
+        <div class="brand-name">HEXCALL</div>
+        <div class="brand-sub">by <b class="js-tag">DarkWizard</b></div>
+      </div>
+    </div>
+    <nav class="nav">
+      <button data-page="home" class="active"><svg><use href="#i-home"/></svg><span>Übersicht</span></button>
+      <button data-page="mods"><svg><use href="#i-mods"/></svg><span>Meine Mods</span></button>
+      <button data-page="studio"><svg><use href="#i-mic"/></svg><span>Aufnahme-Studio</span></button>
+      <button data-page="slots"><svg><use href="#i-sliders"/></svg><span>Im Spiel aktiv</span></button>
+      <button data-page="settings"><svg><use href="#i-settings"/></svg><span>Einstellungen</span></button>
+      <button data-page="help"><svg><use href="#i-help"/></svg><span>Hilfe</span></button>
+    </nav>
+    <div class="side-foot">
+      <div class="game-status" id="gameStatus"><span class="dot"></span><span class="txt">Prüfe Spiel …</span><button class="game-start" id="gameStart" hidden title="World of Tanks starten"><svg><use href="#i-play"/></svg>WoT starten</button></div>
+      <div class="wot-player" id="wotPlayer" hidden><svg><use href="#i-voice"/></svg><span></span></div>
+      <div class="version"><button class="ver-link" id="verLink" title="Was ist neu? – Changelog öffnen">v5.4</button> · <span id="version">WoT –</span></div>
+    </div>
+  </aside>
+
+  <main class="main">
+    <div class="topbanner update" id="updBanner" hidden>
+      <svg><use href="#i-warn"/></svg>
+      <div class="tb-text"><b id="updTitle">Update verfügbar</b><span id="updSub"></span></div>
+      <a class="btn ghost" id="updNotes" target="_blank" rel="noopener">Was ist neu?</a>
+      <button class="btn primary" id="updInstall">Jetzt aktualisieren</button>
+      <button class="btn subtle icon" id="updClose" title="Später">✕</button>
+    </div>
+    <div class="topbanner wot" id="wotBanner" hidden>
+      <svg><use href="#i-reload"/></svg>
+      <div class="tb-text"><b>World of Tanks wurde aktualisiert</b><span id="wotSub"></span></div>
+      <button class="btn blue" id="wotReapply"><svg><use href="#i-reload"/></svg>Sounds wieder einschalten</button>
+    </div>
+    <div class="topbanner warn" id="gameBanner" hidden>
+      <svg><use href="#i-help"/></svg>
+      <div class="tb-text"><b>World of Tanks nicht gefunden</b><span>Bitte unter Einstellungen den WoT-Ordner wählen.</span></div>
+      <button class="btn primary" data-goto="settings">Zu den Einstellungen</button>
+    </div>
+    <div class="watermark" aria-hidden="true"><svg><use href="#emblem"/></svg><div class="wm-tag js-tag">DarkWizard</div></div>
+    <!-- HOME -->
+    <section class="page active" id="page-home">
+      <div class="hero">
+        <svg class="hero-art" viewBox="0 0 1200 360" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+          <defs>
+            <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0" style="stop-color:var(--hero-sky1)"/><stop offset=".62" style="stop-color:var(--hero-sky2)"/><stop offset="1" style="stop-color:var(--hero-sky3)"/>
+            </linearGradient>
+            <radialGradient id="sun" cx=".72" cy=".58" r=".42">
+              <stop offset="0" style="stop-color:var(--hero-sun1);stop-opacity:.85"/><stop offset=".35" style="stop-color:var(--hero-sun2);stop-opacity:.35"/><stop offset="1" style="stop-color:var(--hero-sun2);stop-opacity:0"/>
+            </radialGradient>
+            <linearGradient id="fade" x1="0" x2="1">
+              <stop offset="0" style="stop-color:var(--bg)"/><stop offset=".42" style="stop-color:var(--bg);stop-opacity:.6"/><stop offset=".7" style="stop-color:var(--bg);stop-opacity:0"/>
+            </linearGradient>
+            <linearGradient id="wave" x1="0" x2="1">
+              <stop offset="0" style="stop-color:var(--hero-wave);stop-opacity:0"/><stop offset=".5" style="stop-color:var(--hero-wave)"/><stop offset="1" style="stop-color:var(--hero-wave);stop-opacity:.1"/>
+            </linearGradient>
+          </defs>
+          <rect width="1200" height="360" fill="url(#sky)"/>
+          <rect width="1200" height="360" fill="url(#sun)"/>
+          <g class="wave-lines" fill="none" stroke="url(#wave)" stroke-linecap="round">
+            <path stroke-width="2" d="M0 150 C120 120 180 190 300 150 S480 100 600 150 780 210 900 150 1080 110 1200 150"/>
+            <path stroke-width="1.2" opacity=".6" d="M0 170 C140 140 200 220 330 170 S520 120 640 170 800 230 930 170 1090 130 1200 172"/>
+            <path stroke-width=".8" opacity=".4" d="M0 132 C110 112 210 160 320 132 S500 92 610 132 790 182 910 132 1070 98 1200 128"/>
+          </g>
+          <!-- distant hills -->
+          <path d="M0 270 L140 245 280 262 420 238 560 258 700 236 860 255 1000 240 1200 258 1200 360 0 360z" style="fill:var(--hero-hill)" opacity=".9"/>
+          <!-- tank silhouette -->
+          <g transform="translate(640 196) scale(1.15)" style="fill:var(--hero-tank)">
+            <path d="M40 92 L330 92 L352 112 L330 134 L46 134 L22 112z"/>
+            <path d="M58 74 L300 74 L330 92 L36 92z"/>
+            <path d="M120 40 L228 40 L254 58 L250 74 L104 74 L98 58z"/>
+            <rect x="248" y="50" width="200" height="11" rx="3"/>
+            <rect x="440" y="47" width="22" height="17" rx="3"/>
+            <rect x="150" y="26" width="34" height="16" rx="4"/>
+            <g style="fill:var(--hero-wheel)"><circle cx="70" cy="113" r="14"/><circle cx="108" cy="116" r="15"/><circle cx="148" cy="116" r="15"/><circle cx="188" cy="116" r="15"/><circle cx="228" cy="116" r="15"/><circle cx="268" cy="116" r="15"/><circle cx="306" cy="113" r="14"/></g>
+          </g>
+          <path d="M0 330 L1200 322 1200 360 0 360z" style="fill:var(--bg)"/>
+          <g style="fill:var(--hero-sun1)" class="embers">
+            <circle cx="820" cy="190" r="1.6"/><circle cx="900" cy="160" r="1.2"/><circle cx="760" cy="150" r="1"/><circle cx="1010" cy="200" r="1.4"/><circle cx="960" cy="120" r="1"/><circle cx="700" cy="210" r="1.2"/>
+          </g>
+          <rect width="1200" height="360" fill="url(#fade)"/>
+        </svg>
+        <div class="hero-text">
+          <div class="eyebrow">Eigene Crew. Eigene Stimme.</div>
+          <h1 data-i18n-html="hero-h1">Dein Panzer klingt<br>nach <span class="accent">dir</span>.</h1>
+          <p>Nimm Kommandanten-Ansagen und Effekte direkt mit dem Mikrofon auf und aktiviere sie mit einem Klick im Spiel.</p>
+          <div class="hero-actions">
+            <button class="btn primary lg" id="heroNew"><svg><use href="#i-plus"/></svg>Neuen Sound-Mod erstellen</button>
+            <button class="btn ghost lg" data-goto="slots"><svg><use href="#i-sliders"/></svg>Aktive Sounds</button>
+          </div>
+        </div>
+        <div class="hero-sig"><svg><use href="#emblem"/></svg><span>a <b class="gamertag js-tag">DarkWizard</b> production</span></div>
+      </div>
+
+      <div class="grid3" id="homeSlots"></div>
+
+      <div class="section-head">
+        <h2>Zuletzt bearbeitet</h2>
+        <button class="link" data-goto="mods">Alle Mods <svg><use href="#i-right"/></svg></button>
+      </div>
+      <div class="mod-grid" id="homeMods"></div>
+    </section>
+
+    <!-- MODS -->
+    <section class="page" id="page-mods">
+      <div class="page-head">
+        <div>
+          <div class="eyebrow">Bibliothek</div>
+          <h1>Meine Sound-Mods</h1>
+        </div>
+        <button class="btn primary" id="modsNew"><svg><use href="#i-plus"/></svg>Neuer Sound-Mod</button>
+      </div>
+      <div class="mod-grid" id="modGrid"></div>
+    </section>
+
+    <!-- STUDIO -->
+    <section class="page" id="page-studio">
+      <div class="studio-empty" id="studioEmpty">
+        <svg class="big-ico"><use href="#i-mic"/></svg>
+        <h2>Aufnahme-Studio</h2>
+        <p>Wähle einen Sound-Mod aus oder erstelle einen neuen, um mit der Aufnahme zu beginnen.</p>
+        <div class="row center">
+          <select id="studioPick" class="select"></select>
+          <button class="btn primary" id="studioOpen">Öffnen</button>
+          <button class="btn ghost" id="studioNew"><svg><use href="#i-plus"/></svg>Neu</button>
+        </div>
+      </div>
+
+      <div class="studio" id="studio" hidden>
+        <div class="steps">
+          <div class="steps-head">
+            <div class="mod-title"><svg><use href="#i-edit"/></svg><span id="studioMod">–</span></div>
+            <div class="tabs">
+              <button class="tab active" data-kind="stimme"><svg><use href="#i-voice"/></svg>Stimme <span id="cntStimme" class="pill">0/55</span></button>
+              <button class="tab" data-kind="effekte"><svg><use href="#i-gun"/></svg>Effekte <span id="cntEffekte" class="pill">0/12</span></button>
+            </div>
+            <div class="progress"><div class="bar" id="progressBar"></div></div>
+          </div>
+          <ul class="step-list" id="stepList"></ul>
+        </div>
+
+        <div class="booth" id="booth">
+          <div class="booth-top">
+            <div class="step-count" id="stepCount">Stimme 1 / 55</div>
+            <div class="badge" id="stepBadge"></div>
+          </div>
+          <h1 class="step-title" id="stepTitle">–</h1>
+          <div class="step-line" id="stepLine"></div>
+          <div class="step-hint" id="stepHint"></div>
+
+          <div class="rec-panel">
+            <button class="rec-btn" id="recBtn" title="Aufnehmen (Leertaste)">
+              <span class="rec-ring"></span>
+              <svg class="ico-mic"><use href="#i-mic"/></svg>
+              <svg class="ico-stop"><use href="#i-stop"/></svg>
+            </button>
+            <div class="rec-side">
+              <canvas id="scope" width="760" height="110"></canvas>
+              <div class="rec-meta">
+                <span id="recState">Bereit – Leertaste oder Knopf drücken</span>
+                <span id="recTime" class="mono">0.0 s</span>
+              </div>
+              <label class="check"><input type="checkbox" id="asVariant"><span></span>Als zusätzliche Variante speichern (das Spiel wählt zufällig)</label>
+            </div>
+          </div>
+
+          <div class="takes-wrap">
+            <div class="takes-head">Aufnahmen</div>
+            <div class="takes" id="takes"></div>
+          </div>
+
+          <div class="drop" id="drop">
+            <svg><use href="#i-upload"/></svg>
+            <div data-i18n-html="drop-text"><b>Datei hierher ziehen</b> – WAV, MP3, M4A oder OGG<br><span>oder irgendwo in dieses Feld klicken</span></div>
+            <input type="file" id="fileInput" accept="audio/*,.wav,.mp3,.m4a,.ogg" multiple hidden>
+          </div>
+
+          <div class="booth-nav">
+            <button class="btn ghost" id="prevBtn"><svg><use href="#i-left"/></svg>Zurück</button>
+            <div class="spacer"></div>
+            <button class="btn ghost" id="skipBtn">Überspringen<svg><use href="#i-skip"/></svg></button>
+            <button class="btn primary" id="nextBtn">Weiter<svg><use href="#i-right"/></svg></button>
+          </div>
+          <div class="booth-foot">
+            <button class="btn subtle" id="closeStudio">Studio schließen</button>
+            <button class="btn accent" id="finishBtn"><svg><use href="#i-bolt"/></svg>Fertig – im Spiel aktivieren</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- SLOTS -->
+    <section class="page" id="page-slots">
+      <div class="page-head">
+        <div>
+          <div class="eyebrow">Steuerung</div>
+          <h1>Im Spiel aktiv</h1>
+        </div>
+        <div class="row"><span class="mod-state" id="modState"><span class="dot"></span><span class="txt">–</span></span>
+        <button class="btn danger-ghost" id="allOff"><svg><use href="#i-power"/></svg>Mod aus (alles Original)</button></div>
+      </div>
+
+      <div class="grid3 slots" id="slotCards"></div>
+
+      <div class="info-card">
+        <svg><use href="#i-swap"/></svg>
+        <div>
+          <b>Standard oder Kommandant</b>
+          <p data-i18n-html="slots-info">In WoT unter <i>Einstellungen › Ton</i> die <i>Sprachausgabe</i> wählen: <b>Standard</b> oder <b>Kommandant</b>.
+          Bei „Kommandant“ spricht die Stimme der Nation deines Kommandanten – Spezial-Kommandanten (Battle Pass, Blogger, Events) behalten ihre eigene Stimme. Neue Sounds wirken nach einem Neustart von WoT.</p>
+        </div>
+      </div>
+
+      <div class="row apply-row">
+        <label class="check"><input type="checkbox" id="muteMissing"><span></span>Fehlende Sätze stumm statt Originalstimme</label>
+        <div class="spacer"></div>
+        <span class="apply-state" id="applyState"><span class="dot"></span><span class="txt">Alles übernommen</span></span>
+        <button class="btn subtle" id="discardBtn" hidden>Verwerfen</button>
+        <button class="btn blue lg" id="applyBtn" disabled title="Baut die Sound-Banken mit deiner Auswahl neu. Im Spiel nach einem Neustart von WoT hörbar."><svg><use href="#i-reload"/></svg>Neu laden</button>
+      </div>
+
+      <details class="log" id="logBox">
+        <summary><span>Protokoll</span><svg class="chev"><use href="#i-chevron"/></svg></summary>
+        <pre id="log">–</pre>
+      </details>
+    </section>
+
+    <!-- SETTINGS -->
+    <section class="page" id="page-settings">
+      <div class="page-head"><div><div class="eyebrow">Einstellungen</div><h1>Einstellungen</h1></div></div>
+
+      <div class="set-section hx-shell">
+        <h2>Sprache</h2>
+        <p>Sprache des Clients.</p>
+        <div class="langs">
+          <button class="lang-card" data-lang="en"><span class="lc-code">EN</span><span><b>English</b><small>Default</small></span></button>
+          <button class="lang-card" data-lang="de"><span class="lc-code">DE</span><span><b>Deutsch</b><small>German</small></span></button>
+          <button class="lang-card" data-lang="ru"><span class="lc-code">RU</span><span><b>Русский</b><small>Russian</small></span></button>
+          <button class="lang-card" data-lang="pl"><span class="lc-code">PL</span><span><b>Polski</b><small>Polish</small></span></button>
+          <button class="lang-card" data-lang="fr"><span class="lc-code">FR</span><span><b>Français</b><small>French</small></span></button>
+          <button class="lang-card" data-lang="es"><span class="lc-code">ES</span><span><b>Español</b><small>Spanish</small></span></button>
+        </div>
+      </div>
+
+      <div class="set-section hx-shell">
+        <h2>Design</h2>
+        <p>Wähle das Farbschema des Clients.</p>
+        <div class="themes">
+          <button class="theme-card" data-theme-pick="wizard">
+            <div class="preview pv-wizard"><div class="pv-side"><i></i><i></i><i></i><i></i></div><div class="pv-main"><div class="pv-hero"></div><div class="pv-row"><b></b><b></b><b></b></div><div class="pv-btn"></div></div></div>
+            <div class="tc-name">DarkWizard <svg><use href="#i-check"/></svg></div><div class="tc-sub">Dunkel mit Lila-Glow</div>
+          </button>
+          <button class="theme-card" data-theme-pick="dark">
+            <div class="preview pv-dark"><div class="pv-side"><i></i><i></i><i></i><i></i></div><div class="pv-main"><div class="pv-hero"></div><div class="pv-row"><b></b><b></b><b></b></div><div class="pv-btn"></div></div></div>
+            <div class="tc-name">Commander <svg><use href="#i-check"/></svg></div><div class="tc-sub">Dark Mode mit Bernstein</div>
+          </button>
+          <button class="theme-card" data-theme-pick="light">
+            <div class="preview pv-light"><div class="pv-side"><i></i><i></i><i></i><i></i></div><div class="pv-main"><div class="pv-hero"></div><div class="pv-row"><b></b><b></b><b></b></div><div class="pv-btn"></div></div></div>
+            <div class="tc-name">Hell <svg><use href="#i-check"/></svg></div><div class="tc-sub">White Mode</div>
+          </button>
+        </div>
+      </div>
+
+      <div class="set-section">
+        <h2>World of Tanks</h2>
+        <p>Wo dein Spiel installiert ist. Wird normalerweise automatisch gefunden.</p>
+        <div class="card set-row">
+          <div class="sr-text" style="min-width:0"><b id="gameDirText">–</b><span id="gameDirSub">Spielordner</span></div>
+          <div class="row" style="flex:none">
+            <button class="btn ghost" id="gameDetect">Automatisch suchen</button>
+            <button class="btn ghost" id="gamePick"><svg><use href="#i-folder"/></svg>Ordner wählen …</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="set-section hx-shell">
+        <h2>Version &amp; Updates</h2>
+        <div class="card set-row">
+          <div class="sr-text"><b id="appVersion">Hexcall</b><span id="updStatus">Beim Start wird automatisch nach Updates gesucht.</span></div>
+          <button class="btn ghost" id="updCheck">Nach Updates suchen</button>
+        </div>
+        <label class="card set-row" style="margin-top:10px"><div class="sr-text"><b>Automatische Updates</b><span>Neue Versionen beim Start sofort installieren statt nur Bescheid zu geben</span></div><span class="toggle"><input type="checkbox" id="autoUpdToggle"><span></span></span></label>
+        <p class="data-note">Deine Mods und Einstellungen liegen in <code id="dataDir">%APPDATA%\Hexcall</code> und bleiben bei Updates erhalten.</p>
+      </div>
+
+      <div class="set-section hx-shell">
+        <h2>Anzeige</h2>
+        <div class="set-grid">
+          <label class="card set-row"><div class="sr-text"><b>Animationen</b><span>Schallwellen, Glut und Übergänge</span></div><span class="toggle"><input type="checkbox" id="animToggle"><span></span></span></label>
+        </div>
+      </div>
+    </section>
+
+    <!-- HELP -->
+    <section class="page" id="page-help">
+      <div class="page-head"><div><div class="eyebrow">Hilfe</div><h1>So funktioniert's</h1></div>
+        <div class="row">
+          <a class="btn ghost" href="docs/anleitung" target="_blank"><svg><use href="#i-help"/></svg>Ausführliche Anleitung</a>
+          <a class="btn ghost" href="docs/sprachliste" target="_blank"><svg><use href="#i-voice"/></svg>Sprachliste</a>
+          <div class="subtabs"><button class="active" data-sub="guide">Anleitung</button><button data-sub="log">Changelog</button></div>
+        </div>
+      </div>
+      <div class="clog" id="sub-log" hidden></div>
+      <div id="sub-guide">
+      <div class="help-grid">
+        <div class="help-card" data-i18n-html="help-1"><div class="num">1</div><h3>Testen</h3><p>Unter <b>Im Spiel aktiv</b> alles auf <b>Testton</b> stellen und auf <b>Neu laden</b> klicken. Im Trainingsraum hörst du dann Pieptöne statt Stimme, Kanone und Motor – zwei bei „Standard“, drei bei „Kommandant“. So weißt du, dass der Mod greift.</p></div>
+        <div class="help-card" data-i18n-html="help-2"><div class="num">2</div><h3>Aufnehmen</h3><p>Neuen Sound-Mod erstellen. Das Studio zeigt dir Schritt für Schritt jede Ansage. <b>Leertaste</b> startet und stoppt das Mikrofon. Was du überspringst, bleibt original.</p></div>
+        <div class="help-card" data-i18n-html="help-3"><div class="num">3</div><h3>Effekte</h3><p>Im Studio oben auf <b>Effekte</b> wechseln: Kanone, Motor, Turm, Ketten, Explosionen … Per Mikrofon oder per Drag &amp; Drop einer Sounddatei.</p></div>
+        <div class="help-card" data-i18n-html="help-4"><div class="num">4</div><h3>Aktivieren</h3><p><b>Fertig – im Spiel aktivieren</b> oder unter <b>Im Spiel aktiv</b> die Slots wählen und <b>Neu laden</b>. Wirkt nach einem Neustart von WoT.</p></div>
+      </div>
+      <div class="info-card">
+        <svg><use href="#i-help"/></svg>
+        <div data-i18n-html="help-tips"><b>Tipps</b>
+          <p>Ansagen kurz halten (0,5–2 s). Motor, Turm, Ketten und Feuer laufen in Schleife: 2–4 s gleichmäßiges Geräusch.
+          Stille am Anfang und Ende wird automatisch abgeschnitten, die Lautstärke angeglichen.
+          Spezielle Besatzungsstimmen (Blogger, Events) werden nicht ersetzt.</p></div>
+      </div>
+      </div>
+    </section>
+  </main>
+</div>
+
+<!-- modal -->
+<div class="modal" id="modal" hidden>
+  <div class="modal-card">
+    <h2 id="modalTitle"></h2>
+    <p id="modalText"></p>
+    <input id="modalInput" class="input" hidden>
+    <div class="modal-actions" id="modalActions"></div>
+  </div>
+</div>
+
+<div class="toasts" id="toasts"></div>
+<script src="i18n-langs.js"></script>
+<script src="i18n.js"></script>
+<script src="app.js"></script>
+</body>
+</html>

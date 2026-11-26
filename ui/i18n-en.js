@@ -1,0 +1,62 @@
+'use strict';
+// English texts of the Hexhub shell (keys = German UI text). Game modules have their own games/<id>/ui/i18n-en.js.
+I18N.add('en', {
+  // sidebar
+  'Startseite': 'Home', 'Meine Spiele': 'My games', 'Ideen': 'Ideas', 'Einstellungen': 'Settings', 'Kein Spiel läuft': 'No game running',
+  'Update verfügbar': 'Update available', 'nicht gefunden': 'not found', 'bereit': 'ready',
+  // banners
+  'Was ist neu?': "What's new?", 'Jetzt aktualisieren': 'Update now', 'Später': 'Later',
+  'Keine Verbindung zum Hintergrunddienst': 'No connection to the background service',
+  'Keine Verbindung zum Hintergrunddienst – verbinde neu …': 'No connection to the background service – reconnecting …',
+  // home
+  'Dein Spiele-Client': 'Your game client', 'Alle Spiele. Alle Mods.': 'All games. All mods.', 'Willkommen zurück.': 'Welcome back.',
+  'Starte deine Spiele, sieh was gerade läuft und nutze alle Mods und Werkzeuge von DarkWizard – an einem Ort.': 'Launch your games, see what is running and use all mods and tools by DarkWizard – in one place.',
+  'Bereit': 'Ready', 'Nicht gefunden': 'Not found', 'Nicht gestartet': 'Not running', 'Version': 'Version', 'Gespielt': 'Played',
+  'Spielen': 'Play', 'Schließen': 'Close', 'Öffnen': 'Open', 'Spielordner öffnen': 'Open game folder', 'Ordner wählen': 'Choose folder',
+  'Gemessen, während Hexhub läuft': 'Measured while Hexhub is running', 'gerade eben': 'just now', 'Spiel': 'Game',
+  // game taglines and tabs (from the modules)
+  'Sounds, 3D-Garage, Replays, Trefferanalyse': 'Sounds, 3D garage, replays, hit analysis',
+  'Replays, Hexrender (Replay → Video)': 'Replays, Hexrender (replay → video)',
+  'Übersicht': 'Overview', 'Sounds (Hexcall)': 'Sounds (Hexcall)', '3D-Garage': '3D Garage', 'Mods': 'Mods', 'Mod-Ordner': 'Mod folders',
+  'Statistik': 'Statistics', 'Replays': 'Replays', 'Trefferanalyse': 'Hit analysis', 'Replay → Video': 'Replay → Video', 'Rendern': 'Render',
+  // ideas
+  'Was soll der Client noch können? Notier es hier – für dich als Merkliste und als Vorlage für die nächsten Versionen.': 'What else should the client do? Note it here – as your own list and as input for the next versions.',
+  'Hinzufügen': 'Add', 'Allgemein': 'General', 'Erledigt': 'Done', 'Löschen': 'Delete',
+  'z. B. Fadenkreuz-Auswahl, Score-Tracker, neues Spiel …': 'e.g. crosshair picker, score tracker, new game …',
+  'Noch keine Ideen. Schreib oben die erste rein.': 'No ideas yet. Write the first one above.',
+  // settings
+  'Sprache': 'Language', 'Gilt für den ganzen Client, auch für Hexcall.': 'Applies to the whole client, including Hexcall.',
+  'Design': 'Design', 'Farben für den ganzen Client.': 'Colours for the whole client.', 'Violett · Standard': 'Violet · default',
+  'Dunkel mit Bernstein': 'Dark with amber', 'Hell': 'Light', 'Für helle Räume': 'For bright rooms',
+  'Animationen': 'Animations', 'Übergänge und Effekte': 'Transitions and effects', 'Spiele': 'Games',
+  'Hexhub findet deine Spiele normalerweise selbst. Hier kannst du den Ordner auch von Hand wählen.': 'Hexhub usually finds your games by itself. You can also choose the folder by hand here.',
+  'Version & Updates': 'Version & updates', 'Beim Start wird automatisch nach Updates gesucht.': 'Hexhub checks for updates on start.',
+  'Nach Updates suchen': 'Check for updates', 'Automatische Updates': 'Automatic updates',
+  'Neue Versionen beim Start sofort installieren statt nur Bescheid zu geben': 'Install new versions right away on start instead of just telling you',
+  'Deine Daten liegen in': 'Your data is stored in', '(Hexcall-Sounds weiter in': '(Hexcall sounds stay in', ') und bleiben bei Updates erhalten.': ') and is kept on updates.',
+  'Kein Update-Server eingetragen.': 'No update server configured.', 'Spielordner': 'Game folder',
+  'Gespeichert': 'Saved', 'Automatisch suchen': 'Detect automatically', 'Ordner wählen …': 'Choose folder …', 'Automatisch': 'Automatic',
+}, [
+  [/^läuft · (.+)$/, 'running · $1'],
+  [/^Läuft seit (.+)$/, 'Running for $1'],
+  [/^Läuft · (.+)$/, 'Running · $1'],
+  [/^seit (.+)$/, 'for $1'],
+  [/^(.+) läuft$/, '$1 running'],
+  [/^(.+) gespielt$/, '$1 played'],
+  [/^Willkommen zurück, (.+)\.$/, 'Welcome back, $1.'],
+  [/^(.+) wird gestartet …$/, '$1 is starting …'],
+  [/^(.+) wirklich schließen\? Nicht gespeicherter Fortschritt kann verloren gehen\.$/, 'Really close $1? Unsaved progress may be lost.'],
+  [/^(.+) wurde geschlossen$/, '$1 was closed'],
+  [/^(.+) ließ sich nicht schließen$/, '$1 could not be closed'],
+  [/^Modul (.+) konnte nicht geladen werden: (.+)$/, 'Module $1 could not be loaded: $2'],
+  [/^Neue Version verfügbar: v(.+)$/, 'New version available: v$1'],
+  [/^Du hast die aktuelle Version \(v(.+)\)\.$/, 'You have the latest version (v$1).'],
+  [/^Update verfügbar: v(.+)$/, 'Update available: v$1'],
+  [/^Du nutzt v(.+)\. Deine Daten und Einstellungen bleiben erhalten\.$/, "You're on v$1. Your data and settings are kept."],
+  [/^Auf v(.+) aktualisieren\?$/, 'Update to v$1?'],
+  [/^v(.+) wird installiert – der Client startet gleich neu\.$/, 'v$1 is being installed – the client restarts in a moment.'],
+  [/^Installiere v(.+) automatisch …$/, 'Installing v$1 automatically …'],
+  [/^Update-Prüfung nicht möglich: (.+)$/, 'Update check not possible: $1'],
+  [/^Fehler (\d+)$/, 'Error $1'],
+  [/^Öffnen (.*)$/, 'Open $1'],
+]);

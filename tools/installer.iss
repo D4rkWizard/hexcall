@@ -1,22 +1,22 @@
-; Inno Setup script for Hexcall – compiled by tools/release.js (needs Inno Setup 6).
+; Inno Setup script for Hexhub – compiled by tools/release.js (needs Inno Setup 6).
 ; Installs per user (no admin rights), so the in-app updater can replace files later.
 #ifndef AppVersion
   #define AppVersion "0.0.0"
 #endif
 #ifndef SourceDir
-  #define SourceDir "..\dist\Hexcall"
+  #define SourceDir "..\dist\Hexhub"
 #endif
 
 [Setup]
-AppId={{6B91C4AC-4D94-4F0F-8AE1-853FD13654DC}
-AppName=Hexcall
+AppId={{3F0C8E2A-7B51-4C3E-9A6D-1E2B5D7C9F40}
+AppName=Hexhub
 AppVersion={#AppVersion}
 AppPublisher=DarkWizard
-DefaultDirName={localappdata}\Programs\Hexcall
-DefaultGroupName=Hexcall
+DefaultDirName={localappdata}\Programs\Hexhub
+DefaultGroupName=Hexhub
 PrivilegesRequired=lowest
 DisableProgramGroupPage=yes
-OutputBaseFilename=Hexcall-Setup-{#AppVersion}
+OutputBaseFilename=Hexhub-Setup-{#AppVersion}
 SetupIconFile={#SourceDir}\icon.ico
 UninstallDisplayIcon={app}\icon.ico
 Compression=lzma2
@@ -34,12 +34,11 @@ Name: "desktopicon"; Description: "Desktop shortcut"; GroupDescription: "Additio
 Source: "{#SourceDir}\*"; DestDir: "{app}"; Flags: recursesubdirs createallsubdirs ignoreversion
 
 [Icons]
-Name: "{group}\Hexcall"; Filename: "{sys}\wscript.exe"; Parameters: """{app}\Hexcall.vbs"""; IconFilename: "{app}\icon.ico"
-Name: "{group}\Hexcall Guide"; Filename: "{app}\Guide.html"
-Name: "{group}\Uninstall Hexcall"; Filename: "{uninstallexe}"
-Name: "{userdesktop}\Hexcall"; Filename: "{sys}\wscript.exe"; Parameters: """{app}\Hexcall.vbs"""; IconFilename: "{app}\icon.ico"; Tasks: desktopicon
+Name: "{group}\Hexhub"; Filename: "{sys}\wscript.exe"; Parameters: """{app}\Hexhub.vbs"""; IconFilename: "{app}\icon.ico"
+Name: "{group}\Uninstall Hexhub"; Filename: "{uninstallexe}"
+Name: "{userdesktop}\Hexhub"; Filename: "{sys}\wscript.exe"; Parameters: """{app}\Hexhub.vbs"""; IconFilename: "{app}\icon.ico"; Tasks: desktopicon
 
 [Run]
-Filename: "{sys}\wscript.exe"; Parameters: """{app}\Hexcall.vbs"""; Description: "Start Hexcall now"; Flags: postinstall nowait skipifsilent
+Filename: "{sys}\wscript.exe"; Parameters: """{app}\Hexhub.vbs"""; Description: "Start Hexhub now"; Flags: postinstall nowait skipifsilent
 
-; User data in %APPDATA%\Hexcall is intentionally kept on uninstall.
+; User data in %APPDATA%\Hexhub and %APPDATA%\Hexcall is intentionally kept on uninstall.

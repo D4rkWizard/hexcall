@@ -1,7 +1,5 @@
 # personal data – never upload
-mods/
-user/
-backups/
+data/
 portable.txt
 
 # build output
@@ -10,9 +8,7 @@ build/
 node_modules/
 *.log
 
-# personal project history and notes – stay local
-Projektverlauf/
+# local notes and tools
 CLAUDE.md
-
-# separate prototype "Hexcall Hub" – local only, not part of Hexcall
-Hexcall-Hub/
+.claude/
+games/wot/tools/

@@ -1,0 +1,55 @@
+    <!-- OVERVIEW -->
+    <section class="page" data-tab="home">
+      <div class="grid g2">
+        <div class="card">
+          <div class="status-card"><span class="big-dot" id="oInstDot"></span><div style="flex:1"><h3>osu! (stable)</h3><div class="sub" style="margin:2px 0 0" id="oInstSub">–</div></div>
+            <button class="btn sm ghost" data-oopen="game"><svg><use href="#i-folder"/></svg>Ordner</button></div>
+          <div class="kv" style="margin-top:14px" id="oInstKv"></div>
+        </div>
+        <div class="card">
+          <div class="status-card"><span class="big-dot" id="oSrvDot"></span><div style="flex:1"><h3>Hexrender</h3><div class="sub" style="margin:2px 0 0" id="oSrvSub">Prüfe Render-Server …</div></div>
+            <button class="btn sm ghost" id="oSrvRefresh" title="Neu prüfen"><svg><use href="#i-refresh"/></svg></button></div>
+          <div class="kv" style="margin-top:14px" id="oSrvKv"></div>
+        </div>
+      </div>
+      <div class="grid g4" style="margin-top:16px" id="oKpis"></div>
+      <div class="section-head"><h2>Letzte Replays</h2><button class="link" data-goto="osu:replays">Alle Replays <svg><use href="#i-right"/></svg></button></div>
+      <div class="olist" id="oRecent"></div>
+    </section>
+
+    <!-- REPLAYS -->
+    <section class="page wide" data-tab="replays">
+      <div class="page-head"><div><div class="eyebrow">osu!</div><h1>Replays</h1><div class="sub" id="oRepSub">Lese Replays …</div></div>
+        <div class="row"><button class="btn ghost" data-oopen="replays"><svg><use href="#i-folder"/></svg>Replays-Ordner</button><button class="btn ghost" id="oRepReload"><svg><use href="#i-refresh"/></svg>Neu einlesen</button></div></div>
+      <div class="toolbar">
+        <input class="input" id="oRepSearch" style="flex:1" placeholder="Map, Mapper, Spieler oder Mods suchen …">
+        <div class="chips" id="oRepSrc"></div>
+        <select class="input" id="oRepSort" style="min-width:170px">
+          <option value="date">Neueste zuerst</option><option value="score">Höchster Score</option><option value="acc">Beste Genauigkeit</option><option value="combo">Höchste Combo</option><option value="stars">Meiste Sterne</option>
+        </select>
+      </div>
+      <div class="olist" id="oRepList"></div>
+      <div class="row center" style="margin-top:14px"><button class="btn ghost" id="oRepMore" hidden>Mehr anzeigen</button></div>
+    </section>
+
+    <!-- HEXRENDER: the website itself, embedded -->
+    <section class="page full" data-tab="render">
+      <div class="empty" id="oWebOff" hidden>
+        <svg><use href="#i-video"/></svg>
+        <h2>Hexrender ist gerade nicht erreichbar</h2>
+        <p id="oWebOffTxt">Der Render-Server antwortet nicht. Versuch es später nochmal.</p>
+        <div class="row center"><button class="btn primary" id="oWebStart" hidden><svg><use href="#i-play"/></svg>Hexrender auf diesem PC starten</button><button class="btn ghost" id="oWebRetry"><svg><use href="#i-refresh"/></svg>Neu prüfen</button></div>
+      </div>
+      <iframe class="embed" id="oWeb" title="Hexrender" allow="clipboard-write; fullscreen" hidden></iframe>
+    </section>
+
+    <!-- ADMIN: Hexrender admin page (only on the PC that runs Hexrender) -->
+    <section class="page full" data-tab="admin">
+      <div class="empty" id="oAdmOff" hidden>
+        <svg><use href="#i-server"/></svg>
+        <h2>Hexrender läuft nicht auf diesem PC</h2>
+        <p id="oAdmTxt">Die Admin-Seite gibt es nur auf dem PC, auf dem Hexrender läuft.</p>
+        <div class="row center"><button class="btn primary" id="oAdmStart"><svg><use href="#i-play"/></svg>Hexrender starten</button><button class="btn ghost" data-view="settings">Einstellungen</button></div>
+      </div>
+      <iframe class="embed" id="oAdm" title="Hexrender Admin" allow="clipboard-write" hidden></iframe>
+    </section>

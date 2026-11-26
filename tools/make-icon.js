@@ -12,8 +12,8 @@ const edge = [process.env['ProgramFiles(x86)'], process.env.ProgramFiles].filter
   .map((p) => path.join(p, 'Microsoft', 'Edge', 'Application', 'msedge.exe')).find((p) => fs.existsSync(p));
 if (!edge) { console.log('  Edge nicht gefunden – icon.ico bleibt unverändert.'); process.exit(0); }
 
-const svg = fs.readFileSync(path.join(APP, 'ui', 'icon-emblem.svg'), 'utf8');
-const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'sc-icon-'));
+const svg = fs.readFileSync(path.join(APP, 'ui', 'icon.svg'), 'utf8');
+const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'hexhub-icon-'));
 const pngs = [];
 for (const size of [256, 64, 48, 32, 16]) {
   const html = path.join(tmp, `i${size}.html`);
