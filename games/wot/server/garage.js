@@ -268,8 +268,17 @@ module.exports = function garage({ DATA, gameDir, gameVersion, modsDir }) {
       if (!src) { warnings.push(`Textur fehlt: ${texName}`); continue; }
       let t;
       try { t = bw.ddsToRgba(src, 1e9); } catch (e) { warnings.push(`${path.basename(texName)}: ${e.message}`); continue; }
-      const { width: W, height: H } = t, rgba = t.rgba, painted = new Uint8Array(W * H);
       const group = meshes.filter((m) => m.diffuse === texName);
+      // A small sticker only gets a few texels of the tank texture. The texture is written anyway, so it can be
+      // written at 2x / 4x resolution (max 4096, like HD mods): the original surface is enlarged bilinearly –
+      // looks the same in game – and only the sticker gains the extra detail.
+      const counts = computeLods(group, byPart, t.width, t.height);
+      let f = 1, minW = Infinity;
+      for (const [st, n] of counts) minW = Math.min(minW, Math.sqrt(n * (Math.hypot(...st.r) / (Math.hypot(...st.u) || 1))));
+      if (minW < 70) f = 4; else if (minW < 160) f = 2;
+      while (f > 1 && Math.max(t.width, t.height) * f > 4096) f /= 2;
+      if (f > 1) { t = { ...t, ...upscaleRgba(t.rgba, t.width, t.height, f) }; computeLods(group, byPart, t.width, t.height); }
+      const { width: W, height: H } = t, rgba = t.rgba, painted = new Uint8Array(W * H);
       // pass 1: paint
       for (const m of group) {
         const st = byPart[m.part];
@@ -316,6 +325,14 @@ module.exports = function garage({ DATA, gameDir, gameVersion, modsDir }) {
         if (!src) continue;
         let t;
         try { t = bw.ddsToRgba(src, 1e9); } catch { continue; }
+        // same enlargement rule as for the colour texture, so the edges around a small sticker stay clean
+        const grp = meshes.filter((x) => x[field] === texName);
+        const cnt = computeLods(grp, byPart, t.width, t.height);
+        let f = 1, minW = Infinity;
+        for (const [st, n] of cnt) minW = Math.min(minW, Math.sqrt(n * (Math.hypot(...st.r) / (Math.hypot(...st.u) || 1))));
+        if (minW < 70) f = 4; else if (minW < 160) f = 2;
+        while (f > 1 && Math.max(t.width, t.height) * f > 4096) f /= 2;
+        if (f > 1) { t = { ...t, ...upscaleRgba(t.rgba, t.width, t.height, f) }; computeLods(grp, byPart, t.width, t.height); }
         const { width: W, height: H } = t, rgba = t.rgba;
         let set = 0;
         for (const m of meshes.filter((x) => x[field] === texName)) {
@@ -690,7 +707,7 @@ function cleanCrop(c) {
 }
 function sampleCrop(s, c) {
   const k = s.crop || [0, 0, 1, 1], su = s.flip ? 1 - c[0] : c[0], sv = 1 - c[1];
-  return adjustColor(sample(s.img, k[0] + su * (k[2] - k[0]), k[1] + sv * (k[3] - k[1])), s);
+  return adjustColor(sampleLod(s.img, k[0] + su * (k[2] - k[0]), k[1] + sv * (k[3] - k[1]), s.lod || 0), s);
 }
 const clampN = (v, lo, hi, d) => { v = Number(v); return Number.isFinite(v) ? Math.max(lo, Math.min(hi, v)) : d; };
 // brightness / colour strength / contrast of a sticker – the same formula as the live preview shader (ui/garage.js)
@@ -728,6 +745,95 @@ function sample(img, u, v) {
   }
   return o;
 }
+/* ---------- quality when a sticker is small: mipmaps + trilinear filtering ----------
+   One texel of the tank texture often covers many pixels of the sticker image. Taking a single sample per texel
+   makes small stickers jagged and noisy. Instead the image gets a pyramid of half-size levels (box filter in linear
+   light, premultiplied alpha – edges don't darken), and each texture picks the level that matches how many image
+   pixels fall on one texel, blending between two levels (like a GPU does). */
+const S2L = new Float32Array(256).map((_, i) => { const c = i / 255; return c <= 0.04045 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4; });
+const L2S = (v) => { v = Math.max(0, Math.min(1, v)); return (v <= 0.0031308 ? v * 12.92 : 1.055 * v ** (1 / 2.4) - 0.055) * 255; };
+function mipsOf(img) {
+  if (img.mips) return img.mips;
+  const w0 = img.width, h0 = img.height, d0 = new Float32Array(w0 * h0 * 4);
+  for (let i = 0; i < w0 * h0; i++) {
+    const a = img.rgba[i * 4 + 3] / 255;
+    d0[i * 4] = S2L[img.rgba[i * 4]] * a; d0[i * 4 + 1] = S2L[img.rgba[i * 4 + 1]] * a; d0[i * 4 + 2] = S2L[img.rgba[i * 4 + 2]] * a; d0[i * 4 + 3] = a;
+  }
+  const levels = [{ w: w0, h: h0, d: d0 }];
+  for (let L = levels[0]; L.w > 1 || L.h > 1;) {
+    const w = Math.max(1, L.w >> 1), h = Math.max(1, L.h >> 1), d = new Float32Array(w * h * 4);
+    for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) for (let c = 0; c < 4; c++) {
+      const x0 = Math.min(L.w - 1, x * 2), x1 = Math.min(L.w - 1, x * 2 + 1), y0 = Math.min(L.h - 1, y * 2), y1 = Math.min(L.h - 1, y * 2 + 1);
+      d[(y * w + x) * 4 + c] = (L.d[(y0 * L.w + x0) * 4 + c] + L.d[(y0 * L.w + x1) * 4 + c] + L.d[(y1 * L.w + x0) * 4 + c] + L.d[(y1 * L.w + x1) * 4 + c]) / 4;
+    }
+    L = { w, h, d, s: sharpen(d, w, h, 0.45) }; levels.push(L);
+  }
+  levels[0].s = d0;
+  return (img.mips = levels);
+}
+// gentle unsharp mask for the reduced levels (keeps edges and text crisp after averaging); clamped to the alpha
+function sharpen(d, w, h, amount) {
+  if (w < 3 || h < 3) return d;
+  const o = new Float32Array(d.length);
+  for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
+    const i = (y * w + x) * 4, xm = Math.max(0, x - 1), xp = Math.min(w - 1, x + 1), ym = Math.max(0, y - 1), yp = Math.min(h - 1, y + 1);
+    for (let c = 0; c < 4; c++) {
+      const blur = (d[(ym * w + x) * 4 + c] + d[(yp * w + x) * 4 + c] + d[(y * w + xm) * 4 + c] + d[(y * w + xp) * 4 + c] + 4 * d[i + c]) / 8;
+      o[i + c] = d[i + c] + amount * (d[i + c] - blur);
+    }
+    o[i + 3] = Math.max(0, Math.min(1, o[i + 3]));
+    for (let c = 0; c < 3; c++) o[i + c] = Math.max(0, Math.min(o[i + 3], o[i + c]));
+  }
+  return o;
+}
+function bilinearLevel(L, u, v, out) {
+  const x = u * L.w - 0.5, y = v * L.h - 0.5;
+  const x0 = Math.max(0, Math.min(L.w - 1, Math.floor(x))), y0 = Math.max(0, Math.min(L.h - 1, Math.floor(y)));
+  const x1 = Math.min(L.w - 1, x0 + 1), y1 = Math.min(L.h - 1, y0 + 1), fx = Math.min(1, Math.max(0, x - x0)), fy = Math.min(1, Math.max(0, y - y0));
+  for (let c = 0; c < 4; c++) {
+    const S = L.s || L.d;
+    const a = S[(y0 * L.w + x0) * 4 + c] * (1 - fx) + S[(y0 * L.w + x1) * 4 + c] * fx;
+    const b = S[(y1 * L.w + x0) * 4 + c] * (1 - fx) + S[(y1 * L.w + x1) * 4 + c] * fx;
+    out[c] = a * (1 - fy) + b * fy;
+  }
+}
+const _q0 = [0, 0, 0, 0], _q1 = [0, 0, 0, 0];
+function sampleLod(img, u, v, lod) {
+  const mips = mipsOf(img), l = Math.max(0, Math.min(mips.length - 1, lod)), i0 = Math.floor(l), t = l - i0;
+  bilinearLevel(mips[i0], u, v, _q0);
+  if (t > 0.001 && i0 + 1 < mips.length) { bilinearLevel(mips[i0 + 1], u, v, _q1); for (let c = 0; c < 4; c++) _q0[c] = _q0[c] * (1 - t) + _q1[c] * t; }
+  const a = _q0[3];
+  if (a <= 1e-5) return [0, 0, 0, 0];
+  return [L2S(_q0[0] / a), L2S(_q0[1] / a), L2S(_q0[2] / a), a * 255];
+}
+// which mip level each sticker needs on a texture of W x H: log2 of image pixels per texel (per axis)
+function computeLods(group, byPart, W, H) {
+  const counts = new Map();
+  for (const m of group) {
+    const st = byPart[m.part];
+    if (!st) continue;
+    rasterize(m, W, H, (x, y, P, N) => { for (const s of st) if (decalCoord(s, P, N)) counts.set(s, (counts.get(s) || 0) + 1); });
+  }
+  for (const [s, n] of counts) {
+    const k = s.crop || [0, 0, 1, 1], px = s.img.width * (k[2] - k[0]) * s.img.height * (k[3] - k[1]);
+    s.lod = n ? Math.max(0, 0.5 * Math.log2(px / n)) : 0;
+  }
+  return counts;
+}
+// bilinear enlargement of a decoded texture (what the GPU would do when magnifying it)
+function upscaleRgba(src, w, h, f) {
+  const W = w * f, H = h * f, out = new Uint8Array(W * H * 4);
+  for (let y = 0; y < H; y++) {
+    const sy = (y + 0.5) / f - 0.5, y0 = Math.max(0, Math.floor(sy)), y1 = Math.min(h - 1, y0 + 1), fy = Math.min(1, Math.max(0, sy - y0));
+    for (let x = 0; x < W; x++) {
+      const sx = (x + 0.5) / f - 0.5, x0 = Math.max(0, Math.floor(sx)), x1 = Math.min(w - 1, x0 + 1), fx = Math.min(1, Math.max(0, sx - x0));
+      const o = (y * W + x) * 4, a = (y0 * w + x0) * 4, b = (y0 * w + x1) * 4, c = (y1 * w + x0) * 4, d = (y1 * w + x1) * 4;
+      for (let k = 0; k < 4; k++) out[o + k] = (src[a + k] * (1 - fx) + src[b + k] * fx) * (1 - fy) + (src[c + k] * (1 - fx) + src[d + k] * fx) * fy;
+    }
+  }
+  return { width: W, height: H, rgba: out };
+}
+
 // walk all texels covered by the mesh's triangles in UV space; cb(x, y, localPos, normal)
 // pad = how far (in texels) outside a triangle still counts (fills the seams of UV islands)
 function rasterize(m, W, H, cb, pad = 0.75) {
