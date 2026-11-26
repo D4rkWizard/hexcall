@@ -301,10 +301,10 @@ module.exports = function garage({ DATA, gameDir, gameVersion, modsDir }) {
       if (total && shared / total > 0.04) warnings.push(`Auf ${path.basename(texName).replace(/_AM\.dds$/i, '')} teilt sich ein Sticker die Textur mit einer anderen Stelle des Panzers (z. B. der gespiegelten Seite) – er erscheint dort auch. Prüfansicht zeigt es.`);
       results.push({ texName, kind: t.kind, W, H, rgba });
     }
-    // 2D styles (camouflage) are painted over the colour texture by the game. The alpha of excludeMaskAndAOMap is the
-    // camouflage exclude mask (0 = full camouflage, 255 = none; green = ambient occlusion) – measured on the game files:
-    // normal hulls are mostly 0, special variants that take no camouflage are 255. Under every sticker it is raised
-    // according to the sticker's opacity, so the sticker stays visible on tanks with a 2D style.
+    // 2D styles (camouflage) are painted over the colour texture by the game, controlled by excludeMaskAndAOMap:
+    // red = camouflage exclude mask (white on hatches, periscopes, tools … = no camouflage), green = ambient occlusion,
+    // alpha (DXT5) = high on the big armour plates where the camouflage is strong. Under every sticker red is raised and
+    // alpha lowered according to the sticker's opacity, so the 2D style leaves the sticker alone.
     const masks = [];
     const maskNames = [...new Set(meshes.filter((m) => byPart[m.part] && m.diffuse && m.mask).map((m) => m.mask))];
     for (const maskName of maskNames) {
@@ -324,10 +324,12 @@ module.exports = function garage({ DATA, gameDir, gameVersion, modsDir }) {
             const col = sampleCrop(s, c);
             const a = (col[3] / 255) * s.opacity;
             if (a <= 0.02) continue;
-            const o = (y * W + x) * 4;
-            // DXT1 originals only know on/off alpha
-            const want = t.kind === 'DXT1' ? (a >= 0.5 ? 255 : rgba[o + 3]) : Math.round(rgba[o + 3] + (255 - rgba[o + 3]) * Math.min(1, a * 1.15));
-            if (want > rgba[o + 3]) { rgba[o + 3] = want; set++; }
+            const o = (y * W + x) * 4, k = Math.min(1, a * 1.15);
+            // red = camouflage exclude mask (255 = no camouflage): raise it under the sticker
+            const r = Math.round(rgba[o] + (255 - rgba[o]) * k);
+            // alpha (DXT5 only) is high where the camouflage is strong: lower it under the sticker
+            const al = t.kind === 'DXT1' ? rgba[o + 3] : Math.round(rgba[o + 3] * (1 - k));
+            if (r !== rgba[o] || al !== rgba[o + 3]) { rgba[o] = r; rgba[o + 3] = al; set++; }
           }
         });
       }
