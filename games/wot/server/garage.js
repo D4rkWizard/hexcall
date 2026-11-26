@@ -246,7 +246,8 @@ module.exports = function garage({ DATA, gameDir, gameVersion, modsDir }) {
     const ids = new Set(all.images.map((x) => x.id));
     const clean = list.filter((s) => ids.has(s.image) && ['chassis', 'hull', 'turret', 'gun'].includes(s.part) && v3ok(s.p) && v3ok(s.n) && v3ok(s.r) && v3ok(s.u))
       .map((s) => ({ id: String(s.id || Date.now()).slice(0, 30), image: s.image, part: s.part, p: s.p, n: s.n, r: s.r, u: s.u,
-        opacity: Math.max(0.05, Math.min(1, Number(s.opacity) || 1)), size: Number(s.size) || 0.5, rot: Number(s.rot) || 0, flip: !!s.flip, crop: cleanCrop(s.crop) }));
+        opacity: Math.max(0.05, Math.min(1, Number(s.opacity) || 1)), size: Number(s.size) || 0.5, rot: Number(s.rot) || 0, flip: !!s.flip, crop: cleanCrop(s.crop),
+        bright: clampN(s.bright, -1, 1, 0), sat: clampN(s.sat, 0, 2, 1), contrast: clampN(s.contrast, 0.3, 2, 1) }));
     if (clean.length) all.tanks[tankId] = clean; else delete all.tanks[tankId];
     writeAll(all);
     return clean;
@@ -335,9 +336,11 @@ module.exports = function garage({ DATA, gameDir, gameVersion, modsDir }) {
     };
     editTexture('mask', (px, o, k, kind) => {
       const r = Math.round(px[o] + (255 - px[o]) * k);
+      // green = ambient occlusion: mostly lifted under the sticker, so it is not darkened by the baked shadows
+      const g = Math.round(px[o + 1] + (255 - px[o + 1]) * 0.7 * k);
       const al = kind === 'DXT1' ? px[o + 3] : Math.round(px[o + 3] * (1 - k));
-      if (r === px[o] && al === px[o + 3]) return false;
-      px[o] = r; px[o + 3] = al; return true;
+      if (r === px[o] && g === px[o + 1] && al === px[o + 3]) return false;
+      px[o] = r; px[o + 1] = g; px[o + 3] = al; return true;
     });
     // GMM: red = gloss, green = metallic (brightens the albedo and mirrors the surroundings – the "milky" look),
     // blue = style paint. A sticker behaves like matte paint: no metal, less gloss, no style paint.
@@ -687,7 +690,19 @@ function cleanCrop(c) {
 }
 function sampleCrop(s, c) {
   const k = s.crop || [0, 0, 1, 1], su = s.flip ? 1 - c[0] : c[0], sv = 1 - c[1];
-  return sample(s.img, k[0] + su * (k[2] - k[0]), k[1] + sv * (k[3] - k[1]));
+  return adjustColor(sample(s.img, k[0] + su * (k[2] - k[0]), k[1] + sv * (k[3] - k[1])), s);
+}
+const clampN = (v, lo, hi, d) => { v = Number(v); return Number.isFinite(v) ? Math.max(lo, Math.min(hi, v)) : d; };
+// brightness / colour strength / contrast of a sticker – the same formula as the live preview shader (ui/garage.js)
+function adjustColor(col, s) {
+  const b = s.bright || 0, sat = s.sat == null ? 1 : s.sat, con = s.contrast == null ? 1 : s.contrast;
+  if (!b && sat === 1 && con === 1) return col;
+  let r = col[0] / 255, g = col[1] / 255, bl = col[2] / 255;
+  r = (r - 0.5) * con + 0.5; g = (g - 0.5) * con + 0.5; bl = (bl - 0.5) * con + 0.5;
+  const f = b >= 0 ? 1 + b : 1 + b * 0.8; r *= f; g *= f; bl *= f;
+  const l = r * 0.3 + g * 0.59 + bl * 0.11; r = l + (r - l) * sat; g = l + (g - l) * sat; bl = l + (bl - l) * sat;
+  const c8 = (v) => Math.max(0, Math.min(255, v * 255));
+  return [c8(r), c8(g), c8(bl), col[3]];
 }
 const dot = (a, b) => a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
 // decal space: u,v in [0,1] across the sticker, |d| <= 1 through its depth; only surfaces facing the sticker

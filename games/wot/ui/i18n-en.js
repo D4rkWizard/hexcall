@@ -72,6 +72,7 @@ I18N.add('en', {
   'Panzerliste einklappen': 'Collapse tank list', 'Panzerliste ausklappen': 'Expand tank list', 'Panel minimieren': 'Minimise panel', 'Panel öffnen': 'Open panel',
   'Panels aus': 'Hide panels', 'Panels ein': 'Show panels', 'Vollbild': 'Full view', 'Vollbild beenden': 'Exit full view', 'Ansicht & Teile': 'View & parts',
   'Alle Panels aus-/einblenden (H)': 'Hide/show all panels (H)', 'Vollbild: nur das Modell (F) · Esc beendet': 'Full view: only the model (F) · Esc exits',
+  'Helligkeit': 'Brightness', 'Farbkraft': 'Colour strength', 'Kontrast': 'Contrast',
   'Zuschneiden': 'Crop', 'Sticker aus WoT entfernen': 'Remove stickers from WoT',
   'Im Spielordner liegt noch eine Sticker-Mod – „Sticker aus WoT entfernen“ drücken.': 'A sticker mod is still in the game folder – press "Remove stickers from WoT".',
   'Die Mod-Datei ist gesperrt – bitte World of Tanks schließen und nochmal versuchen.': 'The mod file is locked – please close World of Tanks and try again.', 'Bildausschnitt wählen': 'Choose the image section', 'Rahmen verschieben, an Ecken und Kanten ziehen': 'Move the frame, drag corners and edges',

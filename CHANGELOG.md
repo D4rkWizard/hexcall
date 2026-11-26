@@ -7,7 +7,8 @@
 - 3D garage: removing stickers while WoT runs no longer fails silently (clear message, nothing is forgotten), a leftover sticker mod can always be removed; sticker buttons wrap instead of being cut off
 - 3D garage: collapse the tank list, minimise the panels, hide all panels (H) or switch to a full view of only the model (F, Esc exits) – remembered
 - 3D garage: stickers are objects in the 3D view – click and drag them over the tank, corner handles for size, a knob to rotate (Ctrl/Alt + wheel too), and **crop** the image section
-- 3D garage: stickers are no longer covered by 2D styles – the camouflage mask is cleared under every sticker
+- 3D garage: stickers are no longer covered by 2D styles – based on WoT's tank shader the style pattern and paint are switched off under every sticker, it behaves like matte paint and the baked shadows are lifted
+- 3D garage: per sticker brightness, colour strength and contrast (live preview, baked the same way)
 - "Play" for World of Tanks starts the Wargaming Game Center first if it is not running (otherwise WoT is not signed in) – also for Hexcall's restart button and replays
 - Language, theme and updates are now set once for the whole client (6 languages, 3 themes)
 - Hexcall studio: **Listen to original** – plays WoT's own voice line or effect for every step (converted with the free tool vgmstream, downloaded once on request), with a playback volume slider in the studio

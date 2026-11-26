@@ -58,7 +58,7 @@
   const FS = `#version 300 es
   precision highp float; in vec3 vN; in vec3 vW; in vec2 vUv; in vec3 vL; in vec3 vNL;
   uniform sampler2D uTex; uniform float uHasTex, uAlphaRef, uHi; uniform vec3 uEye; out vec4 o;
-  uniform int uDC; uniform vec3 uDP[${MAX_DECALS}], uDR[${MAX_DECALS}], uDU[${MAX_DECALS}], uDN[${MAX_DECALS}]; uniform vec4 uDX[${MAX_DECALS}], uDK[${MAX_DECALS}];
+  uniform int uDC; uniform vec3 uDP[${MAX_DECALS}], uDR[${MAX_DECALS}], uDU[${MAX_DECALS}], uDN[${MAX_DECALS}]; uniform vec4 uDX[${MAX_DECALS}], uDK[${MAX_DECALS}]; uniform vec3 uDA[${MAX_DECALS}];
   uniform sampler2D uD0, uD1, uD2, uD3, uD4, uD5;
   vec4 dtex(int i, vec2 uv){ if(i==0) return texture(uD0,uv); if(i==1) return texture(uD1,uv); if(i==2) return texture(uD2,uv); if(i==3) return texture(uD3,uv); if(i==4) return texture(uD4,uv); return texture(uD5,uv); }
   void main(){
@@ -75,6 +75,9 @@
       if (dot(normalize(vNL), uDN[i]) < 0.2) continue;
       vec2 su = vec2(uDX[i].y > 0.5 ? 1.0 - u : u, 1.0 - v);
       vec4 s = dtex(i, uDK[i].xy + su * (uDK[i].zw - uDK[i].xy)); // image section (crop)
+      // brightness / colour strength / contrast – same formula as the bake on the server
+      vec3 cc = (s.rgb - 0.5) * uDA[i].z + 0.5; cc *= uDA[i].x >= 0.0 ? 1.0 + uDA[i].x : 1.0 + uDA[i].x * 0.8;
+      float lu = dot(cc, vec3(0.3, 0.59, 0.11)); s.rgb = clamp(lu + (cc - lu) * uDA[i].y, 0.0, 1.0);
       float a = s.a * uDX[i].x;
       base = mix(base, s.rgb, a);
       if (uDX[i].w > 0.5 && (u < 0.012 || u > 0.988 || v < 0.012 || v > 0.988)) base = vec3(0.81,0.61,1.0);
@@ -256,6 +259,7 @@
         gl.uniform3fv(P.u.uDU, ds.flatMap((s) => s.u)); gl.uniform3fv(P.u.uDN, ds.flatMap((s) => s.n));
         gl.uniform4fv(P.u.uDX, ds.flatMap((s) => [s.opacity, s.flip ? 1 : 0, Math.max(Math.hypot(...s.r), Math.hypot(...s.u)) * 0.6, s.id === ST.sel ? 1 : 0]));
         gl.uniform4fv(P.u.uDK, ds.flatMap((s) => s.crop || [0, 0, 1, 1]));
+        gl.uniform3fv(P.u.uDA, ds.flatMap((s) => [s.bright || 0, s.sat == null ? 1 : s.sat, s.contrast == null ? 1 : s.contrast]));
       }
       for (let i = 0; i < MAX_DECALS; i++) {
         gl.activeTexture(gl.TEXTURE1 + i);
@@ -620,7 +624,7 @@
     if (ST.review) setReview(false);
     renderStickers(); R.dirty = true;
     clearTimeout(ST.saveTimer);
-    const id = G.current, list = ST.list.map(({ id: sid, image, part, p, n, r, u, opacity, size, rot, flip, crop }) => ({ id: sid, image, part, p, n, r, u, opacity, size, rot, flip, crop }));
+    const id = G.current, list = ST.list.map(({ id: sid, image, part, p, n, r, u, opacity, size, rot, flip, crop, bright, sat, contrast }) => ({ id: sid, image, part, p, n, r, u, opacity, size, rot, flip, crop, bright, sat, contrast }));
     ST.saveTimer = setTimeout(() => fetch('/api/wot/garage/stickers', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ tank: id, stickers: list }) })
       .then((r) => r.json()).then((d) => { if (d.error) toast(d.error, true); }), 350);
     ST.dirty = true;
@@ -656,6 +660,10 @@
       $('#stkRot').value = s.rot; $('#stkRotV').textContent = `${Math.round(s.rot)}°`;
       $('#stkOp').value = Math.round(s.opacity * 100); $('#stkOpV').textContent = `${Math.round(s.opacity * 100)} %`;
       $('#stkFlip').checked = !!s.flip;
+      const br = Math.round((s.bright || 0) * 100), sa = Math.round((s.sat == null ? 1 : s.sat) * 100), co = Math.round((s.contrast == null ? 1 : s.contrast) * 100);
+      $('#stkBright').value = br; $('#stkBrightV').textContent = `${br > 0 ? '+' : ''}${br} %`;
+      $('#stkSat').value = sa; $('#stkSatV').textContent = `${sa} %`;
+      $('#stkCon').value = co; $('#stkConV').textContent = `${co} %`;
       $('#stkMove').classList.toggle('active', !!(ST.place && ST.place.id === s.id));
     }
     syncApply();
@@ -976,6 +984,9 @@
     $('#stkRot').addEventListener('input', edit((s) => { s.rot = Number($('#stkRot').value); }));
     $('#stkOp').addEventListener('input', edit((s) => { s.opacity = Number($('#stkOp').value) / 100; }));
     $('#stkFlip').addEventListener('change', edit((s) => { s.flip = $('#stkFlip').checked; }));
+    $('#stkBright').addEventListener('input', edit((s) => { s.bright = Number($('#stkBright').value) / 100; }));
+    $('#stkSat').addEventListener('input', edit((s) => { s.sat = Number($('#stkSat').value) / 100; }));
+    $('#stkCon').addEventListener('input', edit((s) => { s.contrast = Number($('#stkCon').value) / 100; }));
     $('#stkMove').addEventListener('click', () => { const s = ST.list.find((q) => q.id === ST.sel); if (!s) return; ST.place = ST.place && ST.place.id === s.id ? null : { id: s.id, image: s.image }; R.auto = false; syncAuto(); renderStickers(); });
     $('#stkDel').addEventListener('click', () => { ST.list = ST.list.filter((q) => q.id !== ST.sel); ST.sel = null; changed(); });
     $('#stkApply').addEventListener('click', applyStickers);
