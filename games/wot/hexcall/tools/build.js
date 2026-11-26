@@ -82,6 +82,18 @@ function listMods() {
 }
 
 // Test tones: "Standard" slot = two rising beeps, "Commander" slot = three falling beeps (so you hear which one plays)
+// Volume from the studio. Above the normalised level (peak 0.89) a soft limiter keeps it from clipping.
+function applyGain(s, g) {
+  if (g === 1) return s;
+  for (let i = 0; i < s.length; i++) {
+    let x = s[i] * g;
+    const a = Math.abs(x);
+    if (a > 0.9) x = Math.sign(x) * (0.9 + 0.099 * Math.tanh((a - 0.9) / 0.099));
+    s[i] = x;
+  }
+  return s;
+}
+
 function beep(slot) {
   const tones = slot === 'national' ? [1568, 1175, 880] : [880, 1320];
   const len = RATE * 0.12, gap = RATE * 0.05;
@@ -107,6 +119,10 @@ function loadTakes(value, kind, slot) {
   if (!fs.existsSync(dir)) return recs;
   const names = [...keys.keys()].sort((a, b) => b.length - a.length);
   const unknown = [];
+  // volume set in the studio (mods\<Name>\volume.json): per kind and per recording, in percent
+  let vol = {};
+  try { vol = JSON.parse(fs.readFileSync(path.join(MODS, value, 'volume.json'), 'utf8')); } catch {}
+  const pct = (v) => (typeof v === 'number' && isFinite(v) ? Math.max(0, Math.min(200, v)) / 100 : 1);
   for (const f of fs.readdirSync(dir).sort()) {
     if (!/\.wav$/i.test(f)) continue;
     const base = f.replace(/\.wav$/i, '').replace(/^vo_/, '').toLowerCase();
@@ -115,6 +131,7 @@ function loadTakes(value, kind, slot) {
     const w = readWav(fs.readFileSync(path.join(dir, f)), f);
     // Effects keep their attack: only trim the end, don't normalise quiet loops too hard
     const s = tidy(resample(w.samples, w.rate, RATE), RATE, kind === 'stimme' ? {} : { pre: 0.015, post: 0.2 });
+    applyGain(s, pct(vol[kind]) * pct(vol.takes && vol.takes[`${kind}/${f}`]));
     if (!recs.has(k)) recs.set(k, []);
     recs.get(k).push({ file: `${value}/${kind}/${f}`, wem: toWem(s, RATE) });
   }

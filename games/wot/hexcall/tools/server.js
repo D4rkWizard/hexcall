@@ -154,6 +154,24 @@ const routes = {
     fs.writeFileSync(path.join(dir, file), body);
     return { file };
   },
+  // in-game volume of a mod: { stimme, effekte, takes: { "stimme/<file>.wav": percent } } – applied by build.js
+  'GET /api/volume': async (q) => {
+    if (!safeName(q.get('mod'))) throw new Error('Ungültiger Name');
+    return readVolume(q.get('mod'));
+  },
+  'POST /api/volume': async (q, body) => {
+    const { mod, kind, file, value } = JSON.parse(body || '{}');
+    if (!safeName(mod) || !kindOk(kind) || !fs.existsSync(path.join(MODS, mod))) throw new Error('Ungültige Anfrage');
+    const v = Math.round(Math.max(0, Math.min(200, Number(value))));
+    if (!isFinite(v)) throw new Error('Ungültiger Wert');
+    const vol = readVolume(mod);
+    if (file) {
+      if (!safeFile(file)) throw new Error('Ungültige Anfrage');
+      if (v === 100) delete vol.takes[`${kind}/${file}`]; else vol.takes[`${kind}/${file}`] = v;
+    } else vol[kind] = v;
+    fs.writeFileSync(path.join(MODS, mod, 'volume.json'), JSON.stringify(vol, null, 2));
+    return vol;
+  },
   // a recording cut in the studio replaces the file (same name)
   'POST /api/take/replace': async (q, body) => {
     const mod = q.get('mod'), kind = q.get('kind'), file = q.get('file');
@@ -342,6 +360,13 @@ function pickFolder() {
       "if ($d.ShowDialog($f) -eq 'OK') { [Console]::OutputEncoding = [Text.Encoding]::UTF8; $d.SelectedPath }";
     execFile('powershell', ['-NoProfile', '-STA', '-Command', ps], { windowsHide: true, encoding: 'utf8' }, (err, out) => resolve(err ? null : (out || '').trim() || null));
   });
+}
+
+function readVolume(mod) {
+  let v = {};
+  try { v = JSON.parse(fs.readFileSync(path.join(MODS, mod, 'volume.json'), 'utf8')); } catch {}
+  const num = (x) => (typeof x === 'number' && isFinite(x) ? x : 100);
+  return { stimme: num(v.stimme), effekte: num(v.effekte), takes: v.takes && typeof v.takes === 'object' ? v.takes : {} };
 }
 
 // url.pathname is relative to the mount point (/api/..., /index.html, ...)

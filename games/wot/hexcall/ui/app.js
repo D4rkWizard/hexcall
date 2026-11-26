@@ -338,7 +338,39 @@ const takesOf = (s) => (S.files[s.kind] && S.files[s.kind][s.key]) || [];
 async function loadFiles() {
   const r = await api(`api/mod?name=${encodeURIComponent(S.mod)}`);
   S.files = { stimme: r.stimme, effekte: r.effekte };
+  try { S.vol = await api(`api/volume?mod=${encodeURIComponent(S.mod)}`); } catch { S.vol = { stimme: 100, effekte: 100, takes: {} }; }
 }
+
+/* ---------- in-game volume: per kind (whole mod) and per recording, applied when the sounds are built ---------- */
+const takeVol = (kind, file) => (S.vol && S.vol.takes[`${kind}/${file}`]) ?? 100;
+const kindVol = (kind) => (S.vol ? S.vol[kind] : 100);
+// listening in the studio follows the in-game volume (louder than 100 % can only be heard in game)
+const gameGain = (kind, file) => Math.min(1, (kindVol(kind) / 100) * (takeVol(kind, file) / 100));
+function renderModVol() {
+  if (!S.vol) return;
+  $('#modVolLbl').textContent = `Lautstärke im Spiel · ${S.kind === 'stimme' ? 'Stimme' : 'Effekte'}`;
+  $('#modVol').value = kindVol(S.kind);
+  $('#modVolV').textContent = `${kindVol(S.kind)} %`;
+}
+// every slider has its own pending value; all of them are sent together after a short pause
+let volTimer = null;
+const volPending = new Map();
+function saveVolume(payload) {
+  volPending.set(`${payload.kind}/${payload.file || ''}`, { mod: S.mod, ...payload });
+  clearTimeout(volTimer);
+  volTimer = setTimeout(async () => {
+    const all = [...volPending.values()]; volPending.clear();
+    try { for (const p of all) S.vol = await api('api/volume', { method: 'POST', json: p }); markVolDirty(); }
+    catch (e) { toast(e.message, 'err'); }
+  }, 250);
+}
+let volHinted = false;
+function markVolDirty() { if (volHinted) return; volHinted = true; toast('Lautstärke gespeichert – wirkt nach „Anwenden“ im Spiel'); }
+$('#modVol').oninput = () => {
+  const v = Number($('#modVol').value);
+  S.vol[S.kind] = v; $('#modVolV').textContent = `${v} %`;
+  saveVolume({ kind: S.kind, value: v });
+};
 
 async function openStudio(mod) {
   S.mod = mod; S.kind = 'stimme'; S.idx = 0; S.askedBranch = false; S.fresh = null;
@@ -407,6 +439,7 @@ function showStep() {
   b.textContent = n ? `${n} Aufnahme${n > 1 ? 'n' : ''}` : 'noch offen – bleibt sonst original';
   $('#prevBtn').disabled = S.idx === 0 && S.kind === 'stimme';
   renderTakes();
+  renderModVol();
   clearScope();
   loadOriginalInfo();
 }
@@ -419,14 +452,24 @@ function renderTakes() {
   box.innerHTML = files.map((f) => `<div class="take ${f === S.fresh ? 'new' : ''}" data-file="${esc(f)}">
       <button class="btn icon play" title="Anhören">${icon('play')}</button>
       <div class="tname">${esc(f)}</div><canvas width="280" height="56"></canvas>
+      <label class="tvol ${takeVol(s.kind, f) !== 100 ? 'changed' : ''}" title="Lautstärke dieser Aufnahme im Spiel"><input type="range" min="0" max="150" step="5" value="${takeVol(s.kind, f)}"><b>${takeVol(s.kind, f)} %</b></label>
       <button class="btn icon ghost cut" title="Schneiden">${icon('cut')}</button>
       <button class="btn icon ghost del" title="Löschen">${icon('trash')}</button></div>`).join('');
   $$('.take', box).forEach((row) => {
     const url = audioUrl(s.kind, row.dataset.file);
     drawPeaks($('canvas', row), url);
-    $('.play', row).onclick = () => playUrl(url, $('.play', row));
+    $('.play', row).onclick = () => { playUrl(url, $('.play', row)); if (player) { player._gain = gameGain(s.kind, row.dataset.file); player.volume = playVolume() * player._gain; } };
     $('.del', row).onclick = () => deleteTake(s, row.dataset.file);
     $('.cut', row).onclick = () => openCutter(s, row.dataset.file);
+    const tv = $('.tvol input', row);
+    tv.oninput = () => {
+      const v = Number(tv.value), f = row.dataset.file;
+      if (v === 100) delete S.vol.takes[`${s.kind}/${f}`]; else S.vol.takes[`${s.kind}/${f}`] = v;
+      $('.tvol b', row).textContent = `${v} %`;
+      $('.tvol', row).classList.toggle('changed', v !== 100);
+      if (player && playerBtn === $('.play', row)) { player._gain = gameGain(s.kind, f); player.volume = playVolume() * player._gain; }
+      saveVolume({ kind: s.kind, file: f, value: v });
+    };
   });
 }
 
@@ -570,7 +613,7 @@ function playVolume() { const v = Number($('#playVol').value); return isNaN(v) ?
   el.value = v; out.textContent = `${v} %`;
   el.oninput = () => {
     out.textContent = `${el.value} %`;
-    if (player) player.volume = playVolume(); // also while something is playing
+    if (player) player.volume = playVolume() * (player._gain ?? 1); // also while something is playing
     try { localStorage.setItem('hexcall-play-vol', el.value); } catch {}
   };
 })();

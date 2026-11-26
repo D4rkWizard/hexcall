@@ -153,7 +153,9 @@ const I18N = (() => {
   };
 
   Object.assign(EN, {
-    'Original anhören': 'Listen to original', 'Schneiden': 'Cut', 'Aufnahme schneiden': 'Cut recording', 'Start': 'Start', 'Ende': 'End', 'Länge': 'Length',
+    'Original anhören': 'Listen to original', 'Schneiden': 'Cut', 'Lautstärke dieser Aufnahme im Spiel': 'In-game volume of this recording',
+    'Wie laut deine Sounds dieser Art im Spiel sind – wirkt nach „Anwenden“ und WoT-Neustart': 'How loud your sounds of this kind are in game – takes effect after "Apply" and restarting WoT',
+    'Lautstärke gespeichert – wirkt nach „Anwenden“ im Spiel': 'Volume saved – takes effect in game after "Apply"', 'Ungültiger Wert': 'Invalid value', 'Aufnahme schneiden': 'Cut recording', 'Start': 'Start', 'Ende': 'End', 'Länge': 'Length',
     'Griffe ziehen oder in die Wellenform klicken · Leertaste = anhören': 'Drag the handles or click into the waveform · space = listen',
     'Auswahl anhören': 'Play selection', 'Stopp': 'Stop', 'Stille wegschneiden': 'Cut silence', 'Stille am Anfang und Ende markieren': 'Select everything except silence at start and end',
     'Zurücksetzen': 'Reset', 'Als neue Variante speichern (Original behalten)': 'Save as a new variant (keep the original)', 'Schneiden & speichern': 'Cut & save',
@@ -169,6 +171,8 @@ const I18N = (() => {
   const PATTERNS = [
     [/^· (\d+) Varianten$/, '· $1 variants'],
     [/^Geschnitten: (.+)$/, 'Cut: $1'],
+    [/^Lautstärke im Spiel · Stimme$/, 'In-game volume · voice'],
+    [/^Lautstärke im Spiel · Effekte$/, 'In-game volume · effects'],
     [/^Mod aktiv: (.+)$/, 'Mod active: $1'],
     [/^Stellt wieder her: (.+)$/, 'Restores: $1'],
     [/^(\d+) Dateien$/, '$1 files'],
