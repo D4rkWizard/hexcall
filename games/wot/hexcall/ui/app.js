@@ -452,7 +452,7 @@ function renderTakes() {
   box.innerHTML = files.map((f) => `<div class="take ${f === S.fresh ? 'new' : ''}" data-file="${esc(f)}">
       <button class="btn icon play" title="Anhören">${icon('play')}</button>
       <div class="tname">${esc(f)}</div><canvas width="280" height="56"></canvas>
-      <label class="tvol ${takeVol(s.kind, f) !== 100 ? 'changed' : ''}" title="Lautstärke dieser Aufnahme im Spiel"><input type="range" min="0" max="150" step="5" value="${takeVol(s.kind, f)}"><b>${takeVol(s.kind, f)} %</b></label>
+      <label class="tvol ${takeVol(s.kind, f) !== 100 ? 'changed' : ''}" title="Lautstärke dieser Aufnahme im Spiel"><input type="range" min="0" max="200" step="5" value="${takeVol(s.kind, f)}"><b>${takeVol(s.kind, f)} %</b></label>
       <button class="btn icon ghost cut" title="Schneiden">${icon('cut')}</button>
       <button class="btn icon ghost del" title="Löschen">${icon('trash')}</button></div>`).join('');
   $$('.take', box).forEach((row) => {

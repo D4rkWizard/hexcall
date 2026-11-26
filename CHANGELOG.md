@@ -7,7 +7,7 @@
 - Language, theme and updates are now set once for the whole client (6 languages, 3 themes)
 - Hexcall studio: **Listen to original** – plays WoT's own voice line or effect for every step (converted with the free tool vgmstream, downloaded once on request), with a playback volume slider in the studio
 - Hexcall studio: **cut your recordings** – drag start/end on the waveform, listen to the selection, cut silence automatically, save over the take or as a new variant
-- Hexcall studio: **in-game volume** – one slider for all voice lines / all effects of a mod and one per recording (0–150 %, a soft limiter keeps loud settings from clipping); applied when the sounds are built – and you hear it just as loud when listening in the studio
+- Hexcall studio: **in-game volume** – one slider for all voice lines / all effects of a mod and one per recording (0–200 %, a soft limiter keeps loud settings from clipping); applied when the sounds are built – and you hear it just as loud when listening in the studio
 - Your Hexcall sounds and settings stay in %APPDATA%\Hexcall and are used automatically
 
 
