@@ -244,7 +244,7 @@ module.exports = function garage({ DATA, gameDir, gameVersion, modsDir }) {
     const ids = new Set(all.images.map((x) => x.id));
     const clean = list.filter((s) => ids.has(s.image) && ['chassis', 'hull', 'turret', 'gun'].includes(s.part) && v3ok(s.p) && v3ok(s.n) && v3ok(s.r) && v3ok(s.u))
       .map((s) => ({ id: String(s.id || Date.now()).slice(0, 30), image: s.image, part: s.part, p: s.p, n: s.n, r: s.r, u: s.u,
-        opacity: Math.max(0.05, Math.min(1, Number(s.opacity) || 1)), size: Number(s.size) || 0.5, rot: Number(s.rot) || 0, flip: !!s.flip }));
+        opacity: Math.max(0.05, Math.min(1, Number(s.opacity) || 1)), size: Number(s.size) || 0.5, rot: Number(s.rot) || 0, flip: !!s.flip, crop: cleanCrop(s.crop) }));
     if (clean.length) all.tanks[tankId] = clean; else delete all.tanks[tankId];
     writeAll(all);
     return clean;
@@ -276,7 +276,7 @@ module.exports = function garage({ DATA, gameDir, gameVersion, modsDir }) {
             const c = decalCoord(s, P, N);
             if (!c) continue;
             s.texels = (s.texels || 0) + 1;
-            const col = sample(s.img, s.flip ? 1 - c[0] : c[0], 1 - c[1]);
+            const col = sampleCrop(s, c);
             const a = (col[3] / 255) * s.opacity;
             if (a <= 0.003) continue;
             const o = (y * W + x) * 4;
@@ -319,7 +319,7 @@ module.exports = function garage({ DATA, gameDir, gameVersion, modsDir }) {
           for (const s of st) {
             const c = decalCoord(s, P, N);
             if (!c) continue;
-            const col = sample(s.img, s.flip ? 1 - c[0] : c[0], 1 - c[1]);
+            const col = sampleCrop(s, c);
             const a = (col[3] / 255) * s.opacity;
             if (a <= 0.02) continue;
             const o = (y * W + x) * 4;
@@ -655,6 +655,16 @@ module.exports = function garage({ DATA, gameDir, gameVersion, modsDir }) {
 };
 
 /* ---------- sticker geometry helpers ---------- */
+// image section of a sticker (x0, y0, x1, y1 in 0..1, top-left origin) – "zuschneiden" in the 3D garage
+function cleanCrop(c) {
+  if (!Array.isArray(c) || c.length !== 4 || !c.every(Number.isFinite)) return [0, 0, 1, 1];
+  const [x0, y0, x1, y1] = c.map((v) => Math.max(0, Math.min(1, v)));
+  return x1 - x0 >= 0.02 && y1 - y0 >= 0.02 ? [x0, y0, x1, y1] : [0, 0, 1, 1];
+}
+function sampleCrop(s, c) {
+  const k = s.crop || [0, 0, 1, 1], su = s.flip ? 1 - c[0] : c[0], sv = 1 - c[1];
+  return sample(s.img, k[0] + su * (k[2] - k[0]), k[1] + sv * (k[3] - k[1]));
+}
 const dot = (a, b) => a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
 // decal space: u,v in [0,1] across the sticker, |d| <= 1 through its depth; only surfaces facing the sticker
 function decalCoord(s, P, N, grow = 1) {

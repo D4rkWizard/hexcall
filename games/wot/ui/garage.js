@@ -58,7 +58,7 @@
   const FS = `#version 300 es
   precision highp float; in vec3 vN; in vec3 vW; in vec2 vUv; in vec3 vL; in vec3 vNL;
   uniform sampler2D uTex; uniform float uHasTex, uAlphaRef, uHi; uniform vec3 uEye; out vec4 o;
-  uniform int uDC; uniform vec3 uDP[${MAX_DECALS}], uDR[${MAX_DECALS}], uDU[${MAX_DECALS}], uDN[${MAX_DECALS}]; uniform vec4 uDX[${MAX_DECALS}];
+  uniform int uDC; uniform vec3 uDP[${MAX_DECALS}], uDR[${MAX_DECALS}], uDU[${MAX_DECALS}], uDN[${MAX_DECALS}]; uniform vec4 uDX[${MAX_DECALS}], uDK[${MAX_DECALS}];
   uniform sampler2D uD0, uD1, uD2, uD3, uD4, uD5;
   vec4 dtex(int i, vec2 uv){ if(i==0) return texture(uD0,uv); if(i==1) return texture(uD1,uv); if(i==2) return texture(uD2,uv); if(i==3) return texture(uD3,uv); if(i==4) return texture(uD4,uv); return texture(uD5,uv); }
   void main(){
@@ -73,7 +73,8 @@
       if (u < 0.0 || u > 1.0 || v < 0.0 || v > 1.0) continue;
       if (abs(dot(d, uDN[i])) > uDX[i].z) continue;
       if (dot(normalize(vNL), uDN[i]) < 0.2) continue;
-      vec4 s = dtex(i, vec2(uDX[i].y > 0.5 ? 1.0 - u : u, 1.0 - v));
+      vec2 su = vec2(uDX[i].y > 0.5 ? 1.0 - u : u, 1.0 - v);
+      vec4 s = dtex(i, uDK[i].xy + su * (uDK[i].zw - uDK[i].xy)); // image section (crop)
       float a = s.a * uDX[i].x;
       base = mix(base, s.rgb, a);
       if (uDX[i].w > 0.5 && (u < 0.012 || u > 0.988 || v < 0.012 || v > 0.988)) base = vec3(0.81,0.61,1.0);
@@ -253,6 +254,7 @@
         gl.uniform3fv(P.u.uDP, ds.flatMap((s) => s.p)); gl.uniform3fv(P.u.uDR, ds.flatMap((s) => s.r));
         gl.uniform3fv(P.u.uDU, ds.flatMap((s) => s.u)); gl.uniform3fv(P.u.uDN, ds.flatMap((s) => s.n));
         gl.uniform4fv(P.u.uDX, ds.flatMap((s) => [s.opacity, s.flip ? 1 : 0, Math.max(Math.hypot(...s.r), Math.hypot(...s.u)) * 0.6, s.id === ST.sel ? 1 : 0]));
+        gl.uniform4fv(P.u.uDK, ds.flatMap((s) => s.crop || [0, 0, 1, 1]));
       }
       for (let i = 0; i < MAX_DECALS; i++) {
         gl.activeTexture(gl.TEXTURE1 + i);
@@ -288,6 +290,7 @@
       }
     }
     gl.bindVertexArray(null);
+    drawGizmo(vp);
   }
 
   /* ---------------- picking: ray from the mouse onto the model (in part-local BigWorld coords) ---------------- */
@@ -334,11 +337,151 @@
     let up = V.cross(right, n);
     const a = (s.rot * Math.PI) / 180, c = Math.cos(a), sn = Math.sin(a);
     const r2 = V.add(V.scale(right, c), V.scale(up, sn)), u2 = V.sub(V.scale(up, c), V.scale(right, sn));
-    const im = imgOf(s.image), half = s.size / 2;
+    const im = imgOf(s.image), half = s.size / 2, k = s.crop || [0, 0, 1, 1];
     s.r = V.scale(r2, half);
-    s.u = V.scale(u2, half * (im.h / im.w));
+    s.u = V.scale(u2, half * ((im.h * (k[3] - k[1])) / (im.w * (k[2] - k[0])))); // size = width of the visible section
     s.n = n;
     return s;
+  }
+
+  /* ---------------- sticker as an object in the 3D view: select, drag, scale, rotate ---------------- */
+  const selSticker = () => ST.list.find((q) => q.id === ST.sel);
+  function toScreen(part, p, vp) {
+    const w = M.xf(partMatrix(part), p);
+    const c = [0, 1, 2, 3].map((k) => vp[k] * w[0] + vp[4 + k] * w[1] + vp[8 + k] * w[2] + vp[12 + k]);
+    if (c[3] <= 0.0001) return null;
+    return [(c[0] / c[3] * 0.5 + 0.5) * R.canvas.clientWidth, (0.5 - c[1] / c[3] * 0.5) * R.canvas.clientHeight];
+  }
+  function stickerAt(hit) {
+    if (!hit) return null;
+    return ST.list.find((s) => s.part === hit.part && (() => { const d = V.sub(hit.p, s.p); return Math.abs(V.dot(d, s.r) / V.dot(s.r, s.r)) <= 1 && Math.abs(V.dot(d, s.u) / V.dot(s.u, s.u)) <= 1 && Math.abs(V.dot(d, s.n)) < Math.max(Math.hypot(...s.r), Math.hypot(...s.u)) * 0.6; })()) || null;
+  }
+  // corners + rotation handle of the selected sticker, drawn as SVG over the canvas
+  function drawGizmo(vp) {
+    const g = $('#stkGizmo'), s = selSticker();
+    if (!s || ST.review || ST.place || MD.place || R.hidden.has(s.part) || $('#tab-stk').hidden) { if (g.innerHTML) g.innerHTML = ''; R.gz = null; return; }
+    const P = (v) => toScreen(s.part, v, vp);
+    const c = [V.add(V.sub(s.p, s.r), s.u), V.add(V.add(s.p, s.r), s.u), V.sub(V.add(s.p, s.r), s.u), V.sub(V.sub(s.p, s.r), s.u)].map(P);
+    const mid = P(s.p), top = P(V.add(s.p, s.u)), knob = P(V.add(s.p, V.scale(s.u, 1.45)));
+    if (c.some((x) => !x) || !mid || !knob) { g.innerHTML = ''; R.gz = null; return; }
+    // keep the rotation knob at least 26 px away from the top edge
+    const dk = Math.hypot(knob[0] - top[0], knob[1] - top[1]), dir = dk > 0.1 ? [(knob[0] - top[0]) / dk, (knob[1] - top[1]) / dk] : [0, -1];
+    const kn = [top[0] + dir[0] * Math.max(26, dk), top[1] + dir[1] * Math.max(26, dk)];
+    R.gz = { mid, corners: c, knob: kn };
+    g.innerHTML = `<polygon class="gz-body" data-gz="move" points="${c.map((p) => p.join(',')).join(' ')}"/>
+      <line class="gz-line" x1="${top[0]}" y1="${top[1]}" x2="${kn[0]}" y2="${kn[1]}"/>
+      ${c.map((p, i) => `<rect class="gz-scale" data-gz="scale" x="${p[0] - 6}" y="${p[1] - 6}" width="12" height="12" rx="2" style="cursor:${i % 2 ? 'nesw' : 'nwse'}-resize"/>`).join('')}
+      <circle class="gz-rot" data-gz="rot" cx="${kn[0]}" cy="${kn[1]}" r="8"/>`;
+  }
+  // light update of the edit sliders while dragging (no full re-render of the panel)
+  function syncEdit(s) {
+    $('#stkSize').value = s.size; $('#stkSizeV').textContent = `${s.size.toFixed(2)} m`;
+    $('#stkRot').value = s.rot; $('#stkRotV').textContent = `${Math.round(s.rot)}°`;
+  }
+  const normRot = (r) => ((r + 540) % 360) - 180;
+  function startStickerDrag(mode, e) {
+    const s = selSticker(); if (!s) return;
+    const r = R.canvas.getBoundingClientRect(), mx = e.clientX - r.left, my = e.clientY - r.top;
+    const mid = R.gz ? R.gz.mid : [mx, my];
+    const d = { mode, s, size: s.size, rot: s.rot, mid, a0: Math.atan2(my - mid[1], mx - mid[0]), r0: Math.max(4, Math.hypot(mx - mid[0], my - mid[1])), moved: false, raf: 0, last: null };
+    if (mode === 'rot') {
+      // which way does the knob turn on screen for +rot? (the model is shown mirrored)
+      const { vp } = camera(), probe = { ...s, rot: s.rot + 5 }; orient(probe);
+      const k0 = toScreen(s.part, V.add(s.p, s.u), vp), k1 = toScreen(s.part, V.add(probe.p, probe.u), vp);
+      const a0 = Math.atan2(k0[1] - mid[1], k0[0] - mid[0]), a1 = Math.atan2(k1[1] - mid[1], k1[0] - mid[0]);
+      d.sign = Math.sign(normRot(((a1 - a0) * 180) / Math.PI)) || 1;
+    }
+    R.sdrag = d; R.auto = false; syncAuto();
+    const move = (ev) => {
+      d.last = ev;
+      if (d.raf) return;
+      d.raf = requestAnimationFrame(() => {
+        d.raf = 0; const q = d.last, x = q.clientX - r.left, y = q.clientY - r.top;
+        if (d.mode === 'move') {
+          const hit = pick(q.clientX, q.clientY);
+          if (hit) { Object.assign(s, { part: hit.part, p: hit.p, n: hit.n }); orient(s); d.moved = true; }
+        } else if (d.mode === 'scale') {
+          s.size = Math.max(0.05, Math.min(4, d.size * (Math.hypot(x - d.mid[0], y - d.mid[1]) / d.r0))); orient(s); d.moved = true;
+        } else if (d.mode === 'rot') {
+          const da = ((Math.atan2(y - d.mid[1], x - d.mid[0]) - d.a0) * 180) / Math.PI;
+          let rot = normRot(d.rot + d.sign * da);
+          if (q.shiftKey) rot = Math.round(rot / 15) * 15; // snap
+          s.rot = rot; orient(s); d.moved = true;
+        }
+        syncEdit(s); R.dirty = true;
+      });
+    };
+    const up = () => {
+      window.removeEventListener('pointermove', move); window.removeEventListener('pointerup', up);
+      R.sdrag = null;
+      if (d.moved) changed(); else renderStickers();
+    };
+    window.addEventListener('pointermove', move); window.addEventListener('pointerup', up);
+  }
+
+  /* ---------------- crop (image section of the selected sticker) ---------------- */
+  const CR = { s: null, crop: null, start: null };
+  function openCrop() {
+    const s = selSticker(); if (!s) return;
+    CR.s = s; CR.start = { crop: [...(s.crop || [0, 0, 1, 1])], size: s.size }; CR.crop = [...CR.start.crop];
+    const img = $('#cropImg');
+    img.onload = () => drawCropRect();
+    img.src = `/api/wot/garage/sticker-image?id=${s.image}`;
+    $('#cropBox').hidden = false;
+    if (img.complete) drawCropRect();
+  }
+  function drawCropRect() {
+    const img = $('#cropImg'), [x0, y0, x1, y1] = CR.crop, w = img.clientWidth, h = img.clientHeight;
+    const ox = img.offsetLeft, oy = img.offsetTop; // the stage has padding so the edge handles stay grabbable
+    Object.assign($('#cropRect').style, { left: `${ox + x0 * w}px`, top: `${oy + y0 * h}px`, width: `${(x1 - x0) * w}px`, height: `${(y1 - y0) * h}px` });
+  }
+  function applyCropLive() {
+    const s = CR.s; if (!s) return;
+    const w0 = CR.start.crop[2] - CR.start.crop[0], w1 = CR.crop[2] - CR.crop[0];
+    s.crop = [...CR.crop];
+    s.size = Math.max(0.05, Math.min(4, CR.start.size * (w1 / w0))); // the visible part keeps its size on the tank
+    orient(s); syncEdit(s); R.dirty = true;
+  }
+  function closeCrop(keep) {
+    if (!CR.s) return;
+    if (!keep) { CR.s.crop = CR.start.crop; CR.s.size = CR.start.size; orient(CR.s); R.dirty = true; }
+    $('#cropBox').hidden = true;
+    const changedCrop = keep && CR.s.crop.join() !== CR.start.crop.join();
+    CR.s = null;
+    if (changedCrop) changed(); else renderStickers();
+  }
+  function bindCrop() {
+    const stage = $('#cropStage');
+    stage.addEventListener('pointerdown', (e) => {
+      const handle = e.target.dataset.c, inRect = e.target.closest('#cropRect');
+      if (!handle && !inRect) return;
+      e.preventDefault(); stage.setPointerCapture(e.pointerId);
+      const img = $('#cropImg'), W = img.clientWidth, H = img.clientHeight, sx = e.clientX, sy = e.clientY, c0 = [...CR.crop], min = 0.03;
+      const move = (ev) => {
+        const dx = (ev.clientX - sx) / W, dy = (ev.clientY - sy) / H;
+        let [x0, y0, x1, y1] = c0;
+        if (!handle) { const w = x1 - x0, h = y1 - y0; x0 = Math.max(0, Math.min(1 - w, x0 + dx)); y0 = Math.max(0, Math.min(1 - h, y0 + dy)); x1 = x0 + w; y1 = y0 + h; }
+        else {
+          if (handle.includes('w')) x0 = Math.max(0, Math.min(x1 - min, x0 + dx));
+          if (handle.includes('e')) x1 = Math.min(1, Math.max(x0 + min, x1 + dx));
+          if (handle.includes('n')) y0 = Math.max(0, Math.min(y1 - min, y0 + dy));
+          if (handle.includes('s')) y1 = Math.min(1, Math.max(y0 + min, y1 + dy));
+        }
+        CR.crop = [x0, y0, x1, y1]; drawCropRect(); applyCropLive();
+      };
+      const up = () => { stage.removeEventListener('pointermove', move); stage.removeEventListener('pointerup', up); };
+      stage.addEventListener('pointermove', move); stage.addEventListener('pointerup', up);
+    });
+    $('#cropReset').addEventListener('click', () => { CR.crop = [0, 0, 1, 1]; drawCropRect(); applyCropLive(); });
+    $('#cropCancel').addEventListener('click', () => closeCrop(false));
+    $('#cropOk').addEventListener('click', () => closeCrop(true));
+    $('#stkCrop').addEventListener('click', () => (CR.s ? closeCrop(true) : openCrop()));
+    $('#stkGizmo').addEventListener('pointerdown', (e) => {
+      const mode = e.target.dataset && e.target.dataset.gz;
+      if (!mode || e.button !== 0) return;
+      e.preventDefault(); e.stopPropagation();
+      startStickerDrag(mode, e);
+    });
   }
 
   /* ---------------- input ---------------- */
@@ -346,6 +489,17 @@
     const c = R.canvas;
     c.addEventListener('contextmenu', (e) => e.preventDefault());
     c.addEventListener('pointerdown', (e) => {
+      // a sticker under the mouse: select it and drag it over the tank (instead of turning the camera)
+      if (e.button === 0 && !e.shiftKey && !ST.place && !MD.place && !ST.review && !$('#tab-stk').hidden) {
+        const found = stickerAt(pick(e.clientX, e.clientY));
+        if (found) {
+          e.preventDefault();
+          if (found.id !== ST.sel) { ST.sel = found.id; renderStickers(); }
+          R.dirty = true;
+          startStickerDrag('move', e);
+          return;
+        }
+      }
       c.setPointerCapture(e.pointerId);
       R.drag = { x: e.clientX, y: e.clientY, sx: e.clientX, sy: e.clientY, pan: e.button === 2 || e.shiftKey, button: e.button };
       R.auto = false; syncAuto();
@@ -365,7 +519,19 @@
       if (!d || d.button !== 0 || Math.hypot(e.clientX - d.sx, e.clientY - d.sy) > 5) return;
       onClick(e.clientX, e.clientY);
     });
-    c.addEventListener('wheel', (e) => { e.preventDefault(); R.cam.dist = Math.max(1.5, Math.min(60, R.cam.dist * Math.exp(e.deltaY * 0.0012))); R.dirty = true; }, { passive: false });
+    c.addEventListener('wheel', (e) => {
+      // Ctrl + wheel = size, Alt + wheel = rotation of the selected sticker
+      const s = selSticker();
+      if (s && (e.ctrlKey || e.altKey) && !ST.review) {
+        e.preventDefault();
+        if (e.ctrlKey) s.size = Math.max(0.05, Math.min(4, s.size * Math.exp(-e.deltaY * 0.0015)));
+        else s.rot = normRot(s.rot + (e.deltaY > 0 ? 5 : -5));
+        orient(s); syncEdit(s); R.dirty = true;
+        clearTimeout(R.wheelSave); R.wheelSave = setTimeout(changed, 300);
+        return;
+      }
+    }, { passive: false });
+    c.addEventListener('wheel', (e) => { if (e.defaultPrevented) return; e.preventDefault(); R.cam.dist = Math.max(1.5, Math.min(60, R.cam.dist * Math.exp(e.deltaY * 0.0012))); R.dirty = true; }, { passive: false });
     c.addEventListener('dblclick', () => { if (!ST.place) resetView(); });
     // drop images straight onto the tank
     const view = $('.gar-view');
@@ -414,6 +580,7 @@
   async function loadStickers(id) {
     const d = await (await fetch(`/api/wot/garage/stickers?tank=${encodeURIComponent(id)}`)).json();
     if (G.current !== id) return;
+    if (CR.s) { CR.s = null; $('#cropBox').hidden = true; }
     ST.images = d.images || []; ST.list = (d.stickers || []).map((s) => orient({ ...s })); ST.applied = d.applied; ST.sel = null; ST.place = null;
     ST.review = false;
     renderStickers(); R.dirty = true;
@@ -422,7 +589,7 @@
     if (ST.review) setReview(false);
     renderStickers(); R.dirty = true;
     clearTimeout(ST.saveTimer);
-    const id = G.current, list = ST.list.map(({ id: sid, image, part, p, n, r, u, opacity, size, rot, flip }) => ({ id: sid, image, part, p, n, r, u, opacity, size, rot, flip }));
+    const id = G.current, list = ST.list.map(({ id: sid, image, part, p, n, r, u, opacity, size, rot, flip, crop }) => ({ id: sid, image, part, p, n, r, u, opacity, size, rot, flip, crop }));
     ST.saveTimer = setTimeout(() => fetch('/api/wot/garage/stickers', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ tank: id, stickers: list }) })
       .then((r) => r.json()).then((d) => { if (d.error) toast(d.error, true); }), 350);
     ST.dirty = true;
@@ -767,6 +934,7 @@
       R.auto = false; syncAuto();
       renderStickers();
     });
+    bindCrop();
     $('#stkList').addEventListener('click', (e) => { const b = e.target.closest('[data-stk]'); if (!b) return; ST.sel = ST.sel === b.dataset.stk ? null : b.dataset.stk; ST.place = null; renderStickers(); R.dirty = true; });
     const edit = (fn) => () => { const s = ST.list.find((q) => q.id === ST.sel); if (!s) return; fn(s); orient(s); changed(); };
     $('#stkSize').addEventListener('input', edit((s) => { s.size = Number($('#stkSize').value); }));
@@ -806,6 +974,7 @@
 
     document.addEventListener('keydown', (e) => {
       if (!$('#page-garage').classList.contains('active') || /INPUT|SELECT|TEXTAREA/.test(document.activeElement.tagName)) return;
+      if (e.key === 'Escape' && CR.s) { closeCrop(false); return; }
       if (e.key === 'Escape' && (ST.place || MD.place)) { ST.place = null; MD.place = null; renderStickers(); renderModels(); }
       if (e.key === 'Delete' || e.key === 'Entf') { if (!$('#tab-mdl').hidden && MD.sel) $('#mdlDel').click(); else if (ST.sel) $('#stkDel').click(); }
     });

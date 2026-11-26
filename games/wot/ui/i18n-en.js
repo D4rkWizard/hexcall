@@ -67,7 +67,10 @@ I18N.add('en', {
   'Anwenden (in WoT einbauen)': 'Apply (build into WoT)', 'Anbau entfernen (Entf)': 'Remove part (Del)', 'Sticker entfernen (Entf)': 'Remove sticker (Del)',
   'Rein optisch – die Trefferzonen bleiben original. Gilt für jeden Panzer dieses Typs, den du im Gefecht siehst. Keine riesigen Anbauten (Fair Play). Wirkt nach WoT-Neustart.':
     'Purely visual – hit zones stay original. Applies to every tank of this type you see in battle. No huge parts (fair play). Takes effect after restarting WoT.',
-  'Bild wählen, dann auf den Panzer klicken': 'Pick an image, then click on the tank', 'Drehung': 'Rotation', 'Deckkraft': 'Opacity', 'Spiegeln': 'Mirror', 'Prüfansicht': 'Check view',
+  'Bild wählen, dann auf den Panzer klicken': 'Pick an image, then click on the tank',
+  'Bild wählen, dann auf den Panzer klicken. Sticker anklicken und ziehen = verschieben · Ecken = Größe · Kreis = drehen': 'Pick an image, then click on the tank. Click and drag a sticker = move · corners = size · circle = rotate',
+  'Zuschneiden': 'Crop', 'Bildausschnitt wählen': 'Choose the image section', 'Rahmen verschieben, an Ecken und Kanten ziehen': 'Move the frame, drag corners and edges',
+  'Ganzes Bild': 'Whole image', 'Übernehmen': 'Apply', 'Drehung': 'Rotation', 'Deckkraft': 'Opacity', 'Spiegeln': 'Mirror', 'Prüfansicht': 'Check view',
   'Zeigt die eingebrannte Textur – so sieht es in WoT aus': 'Shows the burnt-in texture – this is how it looks in WoT',
   'Nur du siehst die Sticker. 2D-Stile werden unter den Stickern ausgespart, bei 3D-Stilen sind sie nicht sichtbar. Wirkt nach WoT-Neustart.': 'Only you see the stickers. 2D styles are left out under the stickers, with 3D styles they are not visible. Takes effect after restarting WoT.',
   'Klick auf den Panzer zum Platzieren · Esc bricht ab': 'Click on the tank to place · Esc cancels', 'Teile': 'Parts',

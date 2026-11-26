@@ -109,6 +109,12 @@
         </div>
         <div class="gar-view">
           <canvas id="garCanvas"></canvas>
+          <svg class="stk-gizmo" id="stkGizmo" aria-hidden="true"></svg>
+          <div class="crop-box" id="cropBox" hidden>
+            <div class="crop-head"><b>Zuschneiden</b><span class="sub">Rahmen verschieben, an Ecken und Kanten ziehen</span></div>
+            <div class="crop-stage" id="cropStage"><img id="cropImg" alt="" draggable="false"><div class="crop-rect" id="cropRect"><i data-c="nw"></i><i data-c="n"></i><i data-c="ne"></i><i data-c="e"></i><i data-c="se"></i><i data-c="s"></i><i data-c="sw"></i><i data-c="w"></i></div></div>
+            <div class="crop-acts"><button class="btn sm ghost" id="cropReset">Ganzes Bild</button><span class="spacer"></span><button class="btn sm ghost" id="cropCancel">Abbrechen</button><button class="btn sm primary" id="cropOk">Übernehmen</button></div>
+          </div>
           <div class="gar-msg" id="garMsg" hidden></div>
           <div class="gar-hud" id="garHud" hidden>
             <div class="gar-head"><h1 id="garTitle"></h1><div class="sub" id="garMeta"></div></div>
@@ -144,7 +150,7 @@
                 </div>
               </div>
               <div class="stk-page" id="tab-stk">
-              <div class="stk-head"><span class="sub">Bild wählen, dann auf den Panzer klicken</span></div>
+              <div class="stk-head"><span class="sub">Bild wählen, dann auf den Panzer klicken. Sticker anklicken und ziehen = verschieben · Ecken = Größe · Kreis = drehen</span></div>
               <div class="stk-images" id="stkImages"></div>
               <div class="stk-list" id="stkList"></div>
               <div class="stk-edit" id="stkEdit" hidden>
@@ -153,6 +159,7 @@
                 <div class="gar-row"><span class="lbl">Deckkraft</span><input type="range" id="stkOp" min="10" max="100" step="1"><span class="val" id="stkOpV"></span></div>
                 <div class="stk-acts">
                   <label class="chk-row"><input type="checkbox" id="stkFlip"> Spiegeln</label>
+                  <button class="btn sm ghost" id="stkCrop" title="Bildausschnitt wählen"><svg><use href="#i-cut"/></svg>Zuschneiden</button>
                   <button class="btn sm ghost" id="stkMove">Neu setzen</button>
                   <button class="btn sm ghost icon" id="stkDel" title="Sticker entfernen (Entf)"><svg><use href="#i-trash"/></svg></button>
                 </div>

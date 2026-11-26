@@ -143,3 +143,24 @@ body.wait,body.wait *{cursor:progress!important}
 .hv-head button:last-child{text-align:right}.hv-head button.on{color:var(--accent-hi)}
 .hv-item{grid-template-columns:38px 1fr 56px}
 .hv-item .t{display:flex;flex-direction:column;font-weight:600;color:var(--text3)}.hv-item .t small{color:var(--dim);font-weight:400;font-size:10.5px}
+
+/* 3D garage – sticker handles in the 3D view */
+.stk-gizmo{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;overflow:visible}
+.stk-gizmo .gz-body{fill:rgba(207,155,255,.06);stroke:#cf9bff;stroke-width:1.5;stroke-dasharray:5 4;pointer-events:all;cursor:move}
+.stk-gizmo .gz-line{stroke:#cf9bff;stroke-width:1.5}
+.stk-gizmo .gz-scale{fill:#fff;stroke:#8b45f0;stroke-width:2;pointer-events:all}
+.stk-gizmo .gz-rot{fill:#b46cff;stroke:#fff;stroke-width:2;pointer-events:all;cursor:grab}
+.stk-gizmo .gz-rot:active{cursor:grabbing}
+.gar-view canvas.over-sticker{cursor:move}
+/* 3D garage – crop a sticker */
+.crop-box{position:absolute;left:24px;top:74px;width:380px;z-index:5;padding:14px;border-radius:14px;background:rgba(20,14,32,.94);border:1px solid var(--line2);backdrop-filter:blur(8px);display:flex;flex-direction:column;gap:10px;box-shadow:0 20px 60px rgba(0,0,0,.5)}
+.crop-head{display:flex;flex-direction:column;gap:2px}.crop-head .sub{font-size:12px;margin:0}
+.crop-stage{position:relative;align-self:center;max-width:100%;background:repeating-conic-gradient(#241a36 0 25%,#1a1328 0 50%) 0 0/14px 14px;border-radius:6px;user-select:none;touch-action:none}
+.crop-stage img{display:block;max-width:352px;max-height:300px;pointer-events:none}
+.crop-rect{position:absolute;box-shadow:0 0 0 9999px rgba(8,5,14,.62);outline:1.5px solid #cf9bff;cursor:move}
+.crop-stage{overflow:hidden;padding:9px}
+.crop-rect i{position:absolute;width:12px;height:12px;margin:-6px 0 0 -6px;background:#fff;border:2px solid #8b45f0;border-radius:3px}
+.crop-rect i[data-c=nw]{left:0;top:0;cursor:nwse-resize}.crop-rect i[data-c=n]{left:50%;top:0;cursor:ns-resize}.crop-rect i[data-c=ne]{left:100%;top:0;cursor:nesw-resize}
+.crop-rect i[data-c=e]{left:100%;top:50%;cursor:ew-resize}.crop-rect i[data-c=se]{left:100%;top:100%;cursor:nwse-resize}.crop-rect i[data-c=s]{left:50%;top:100%;cursor:ns-resize}
+.crop-rect i[data-c=sw]{left:0;top:100%;cursor:nesw-resize}.crop-rect i[data-c=w]{left:0;top:50%;cursor:ew-resize}
+.crop-acts{display:flex;gap:6px;align-items:center}
