@@ -128,7 +128,7 @@ module.exports = function garage({ DATA, gameDir, gameVersion, modsDir }) {
             for (const pr of bw.kids(mat, 'property')) { const [k, val] = pr.c[0] || []; if (k) props[bw.str(pr)] = { type: k, v: val.v }; }
             const tex = (k) => (props[k] && props[k].type === 'Texture' ? String(props[k].v).trim() : null);
             const i = meshes.length;
-            meshes.push({ verts, idx: ind.idx.subarray(grp.startIndex, grp.startIndex + grp.primitives * 3), part: p.part, diffuse: tex('diffuseMap'), mask: tex('excludeMaskAndAOMap') });
+            meshes.push({ verts, idx: ind.idx.subarray(grp.startIndex, grp.startIndex + grp.primitives * 3), part: p.part, diffuse: tex('diffuseMap'), mask: tex('excludeMaskAndAOMap'), gmm: tex('metallicGlossMap') });
             p.meshes.push({
               i, material: bw.str(bw.kid(mat, 'identifier')), diffuse: tex('diffuseMap'), normal: tex('normalMap'),
               alphaTest: props.alphaTestEnable ? !!props.alphaTestEnable.v : false,
@@ -301,40 +301,48 @@ module.exports = function garage({ DATA, gameDir, gameVersion, modsDir }) {
       if (total && shared / total > 0.04) warnings.push(`Auf ${path.basename(texName).replace(/_AM\.dds$/i, '')} teilt sich ein Sticker die Textur mit einer anderen Stelle des Panzers (z. B. der gespiegelten Seite) – er erscheint dort auch. Prüfansicht zeigt es.`);
       results.push({ texName, kind: t.kind, W, H, rgba });
     }
-    // 2D styles (camouflage) are painted over the colour texture by the game, controlled by excludeMaskAndAOMap:
-    // red = camouflage exclude mask (white on hatches, periscopes, tools … = no camouflage), green = ambient occlusion,
-    // alpha (DXT5) = high on the big armour plates where the camouflage is strong. Under every sticker red is raised and
-    // alpha lowered according to the sticker's opacity, so the 2D style leaves the sticker alone.
+    // Keep 2D styles off the stickers – read from WoT's tank shader (PBS_tank_colourised):
+    //  * excludeMaskAndAOMap: alpha × 5 switches the style pattern (tintMap) on, red blocks projection decals
+    //    (emblems/inscriptions), green = ambient occlusion
+    //  * metallicGlossMap: blue = how strongly the style's paint colours are mixed over the colour texture
+    // Under every sticker (by its opacity): pattern off (alpha 0), paint off (GMM blue 0), no emblems on top (red 255).
     const masks = [];
-    const maskNames = [...new Set(meshes.filter((m) => byPart[m.part] && m.diffuse && m.mask).map((m) => m.mask))];
-    for (const maskName of maskNames) {
-      const src = state.pkg.read(maskName);
-      if (!src) continue;
-      let t;
-      try { t = bw.ddsToRgba(src, 1e9); } catch { continue; }
-      const { width: W, height: H } = t, rgba = t.rgba;
-      let set = 0;
-      for (const m of meshes.filter((x) => x.mask === maskName)) {
-        const st = byPart[m.part];
-        if (!st) continue;
-        rasterize(m, W, H, (x, y, P, N) => {
-          for (const s of st) {
-            const c = decalCoord(s, P, N);
-            if (!c) continue;
-            const col = sampleCrop(s, c);
-            const a = (col[3] / 255) * s.opacity;
-            if (a <= 0.02) continue;
-            const o = (y * W + x) * 4, k = Math.min(1, a * 1.15);
-            // red = camouflage exclude mask (255 = no camouflage): raise it under the sticker
-            const r = Math.round(rgba[o] + (255 - rgba[o]) * k);
-            // alpha (DXT5 only) is high where the camouflage is strong: lower it under the sticker
-            const al = t.kind === 'DXT1' ? rgba[o + 3] : Math.round(rgba[o + 3] * (1 - k));
-            if (r !== rgba[o] || al !== rgba[o + 3]) { rgba[o] = r; rgba[o + 3] = al; set++; }
-          }
-        });
+    const editTexture = (field, fn) => {
+      const names = [...new Set(meshes.filter((m) => byPart[m.part] && m.diffuse && m[field]).map((m) => m[field]))];
+      for (const texName of names) {
+        const src = state.pkg.read(texName);
+        if (!src) continue;
+        let t;
+        try { t = bw.ddsToRgba(src, 1e9); } catch { continue; }
+        const { width: W, height: H } = t, rgba = t.rgba;
+        let set = 0;
+        for (const m of meshes.filter((x) => x[field] === texName)) {
+          const st = byPart[m.part];
+          if (!st) continue;
+          rasterize(m, W, H, (x, y, P, N) => {
+            for (const s of st) {
+              const c = decalCoord(s, P, N);
+              if (!c) continue;
+              const a = (sampleCrop(s, c)[3] / 255) * s.opacity;
+              if (a <= 0.02) continue;
+              if (fn(rgba, (y * W + x) * 4, Math.min(1, a * 1.15), t.kind)) set++;
+            }
+          });
+        }
+        if (set && !masks.some((q) => q.texName === texName)) masks.push({ texName, kind: t.kind, W, H, rgba });
       }
-      if (set) masks.push({ texName: maskName, kind: t.kind, W, H, rgba });
-    }
+    };
+    editTexture('mask', (px, o, k, kind) => {
+      const r = Math.round(px[o] + (255 - px[o]) * k);
+      const al = kind === 'DXT1' ? px[o + 3] : Math.round(px[o + 3] * (1 - k));
+      if (r === px[o] && al === px[o + 3]) return false;
+      px[o] = r; px[o + 3] = al; return true;
+    });
+    editTexture('gmm', (px, o, k) => {
+      const b = Math.round(px[o + 2] * (1 - k));
+      if (b === px[o + 2]) return false;
+      px[o + 2] = b; return true;
+    });
     // how many texture pixels each sticker really gets (WoT textures have limited resolution per square metre)
     const resolution = [];
     list.forEach((s0, i) => {
