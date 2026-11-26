@@ -164,3 +164,31 @@ body.wait,body.wait *{cursor:progress!important}
 .crop-rect i[data-c=e]{left:100%;top:50%;cursor:ew-resize}.crop-rect i[data-c=se]{left:100%;top:100%;cursor:nwse-resize}.crop-rect i[data-c=s]{left:50%;top:100%;cursor:ns-resize}
 .crop-rect i[data-c=sw]{left:0;top:100%;cursor:nesw-resize}.crop-rect i[data-c=w]{left:0;top:50%;cursor:ew-resize}
 .crop-acts{display:flex;gap:6px;align-items:center}
+
+/* 3D garage – collapsible panels and full view */
+.gar-side{position:relative}
+.gar-collapse{position:absolute;right:8px;top:18px;width:28px;height:28px;border-radius:8px;border:1px solid var(--line2);background:var(--panel2);color:var(--muted);display:grid;place-items:center;z-index:2}
+.gar-collapse:hover{color:var(--text);border-color:var(--line-hover)}
+.gar-collapse svg{width:15px;height:15px;transform:rotate(180deg);transition:transform .2s}
+.gar.side-min{grid-template-columns:46px 1fr}
+.gar.side-min .gar-side{padding:18px 0 0;align-items:center}
+.gar.side-min .gar-side>*:not(.gar-collapse){display:none}
+.gar.side-min .gar-collapse{position:static}
+.gar.side-min .gar-collapse svg{transform:none}
+.stk-top{display:flex;gap:6px;align-items:center}.stk-top .stk-tabs{flex:1}
+.pan-min{width:26px;height:26px;flex:none;border-radius:7px;border:1px solid var(--line2);background:transparent;color:var(--muted);display:grid;place-items:center}
+.pan-min:hover{color:var(--text);border-color:var(--line-hover)}
+.pan-min svg{width:14px;height:14px}
+.stk.min{width:auto;padding:8px}.stk.min>*:not(.stk-top){display:none}
+.stk.min .pan-min svg,.gar-panel.min .pan-min svg{transform:rotate(90deg)}
+.gar-panel .pan-min{position:absolute;right:10px;top:10px}
+.gp-title{font:600 10.5px var(--head);letter-spacing:.14em;text-transform:uppercase;color:var(--dim);margin:0 0 8px}
+.gar-panel.min{width:auto;padding:8px 44px 8px 14px}.gar-panel.min>*:not(.pan-min):not(.gp-title){display:none}.gar-panel.min .gp-title{margin:4px 0}.gar-panel.min .pan-min{top:6px}
+.gar.panels-off .stk,.gar.panels-off .gar-panel{display:none}
+#garPanels.active,#garFull.active{border-color:var(--accent-line);color:var(--accent-hi);background:var(--accent-soft)}
+/* full view: only the model (Hexhub sidebar, game header and tank list hidden) */
+.garage-full .app{grid-template-columns:1fr}
+.garage-full .side{display:none}
+.garage-full #view-game-wot .ghead{display:none}
+.garage-full .gar,.garage-full .gar.side-min{grid-template-columns:1fr}
+.garage-full .gar-side{display:none}

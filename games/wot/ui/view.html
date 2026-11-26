@@ -99,6 +99,7 @@
     <section class="page full" data-tab="garage" id="page-garage">
       <div class="gar">
         <div class="gar-side">
+          <button class="gar-collapse" id="garSideBtn" title="Panzerliste einklappen"><svg><use href="#i-right"/></svg></button>
           <div class="eyebrow" style="margin:0 0 4px">Mods</div>
           <h2 style="font-size:22px">3D-Garage</h2>
           <div class="sub" style="margin:2px 0 12px">Jeder Panzer aus deiner Installation</div>
@@ -121,9 +122,11 @@
             <div class="gar-tools">
               <button class="btn sm ghost active-able" id="garAuto" title="Automatisch drehen"><svg><use href="#i-orbit"/></svg>Drehen</button>
               <button class="btn sm ghost" id="garReset" title="Ansicht zurücksetzen (Doppelklick)"><svg><use href="#i-reset"/></svg>Ansicht</button>
+              <button class="btn sm ghost" id="garPanels" title="Alle Panels aus-/einblenden (H)"><svg><use href="#i-sliders"/></svg><span>Panels aus</span></button>
+              <button class="btn sm ghost" id="garFull" title="Vollbild: nur das Modell (F) · Esc beendet"><svg><use href="#i-expand"/></svg><span>Vollbild</span></button>
             </div>
             <div class="stk">
-              <div class="stk-tabs"><button class="active" data-tab="stk">Sticker</button><button data-tab="mdl">Anbauten (3D)</button></div>
+              <div class="stk-top"><div class="stk-tabs"><button class="active" data-tab="stk">Sticker</button><button data-tab="mdl">Anbauten (3D)</button></div><button class="pan-min" id="stkMin" title="Panel minimieren"><svg><use href="#i-minus"/></svg></button></div>
               <div class="stk-page" id="tab-mdl" hidden>
                 <div class="stk-head"><span class="sub">.glb, .gltf oder .obj importieren, dann „Anbauen“ und auf den Panzer klicken</span></div>
                 <label class="btn sm ghost" style="width:100%"><input type="file" id="mdlFile" accept=".glb,.gltf,.obj,.mtl,image/*" multiple hidden><svg><use href="#i-upload"/></svg>3D-Modell importieren</label>
@@ -174,6 +177,8 @@
             </div>
             <div class="stk-hint" id="stkPlaceHint" hidden>Klick auf den Panzer zum Platzieren · Esc bricht ab</div>
             <div class="gar-panel">
+              <button class="pan-min" id="garPanelMin" title="Panel minimieren"><svg><use href="#i-minus"/></svg></button>
+              <div class="gp-title">Ansicht &amp; Teile</div>
               <div class="gar-row"><span class="lbl">Teile</span><div class="chips" id="garParts"></div></div>
               <div class="gar-row"><span class="lbl">Turm</span><input type="range" id="garYaw" min="-180" max="180" value="0"></div>
               <div class="gar-row"><span class="lbl">Kanone</span><input type="range" id="garPitch" min="-10" max="25" value="0"></div>

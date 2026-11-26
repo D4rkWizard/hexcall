@@ -215,7 +215,8 @@
   function frame() {
     requestAnimationFrame(frame);
     const gl = R.gl, c = R.canvas;
-    if (!gl || !G.opened || !$('#page-garage').classList.contains('active')) return;
+    if (!$('#page-garage').classList.contains('active') || !$('#view-game-wot').classList.contains('active')) { if (document.documentElement.classList.contains('garage-full')) setFull(false); return; }
+    if (!gl || !G.opened) return;
     const dpr = Math.min(window.devicePixelRatio || 1, 2);
     const w = Math.max(1, Math.round(c.clientWidth * dpr)), h = Math.max(1, Math.round(c.clientHeight * dpr));
     if (c.width !== w || c.height !== h) { c.width = w; c.height = h; R.dirty = true; }
@@ -482,6 +483,36 @@
       e.preventDefault(); e.stopPropagation();
       startStickerDrag(mode, e);
     });
+  }
+
+  /* ---------------- layout: collapse the tank list / panels, full view (remembered) ---------------- */
+  const LAY = { side: false, stk: false, panel: false, off: false };
+  try { Object.assign(LAY, JSON.parse(localStorage.getItem('hexhub-garage-layout') || '{}')); } catch {}
+  function applyLayout() {
+    $('.gar').classList.toggle('side-min', LAY.side);
+    $('.stk').classList.toggle('min', LAY.stk);
+    $('.gar-panel').classList.toggle('min', LAY.panel);
+    $('.gar').classList.toggle('panels-off', LAY.off);
+    $('#garSideBtn').title = LAY.side ? 'Panzerliste ausklappen' : 'Panzerliste einklappen';
+    $('#stkMin').title = $('#garPanelMin').title = 'Panel minimieren';
+    if (LAY.stk) $('#stkMin').title = 'Panel öffnen';
+    if (LAY.panel) $('#garPanelMin').title = 'Panel öffnen';
+    $('#garPanels').classList.toggle('active', LAY.off);
+    $('#garPanels span').textContent = LAY.off ? 'Panels ein' : 'Panels aus';
+    const full = document.documentElement.classList.contains('garage-full');
+    $('#garFull').classList.toggle('active', full);
+    $('#garFull span').textContent = full ? 'Vollbild beenden' : 'Vollbild';
+    try { localStorage.setItem('hexhub-garage-layout', JSON.stringify(LAY)); } catch {}
+    R.dirty = true;
+  }
+  function setFull(on) { document.documentElement.classList.toggle('garage-full', on); applyLayout(); }
+  function bindLayout() {
+    $('#garSideBtn').addEventListener('click', () => { LAY.side = !LAY.side; applyLayout(); });
+    $('#stkMin').addEventListener('click', () => { LAY.stk = !LAY.stk; applyLayout(); });
+    $('#garPanelMin').addEventListener('click', () => { LAY.panel = !LAY.panel; applyLayout(); });
+    $('#garPanels').addEventListener('click', () => { LAY.off = !LAY.off; applyLayout(); });
+    $('#garFull').addEventListener('click', () => setFull(!document.documentElement.classList.contains('garage-full')));
+    applyLayout();
   }
 
   /* ---------------- input ---------------- */
@@ -935,6 +966,7 @@
       renderStickers();
     });
     bindCrop();
+    bindLayout();
     $('#stkList').addEventListener('click', (e) => { const b = e.target.closest('[data-stk]'); if (!b) return; ST.sel = ST.sel === b.dataset.stk ? null : b.dataset.stk; ST.place = null; renderStickers(); R.dirty = true; });
     const edit = (fn) => () => { const s = ST.list.find((q) => q.id === ST.sel); if (!s) return; fn(s); orient(s); changed(); };
     $('#stkSize').addEventListener('input', edit((s) => { s.size = Number($('#stkSize').value); }));
@@ -975,6 +1007,9 @@
     document.addEventListener('keydown', (e) => {
       if (!$('#page-garage').classList.contains('active') || /INPUT|SELECT|TEXTAREA/.test(document.activeElement.tagName)) return;
       if (e.key === 'Escape' && CR.s) { closeCrop(false); return; }
+      if (e.key === 'Escape' && document.documentElement.classList.contains('garage-full') && !ST.place && !MD.place) { setFull(false); return; }
+      if (!e.ctrlKey && !e.altKey && !e.metaKey && (e.key === 'f' || e.key === 'F')) { setFull(!document.documentElement.classList.contains('garage-full')); return; }
+      if (!e.ctrlKey && !e.altKey && !e.metaKey && (e.key === 'h' || e.key === 'H')) { LAY.off = !LAY.off; applyLayout(); return; }
       if (e.key === 'Escape' && (ST.place || MD.place)) { ST.place = null; MD.place = null; renderStickers(); renderModels(); }
       if (e.key === 'Delete' || e.key === 'Entf') { if (!$('#tab-mdl').hidden && MD.sel) $('#mdlDel').click(); else if (ST.sel) $('#stkDel').click(); }
     });
