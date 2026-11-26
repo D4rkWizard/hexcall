@@ -580,3 +580,7 @@ a.btn { text-decoration: none; color: inherit; }
 .orig-btn svg { width: 15px; height: 15px; }
 .orig-btn .oc { color: var(--muted); font-weight: 500; font-variant-numeric: tabular-nums; }
 .orig-btn.busy { opacity: .6; pointer-events: none; }
+.vol { display: inline-flex; align-items: center; gap: 8px; color: var(--muted); font-size: 12px; margin-right: 6px; cursor: default; }
+.vol svg { width: 15px; height: 15px; }
+.vol input { width: 110px; accent-color: var(--accent); }
+.vol span { width: 38px; text-align: right; }

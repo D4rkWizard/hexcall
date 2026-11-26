@@ -153,7 +153,7 @@ const I18N = (() => {
   };
 
   Object.assign(EN, {
-    'Original anhören': 'Listen to original', 'So klingt es im Spiel ohne Mod': 'This is how it sounds in game without a mod',
+    'Original anhören': 'Listen to original', 'Lautstärke beim Anhören (ändert nichts im Spiel)': 'Playback volume (does not change anything in game)', 'So klingt es im Spiel ohne Mod': 'This is how it sounds in game without a mod',
     'Original-Sounds abspielen': 'Play original sounds', 'Herunterladen': 'Download', 'Abbrechen': 'Cancel',
     'WoT speichert seine Sounds in einem Format, das Hexhub erst umwandeln muss. Dafür wird einmalig das freie Programm vgmstream heruntergeladen (ca. 5 MB, von GitHub).':
       'WoT stores its sounds in a format Hexhub has to convert first. For that, the free program vgmstream is downloaded once (about 5 MB, from GitHub).',

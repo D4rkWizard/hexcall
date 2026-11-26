@@ -428,6 +428,20 @@ function renderTakes() {
   });
 }
 
+/* ---------- playback volume in the studio (only for listening, not for the game) ---------- */
+function playVolume() { const v = Number($('#playVol').value); return isNaN(v) ? 0.8 : v / 100; }
+(() => {
+  let v = 80;
+  try { const s = Number(localStorage.getItem('hexcall-play-vol')); if (localStorage.getItem('hexcall-play-vol') !== null && !isNaN(s)) v = s; } catch {}
+  const el = $('#playVol'), out = $('#playVolV');
+  el.value = v; out.textContent = `${v} %`;
+  el.oninput = () => {
+    out.textContent = `${el.value} %`;
+    if (player) player.volume = playVolume(); // also while something is playing
+    try { localStorage.setItem('hexcall-play-vol', el.value); } catch {}
+  };
+})();
+
 /* ---------- listen to the original WoT sound of the current step ---------- */
 const ORIG = { step: null, idx: 0, count: 0 };
 async function loadOriginalInfo() {
@@ -485,6 +499,7 @@ function playUrl(url, btn) {
   if (player) { player.pause(); setPlayIcon(playerBtn, 'play'); }
   if (!url || (playerBtn === btn && player && !player.ended && !player._stopped)) { if (player) player._stopped = true; playerBtn = null; return; }
   player = new Audio(url);
+  player.volume = playVolume();
   playerBtn = btn;
   setPlayIcon(btn, 'stop');
   player.onended = () => { setPlayIcon(btn, 'play'); playerBtn = null; };
