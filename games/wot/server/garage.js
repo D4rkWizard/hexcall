@@ -235,7 +235,9 @@ module.exports = function garage({ DATA, gameDir, gameVersion, modsDir }) {
   }
   function stickers(tankId) {
     const all = readAll();
-    return { images: all.images, stickers: all.tanks[tankId] || [], applied: all.applied[tankId] || null };
+    let modOnDisk = false;
+    try { load(); const f = stickerModPath(); modOnDisk = !!f && fs.existsSync(f); } catch {}
+    return { images: all.images, stickers: all.tanks[tankId] || [], applied: all.applied[tankId] || null, modOnDisk };
   }
   function saveStickers(tankId, list) {
     tank(tankId); // validates the id
@@ -375,12 +377,21 @@ module.exports = function garage({ DATA, gameDir, gameVersion, modsDir }) {
       }
       all.applied[tankId] = { at: new Date().toISOString(), textures: b.results.map((r) => r.texName), masks: b.masks.map((r) => r.texName), count: list.length };
     } else delete all.applied[tankId];
-    writeAll(all);
-    const mod = writeMod(all);
+    const mod = writeMod(all); // throws if the file is locked – then the stored state stays as it was
     if (all.applied[tankId]) all.applied[tankId].resolution = resolution;
     writeAll(all);
     return { ...mod, warnings, resolution, applied: all.applied[tankId] || null };
   }
+  // delete a mod file; WoT locks its mods while it runs – say so instead of failing silently
+  function removeModFile(target) {
+    try { fs.unlinkSync(target); }
+    catch (e) {
+      if (e.code === 'ENOENT') return;
+      throw new Error(e.code === 'EBUSY' || e.code === 'EPERM' ? 'Die Mod-Datei ist gesperrt – bitte World of Tanks schließen und nochmal versuchen.' : e.message);
+    }
+  }
+  const stickerModPath = () => { const g = state.dir, ver = gameVersion(g); return ver ? path.join(modsDir ? modsDir(ver) : path.join(g, 'mods', ver), MOD_NAME) : null; };
+
   function writeMod(all) {
     const g = state.dir, ver = gameVersion(g);
     if (!ver) throw new Error('WoT-Version nicht erkannt');
@@ -392,7 +403,7 @@ module.exports = function garage({ DATA, gameDir, gameVersion, modsDir }) {
       if (files.has(t.toLowerCase())) clash.push(t);
       files.set(t.toLowerCase(), { name: `res/${t}`, data: fs.readFileSync(f) });
     }
-    if (!files.size) { try { fs.unlinkSync(target); } catch {} return { mod: null, textures: 0, clash }; }
+    if (!files.size) { removeModFile(target); return { mod: null, textures: 0, clash }; }
     const meta = Buffer.from(`<root>\n  <id>darkwizard.hexcall_hub_sticker</id>\n  <version>1.0.0</version>\n  <name>Hexcall Hub Sticker</name>\n  <description>Eigene Sticker aus der 3D-Garage des Hexcall Hub</description>\n</root>\n`);
     const zip = bw.zipStore([{ name: 'meta.xml', data: meta }, ...files.values()]);
     fs.mkdirSync(path.dirname(target), { recursive: true });
@@ -617,7 +628,7 @@ module.exports = function garage({ DATA, gameDir, gameVersion, modsDir }) {
       const f = path.join(MOUT, safeId(id), rel);
       if (fs.existsSync(f)) files.set(rel.toLowerCase(), { name: `res/${rel}`, data: fs.readFileSync(f) });
     }
-    if (!files.size) { try { fs.unlinkSync(target); } catch {} return { mod: null, files: 0 }; }
+    if (!files.size) { removeModFile(target); return { mod: null, files: 0 }; }
     const meta = Buffer.from(`<root>\n  <id>darkwizard.hexcall_hub_models</id>\n  <version>1.0.0</version>\n  <name>Hexcall Hub Modelle</name>\n  <description>Eigene 3D-Anbauten aus der 3D-Garage des Hexcall Hub</description>\n</root>\n`);
     const zip = bw.zipStore([{ name: 'meta.xml', data: meta }, ...files.values()]);
     fs.mkdirSync(path.dirname(target), { recursive: true });

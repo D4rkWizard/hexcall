@@ -612,7 +612,7 @@
     const d = await (await fetch(`/api/wot/garage/stickers?tank=${encodeURIComponent(id)}`)).json();
     if (G.current !== id) return;
     if (CR.s) { CR.s = null; $('#cropBox').hidden = true; }
-    ST.images = d.images || []; ST.list = (d.stickers || []).map((s) => orient({ ...s })); ST.applied = d.applied; ST.sel = null; ST.place = null;
+    ST.images = d.images || []; ST.list = (d.stickers || []).map((s) => orient({ ...s })); ST.applied = d.applied; ST.modOnDisk = !!d.modOnDisk; ST.sel = null; ST.place = null;
     ST.review = false;
     renderStickers(); R.dirty = true;
   }
@@ -631,9 +631,12 @@
     const note = $('#stkStatus');
     if (ST.dirty && (ST.list.length || a)) note.innerHTML = '<span class="warn">Noch nicht in WoT – „Anwenden“ drücken.</span>';
     else if (a) note.innerHTML = `In WoT eingebaut: ${a.count} Sticker · ${new Date(a.at).toLocaleString('de-DE', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}`;
+    else if (!ST.list.length && ST.modOnDisk) note.innerHTML = '<span class="warn">Im Spielordner liegt noch eine Sticker-Mod – „Sticker aus WoT entfernen“ drücken.</span>';
     else note.textContent = ST.list.length ? '' : 'Noch keine Sticker auf diesem Panzer.';
-    $('#stkApply').disabled = !ST.list.length && !a;
-    $('#stkApply').lastChild.textContent = !ST.list.length && a ? 'Sticker aus WoT entfernen' : 'Anwenden (in WoT einbauen)';
+    // a sticker mod may still be in the game folder although nothing is stored here (e.g. removal failed while WoT ran)
+    const removable = !ST.list.length && (a || ST.modOnDisk);
+    $('#stkApply').disabled = !ST.list.length && !removable;
+    $('#stkApply').lastChild.textContent = removable ? 'Sticker aus WoT entfernen' : 'Anwenden (in WoT einbauen)';
     $('#stkReview').disabled = !a || ST.dirty;
     $('#stkReview').classList.toggle('active', ST.review);
   }
@@ -694,7 +697,7 @@
       const r = await fetch('/api/wot/garage/apply', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ tank: G.current }) });
       const d = await r.json();
       if (!r.ok) throw new Error(d.error || 'Fehler');
-      ST.applied = d.applied; ST.dirty = false;
+      ST.applied = d.applied; ST.modOnDisk = !!d.mod; ST.dirty = false;
       for (const m of R.meshes) m.texBaked = null;
       for (const w of d.warnings || []) toast(w, true);
       if (d.clash && d.clash.length) toast('Ein anderer Panzer benutzt dieselbe Textur – dessen Sticker überschreiben sich gegenseitig.', true);
