@@ -99,7 +99,8 @@ async function wav(game, kind, key, i) {
   const out = path.join(dir, `${s.id}.wav`);
   if (fs.existsSync(out)) return fs.readFileSync(out);
   fs.mkdirSync(dir, { recursive: true });
-  let wem = !s.stream && s.bank.media.get(s.id);
+  // WoT keeps most sounds inside the bank, even those flagged as streamed
+  let wem = s.bank.media.get(s.id);
   if (!wem) wem = extract(packages(game), (n) => n === `audioww/${s.id}.wem`).get(`audioww/${s.id}.wem`);
   if (!wem) throw new Error('Original-Sound nicht gefunden (gestreamt).');
   const tmp = path.join(dir, `${s.id}.wem`);
