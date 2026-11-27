@@ -11,6 +11,7 @@
 - 3D garage: **Farbkasten** – paint on the tank with a brush (palette, own colour, size, hardness, opacity, eraser, undo); baked below the stickers with the same 2D-style handling and high resolution
 - 3D garage: small stickers stay sharp – mipmapped, gamma-correct filtering with gentle sharpening, and the tank texture is written at 2x/4x resolution (max 4096) when a sticker would get only few pixels
 - 3D garage: per sticker brightness, colour strength and contrast (live preview, baked the same way)
+- 3D garage: per sticker **shine** (matte paint ↔ glossy metal) – next to shiny styles a matte sticker looked dark in game
 - 3D garage: emblem-quality stickers – textures with stickers/paint are written as BC7 (the format WoT uses for its own 3D parts) instead of DXT, so colours, gradients and edges stay clean; mipmaps are averaged in linear light and lightly sharpened; like an emblem's own texture, every sticker now gets about one texel per image pixel (up to 512×512, texture max 4096); the 3D preview after "Apply" shows the full resolution
 - 3D garage: stickers and paint also appear on **3D styles** – "Apply" builds them into the textures of every 3D style of the tank; the View & parts panel can show each 3D style's model as a preview
 - 3D garage: **edited tanks** overview (stickers, paint, 3D parts, installed or not) with "clear" per tank and "clear all tanks" (with a safety question) – also removes them from WoT

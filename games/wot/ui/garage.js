@@ -844,7 +844,7 @@
     if (ST.review) setReview(false);
     renderStickers(); R.dirty = true;
     clearTimeout(ST.saveTimer);
-    const id = G.current, list = ST.list.map(({ id: sid, image, part, p, n, r, u, opacity, size, rot, flip, crop, bright, sat, contrast }) => ({ id: sid, image, part, p, n, r, u, opacity, size, rot, flip, crop, bright, sat, contrast }));
+    const id = G.current, list = ST.list.map(({ id: sid, image, part, p, n, r, u, opacity, size, rot, flip, crop, bright, sat, contrast, shine }) => ({ id: sid, image, part, p, n, r, u, opacity, size, rot, flip, crop, bright, sat, contrast, shine }));
     ST.saveTimer = setTimeout(() => fetch('/api/wot/garage/stickers', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ tank: id, stickers: list }) })
       .then((r) => r.json()).then((d) => { if (d.error) toast(d.error, true); loadEdited(); }), 350);
     ST.dirty = true;
@@ -887,6 +887,7 @@
       $('#stkBright').value = br; $('#stkBrightV').textContent = `${br > 0 ? '+' : ''}${br} %`;
       $('#stkSat').value = sa; $('#stkSatV').textContent = `${sa} %`;
       $('#stkCon').value = co; $('#stkConV').textContent = `${co} %`;
+      const shn = Math.round((s.shine || 0) * 100); $('#stkShine').value = shn; $('#stkShineV').textContent = shn ? `${shn} %` : 'matt';
       $('#stkMove').classList.toggle('active', !!(ST.place && ST.place.id === s.id));
     }
     syncApply();
@@ -1257,6 +1258,7 @@
     $('#stkBright').addEventListener('input', edit((s) => { s.bright = Number($('#stkBright').value) / 100; }));
     $('#stkSat').addEventListener('input', edit((s) => { s.sat = Number($('#stkSat').value) / 100; }));
     $('#stkCon').addEventListener('input', edit((s) => { s.contrast = Number($('#stkCon').value) / 100; }));
+    $('#stkShine').addEventListener('input', edit((s) => { s.shine = Number($('#stkShine').value) / 100; }));
     $('#stkMove').addEventListener('click', () => { const s = ST.list.find((q) => q.id === ST.sel); if (!s) return; ST.place = ST.place && ST.place.id === s.id ? null : { id: s.id, image: s.image }; R.auto = false; syncAuto(); renderStickers(); });
     $('#stkDel').addEventListener('click', () => { ST.list = ST.list.filter((q) => q.id !== ST.sel); ST.sel = null; changed(); });
     $('#stkApply').addEventListener('click', applyStickers);

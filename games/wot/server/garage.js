@@ -287,7 +287,7 @@ module.exports = function garage({ DATA, gameDir, gameVersion, modsDir }) {
     const clean = list.filter((s) => ids.has(s.image) && ['chassis', 'hull', 'turret', 'gun'].includes(s.part) && v3ok(s.p) && v3ok(s.n) && v3ok(s.r) && v3ok(s.u))
       .map((s) => ({ id: String(s.id || Date.now()).slice(0, 30), image: s.image, part: s.part, p: s.p, n: s.n, r: s.r, u: s.u,
         opacity: Math.max(0.05, Math.min(1, Number(s.opacity) || 1)), size: Number(s.size) || 0.5, rot: Number(s.rot) || 0, flip: !!s.flip, crop: cleanCrop(s.crop),
-        bright: clampN(s.bright, -1, 1, 0), sat: clampN(s.sat, 0, 2, 1), contrast: clampN(s.contrast, 0.3, 2, 1) }));
+        bright: clampN(s.bright, -1, 1, 0), sat: clampN(s.sat, 0, 2, 1), contrast: clampN(s.contrast, 0.3, 2, 1), shine: clampN(s.shine, 0, 1, 0) }));
     if (clean.length) all.tanks[tankId] = clean; else delete all.tanks[tankId];
     writeAll(all);
     return clean;
@@ -411,7 +411,7 @@ module.exports = function garage({ DATA, gameDir, gameVersion, modsDir }) {
               if (!c) continue;
               const a = (sampleCrop(s, c)[3] / 255) * s.opacity;
               if (a <= 0.02) continue;
-              if (fn(rgba, (y * W + x) * 4, Math.min(1, a * 1.15), t.kind)) set++;
+              if (fn(rgba, (y * W + x) * 4, Math.min(1, a * 1.15), t.kind, s)) set++;
             }
           });
         }
@@ -429,8 +429,12 @@ module.exports = function garage({ DATA, gameDir, gameVersion, modsDir }) {
     });
     // GMM: red = gloss, green = metallic (brightens the albedo and mirrors the surroundings – the "milky" look),
     // blue = style paint. A sticker behaves like matte paint: no metal, less gloss, no style paint.
-    editTexture('gmm', (px, o, k) => {
-      const r = Math.round(px[o] * (1 - 0.35 * k)), g = Math.round(px[o + 1] * (1 - k)), b = Math.round(px[o + 2] * (1 - k));
+    // "Glanz" per sticker: 0 = matte paint, 1 = glossy metal like the style around it (reflects the garage lights,
+    // so it does not look dark next to shiny styles)
+    editTexture('gmm', (px, o, k, kind, s) => {
+      const sh = s ? s.shine || 0 : 0;
+      const gl = px[o] * 0.65 + (235 - px[o] * 0.65) * sh, me = 210 * sh;
+      const r = Math.round(px[o] + (gl - px[o]) * k), g = Math.round(px[o + 1] + (me - px[o + 1]) * k), b = Math.round(px[o + 2] * (1 - k));
       if (r === px[o] && g === px[o + 1] && b === px[o + 2]) return false;
       px[o] = r; px[o + 1] = g; px[o + 2] = b; return true;
     });
