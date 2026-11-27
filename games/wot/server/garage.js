@@ -265,11 +265,17 @@ module.exports = function garage({ DATA, gameDir, gameVersion, modsDir }) {
     for (const k of [...paint.keys()]) if (!ownDiffuse.has(k)) paint.delete(k);
     const texNames = [...new Set([...meshes.filter((m) => byPart[m.part] && m.diffuse).map((m) => m.diffuse), ...paint.keys()])];
     const results = [], warnings = [];
-    // enlargement factor: small stickers get 2x / 4x, a paint layer at least its own resolution (max 4096)
+    // enlargement factor (max 4096): like WoT's emblems, which bring their own 512 px texture, every sticker gets
+    // about one texel per image pixel (budget 512x512) instead of the few texels the tank texture has at that spot;
+    // a paint layer gets at least its own resolution
+    const STICKER_BUDGET = 512 * 512;
     const factorFor = (counts, w, h, paintW) => {
-      let f = 1, minW = Infinity;
-      for (const [st, n] of counts) minW = Math.min(minW, Math.sqrt(n * (Math.hypot(...st.r) / (Math.hypot(...st.u) || 1))));
-      if (minW < 70) f = 4; else if (minW < 160) f = 2;
+      let f = 1;
+      for (const [st, n] of counts) {
+        const k = st.crop || [0, 0, 1, 1], px = st.img.width * (k[2] - k[0]) * st.img.height * (k[3] - k[1]);
+        const want = Math.min(px, STICKER_BUDGET);
+        while (n * f * f < want * 0.7 && f < 8) f *= 2;
+      }
       if (paintW) while (w * f < paintW && f < 8) f *= 2;
       while (f > 1 && Math.max(w, h) * f > 4096) f /= 2;
       return f;
@@ -469,7 +475,9 @@ module.exports = function garage({ DATA, gameDir, gameVersion, modsDir }) {
       const b = bake(tankId, list, paint);
       warnings = b.warnings; resolution = b.resolution;
       for (const r of b.results) {
-        const dds = bw.encodeDds(r.W, r.H, r.rgba, r.kind);
+        // BC7 (like WoT's own 3D parts) instead of DXT: 8-bit endpoints and 16 steps per block keep sticker colours,
+        // gradients and edges intact; mips averaged in linear light + lightly sharpened so they don't go dark/soft at distance
+        const dds = bw.encodeDds(r.W, r.H, r.rgba, 'BC7', { linear: true, sharpen: 0.2 });
         const f = path.join(dir, r.texName);
         fs.mkdirSync(path.dirname(f), { recursive: true });
         fs.writeFileSync(f, dds);

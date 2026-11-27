@@ -415,6 +415,15 @@ function ddsToRgba(buf, maxSize = 2048) {
         out[o + 3] = alpha ? alpha(k) : d.kind === 'DXT1' && c0 <= c1 && sel === 3 ? 0 : 255;
       }
     }
+  } else if (d.kind === 'BC7') {
+    const bw = Math.max(1, (w + 3) >> 2), bh = Math.max(1, (h + 3) >> 2), px = new Uint8Array(64);
+    for (let by = 0; by < bh; by++) for (let bx = 0; bx < bw; bx++) {
+      if (!bc7DecodeBlock(data, (by * bw + bx) * 16, px)) throw new Error('Texturformat BC7 (dieser Modus) wird noch nicht unterstützt');
+      for (let k = 0; k < 16; k++) {
+        const x = bx * 4 + (k & 3), y = by * 4 + (k >> 2);
+        if (x < w && y < h) out.set(px.subarray(k * 4, k * 4 + 4), (y * w + x) * 4);
+      }
+    }
   } else if (d.kind === 'RGBA' || d.kind === 'BGRA') {
     for (let i = 0; i < w * h; i++) {
       const s = i * 4;
@@ -543,12 +552,212 @@ function encodeAlphaBlock(px, out, o) {
   }
   for (let i = 0; i < 6; i++) out[o + 2 + i] = Number((bits >> BigInt(8 * i)) & 255n);
 }
-function encodeDds(w, h, rgba, kind) {
+/* ---------- BC7 (mode 6) encoder ----------
+   WoT loads BC7 (DXGI 98, used by its own 3D customization parts). Mode 6 stores one RGBA line per 4x4 block with
+   8-bit endpoints and 16 steps – far fewer block artefacts and colour shifts than DXT's 565 endpoints with 4 steps,
+   which is what made baked stickers look blocky/muddy compared to the game's emblems. */
+const BC7W = [0, 4, 9, 13, 17, 21, 26, 30, 34, 38, 43, 47, 51, 55, 60, 64];
+const _bc = { q: [new Int32Array(4), new Int32Array(4)], p: [0, 0], idx: new Int32Array(16), pal: new Float64Array(64) };
+function bc7Quant(e, q) { // endpoint (0..255 floats) -> 7-bit values + shared p-bit, returns p
+  let best = 0, bErr = Infinity;
+  for (let p = 0; p < 2; p++) {
+    let err = 0;
+    for (let c = 0; c < 4; c++) { const v = Math.max(0, Math.min(127, Math.round((e[c] - p) / 2))); const d = v * 2 + p - e[c]; err += d * d; }
+    if (err < bErr) { bErr = err; best = p; }
+  }
+  for (let c = 0; c < 4; c++) q[c] = Math.max(0, Math.min(127, Math.round((e[c] - best) / 2)));
+  return best;
+}
+// evaluate endpoints: quantize, pick indices; returns the squared error, result in st (q, p, idx)
+function bc7Eval(px, e0, e1, st) {
+  st.p[0] = bc7Quant(e0, st.q[0]); st.p[1] = bc7Quant(e1, st.q[1]);
+  const r0 = [0, 0, 0, 0], r1 = [0, 0, 0, 0];
+  for (let c = 0; c < 4; c++) { r0[c] = st.q[0][c] * 2 + st.p[0]; r1[c] = st.q[1][c] * 2 + st.p[1]; }
+  const pal = st.pal;
+  for (let i = 0; i < 16; i++) for (let c = 0; c < 4; c++) pal[i * 4 + c] = ((64 - BC7W[i]) * r0[c] + BC7W[i] * r1[c] + 32) >> 6;
+  const d = [r1[0] - r0[0], r1[1] - r0[1], r1[2] - r0[2], r1[3] - r0[3]], dd = d[0] * d[0] + d[1] * d[1] + d[2] * d[2] + d[3] * d[3];
+  let total = 0;
+  for (let k = 0; k < 16; k++) {
+    const o = k * 4;
+    let guess = 0;
+    if (dd > 0) {
+      const t = ((px[o] - r0[0]) * d[0] + (px[o + 1] - r0[1]) * d[1] + (px[o + 2] - r0[2]) * d[2] + (px[o + 3] - r0[3]) * d[3]) / dd * 15;
+      guess = Math.max(0, Math.min(15, Math.round(t)));
+    }
+    let best = guess, bErr = Infinity;
+    for (let i = Math.max(0, guess - 1); i <= Math.min(15, guess + 1); i++) {
+      const a = px[o] - pal[i * 4], b = px[o + 1] - pal[i * 4 + 1], c = px[o + 2] - pal[i * 4 + 2], e = px[o + 3] - pal[i * 4 + 3];
+      const err = a * a + b * b + c * c + e * e;
+      if (err < bErr) { bErr = err; best = i; }
+    }
+    st.idx[k] = best; total += bErr;
+  }
+  return total;
+}
+function bc7Block(px, out, o) {
+  const mean = [0, 0, 0, 0];
+  let same = true;
+  for (let k = 0; k < 16; k++) for (let c = 0; c < 4; c++) { mean[c] += px[k * 4 + c]; if (px[k * 4 + c] !== px[c]) same = false; }
+  for (let c = 0; c < 4; c++) mean[c] /= 16;
+  let e0, e1;
+  if (same) { e0 = [px[0], px[1], px[2], px[3]]; e1 = e0.slice(); }
+  else {
+    // principal axis (power iteration on the covariance)
+    const cov = new Float64Array(16);
+    for (let k = 0; k < 16; k++) for (let i = 0; i < 4; i++) { const di = px[k * 4 + i] - mean[i]; for (let j = i; j < 4; j++) cov[i * 4 + j] += di * (px[k * 4 + j] - mean[j]); }
+    for (let i = 0; i < 4; i++) for (let j = 0; j < i; j++) cov[i * 4 + j] = cov[j * 4 + i];
+    let ax = [1, 1, 1, 0.5];
+    { let mx = -1; for (let c = 0; c < 4; c++) if (cov[c * 5] > mx) { mx = cov[c * 5]; ax = [0, 0, 0, 0]; ax[c] = 1; } }
+    for (let it = 0; it < 8; it++) {
+      const n = [0, 0, 0, 0];
+      for (let i = 0; i < 4; i++) for (let j = 0; j < 4; j++) n[i] += cov[i * 4 + j] * ax[j];
+      const l = Math.hypot(n[0], n[1], n[2], n[3]);
+      if (l < 1e-9) break;
+      ax = n.map((v) => v / l);
+    }
+    let tmin = Infinity, tmax = -Infinity;
+    for (let k = 0; k < 16; k++) {
+      let t = 0; for (let c = 0; c < 4; c++) t += (px[k * 4 + c] - mean[c]) * ax[c];
+      if (t < tmin) tmin = t; if (t > tmax) tmax = t;
+    }
+    e0 = mean.map((m, c) => Math.max(0, Math.min(255, m + ax[c] * tmin)));
+    e1 = mean.map((m, c) => Math.max(0, Math.min(255, m + ax[c] * tmax)));
+  }
+  const st = _bc;
+  let err = bc7Eval(px, e0, e1, st);
+  let bq = [Int32Array.from(st.q[0]), Int32Array.from(st.q[1])], bp = [st.p[0], st.p[1]], bi = Int32Array.from(st.idx);
+  // least-squares refinement of the endpoints from the chosen indices
+  for (let it = 0; it < 2 && err > 0 && !same; it++) {
+    let a = 0, b = 0, cc = 0; const r0 = [0, 0, 0, 0], r1 = [0, 0, 0, 0];
+    for (let k = 0; k < 16; k++) {
+      const w = BC7W[bi[k]] / 64, v = 1 - w;
+      a += v * v; b += v * w; cc += w * w;
+      for (let c = 0; c < 4; c++) { r0[c] += v * px[k * 4 + c]; r1[c] += w * px[k * 4 + c]; }
+    }
+    const det = a * cc - b * b;
+    if (Math.abs(det) < 1e-6) break;
+    const n0 = [0, 0, 0, 0], n1 = [0, 0, 0, 0];
+    for (let c = 0; c < 4; c++) {
+      n0[c] = Math.max(0, Math.min(255, (cc * r0[c] - b * r1[c]) / det));
+      n1[c] = Math.max(0, Math.min(255, (a * r1[c] - b * r0[c]) / det));
+    }
+    const e2 = bc7Eval(px, n0, n1, st);
+    if (e2 >= err) break;
+    err = e2; bq = [Int32Array.from(st.q[0]), Int32Array.from(st.q[1])]; bp = [st.p[0], st.p[1]]; bi = Int32Array.from(st.idx);
+  }
+  // anchor rule: index of pixel 0 must have its top bit clear -> swap endpoints and invert indices
+  if (bi[0] >= 8) { bq = [bq[1], bq[0]]; bp = [bp[1], bp[0]]; for (let k = 0; k < 16; k++) bi[k] = 15 - bi[k]; }
+  // pack 128 bits, LSB first: mode(7) R0 R1 G0 G1 B0 B1 A0 A1 (7 each) P0 P1 indices (3 + 15*4)
+  const w = [0, 0, 0, 0];
+  let pos = 0;
+  const put = (val, n) => { for (let i = 0; i < n; i++, pos++) if ((val >> i) & 1) w[pos >> 5] |= 1 << (pos & 31); };
+  put(1 << 6, 7);
+  for (let c = 0; c < 4; c++) { put(bq[0][c], 7); put(bq[1][c], 7); }
+  put(bp[0], 1); put(bp[1], 1);
+  put(bi[0], 3);
+  for (let k = 1; k < 16; k++) put(bi[k], 4);
+  for (let i = 0; i < 4; i++) out.writeUInt32LE(w[i] >>> 0, o + i * 4);
+}
+function bc7DecodeBlock(data, b, px) { // mode 6 only (what bc7Block writes); returns false for other modes
+  const w = [data.readUInt32LE(b), data.readUInt32LE(b + 4), data.readUInt32LE(b + 8), data.readUInt32LE(b + 12)];
+  let pos = 0;
+  const get = (n) => { let v = 0; for (let i = 0; i < n; i++, pos++) v |= ((w[pos >> 5] >>> (pos & 31)) & 1) << i; return v; };
+  if (get(7) !== 64) return false;
+  const q = [[0, 0, 0, 0], [0, 0, 0, 0]];
+  for (let c = 0; c < 4; c++) { q[0][c] = get(7); q[1][c] = get(7); }
+  const p0 = get(1), p1 = get(1);
+  const r0 = q[0].map((v) => v * 2 + p0), r1 = q[1].map((v) => v * 2 + p1);
+  for (let k = 0; k < 16; k++) {
+    const i = get(k === 0 ? 3 : 4);
+    for (let c = 0; c < 4; c++) px[k * 4 + c] = ((64 - BC7W[i]) * r0[c] + BC7W[i] * r1[c] + 32) >> 6;
+  }
+  return true;
+}
+
+/* ---------- mip chain: colour textures averaged in linear light (no darkening of fine detail at distance),
+   with a light unsharp mask so stickers stay crisp; data textures (masks) are averaged as stored ---------- */
+function mipChain(w, h, rgba, { linear = false, sharpen = 0 } = {}) {
+  const levels = [{ w, h, d: rgba }];
+  if (!linear) {
+    let cw = w, chh = h, cur = rgba;
+    while (cw > 1 || chh > 1) {
+      const nw = Math.max(1, cw >> 1), nh = Math.max(1, chh >> 1), next = new Uint8Array(nw * nh * 4);
+      for (let y = 0; y < nh; y++) for (let x = 0; x < nw; x++) for (let c = 0; c < 4; c++) {
+        const x0 = Math.min(cw - 1, x * 2), x1 = Math.min(cw - 1, x * 2 + 1), y0 = Math.min(chh - 1, y * 2), y1 = Math.min(chh - 1, y * 2 + 1);
+        next[(y * nw + x) * 4 + c] = (cur[(y0 * cw + x0) * 4 + c] + cur[(y0 * cw + x1) * 4 + c] + cur[(y1 * cw + x0) * 4 + c] + cur[(y1 * cw + x1) * 4 + c] + 2) >> 2;
+      }
+      levels.push({ w: nw, h: nh, d: next }); cur = next; cw = nw; chh = nh;
+    }
+    return levels;
+  }
+  const toByte = (L, f) => { // linear float level -> sRGB bytes (with optional sharpening)
+    const out = new Uint8Array(L.w * L.h * 4), d = L.f;
+    for (let y = 0; y < L.h; y++) for (let x = 0; x < L.w; x++) {
+      const i = (y * L.w + x) * 4;
+      for (let c = 0; c < 4; c++) {
+        let v = d[i + c];
+        if (f && L.w > 2 && L.h > 2) {
+          const xm = Math.max(0, x - 1), xp = Math.min(L.w - 1, x + 1), ym = Math.max(0, y - 1), yp = Math.min(L.h - 1, y + 1);
+          const blur = (d[(ym * L.w + x) * 4 + c] + d[(yp * L.w + x) * 4 + c] + d[(y * L.w + xm) * 4 + c] + d[(y * L.w + xp) * 4 + c] + 4 * v) / 8;
+          v += f * (v - blur);
+        }
+        v = Math.max(0, Math.min(1, v));
+        out[i + c] = c === 3 ? Math.round(v * 255) : Math.round(v <= 0.0031308 ? v * 12.92 * 255 : (1.055 * v ** (1 / 2.4) - 0.055) * 255);
+      }
+    }
+    return out;
+  };
+  let prev = null, cw = w, chh = h;
+  while (cw > 1 || chh > 1) {
+    const nw = Math.max(1, cw >> 1), nh = Math.max(1, chh >> 1), f = new Float32Array(nw * nh * 4);
+    const at = prev ? (x, y, c) => prev.f[(y * cw + x) * 4 + c] : (x, y, c) => (c === 3 ? rgba[(y * cw + x) * 4 + 3] / 255 : SRGB2LIN[rgba[(y * cw + x) * 4 + c]]);
+    for (let y = 0; y < nh; y++) for (let x = 0; x < nw; x++) {
+      const x0 = Math.min(cw - 1, x * 2), x1 = Math.min(cw - 1, x * 2 + 1), y0 = Math.min(chh - 1, y * 2), y1 = Math.min(chh - 1, y * 2 + 1);
+      for (let c = 0; c < 4; c++) f[(y * nw + x) * 4 + c] = (at(x0, y0, c) + at(x1, y0, c) + at(x0, y1, c) + at(x1, y1, c)) / 4;
+    }
+    const L = { w: nw, h: nh, f };
+    L.d = toByte(L, sharpen);
+    levels.push(L); prev = L; cw = nw; chh = nh;
+  }
+  for (const L of levels) delete L.f;
+  return levels;
+}
+const SRGB2LIN = new Float32Array(256).map((_, i) => { const c = i / 255; return c <= 0.04045 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4; });
+
+function encodeDds(w, h, rgba, kind, opts = {}) {
+  if (kind === 'BC7') return encodeBc7Dds(w, h, rgba, opts);
+  return encodeDxtDds(w, h, rgba, kind, opts);
+}
+function encodeBc7Dds(w, h, rgba, opts) {
+  const levels = [], px = new Uint8Array(64);
+  for (const L of mipChain(w, h, rgba, opts)) {
+    const bw = Math.max(1, (L.w + 3) >> 2), bh = Math.max(1, (L.h + 3) >> 2), out = Buffer.alloc(bw * bh * 16);
+    for (let by = 0; by < bh; by++) for (let bx = 0; bx < bw; bx++) {
+      for (let k = 0; k < 16; k++) {
+        const x = Math.min(L.w - 1, bx * 4 + (k & 3)), y = Math.min(L.h - 1, by * 4 + (k >> 2)), s = (y * L.w + x) * 4;
+        px[k * 4] = L.d[s]; px[k * 4 + 1] = L.d[s + 1]; px[k * 4 + 2] = L.d[s + 2]; px[k * 4 + 3] = L.d[s + 3];
+      }
+      bc7Block(px, out, (by * bw + bx) * 16);
+    }
+    levels.push(out);
+  }
+  const head = Buffer.alloc(148);
+  head.write('DDS ', 0, 'latin1');
+  head.writeUInt32LE(124, 4);
+  head.writeUInt32LE(0x1 | 0x2 | 0x4 | 0x1000 | 0x20000 | 0x80000, 8);
+  head.writeUInt32LE(h, 12); head.writeUInt32LE(w, 16); head.writeUInt32LE(levels[0].length, 20);
+  head.writeUInt32LE(levels.length, 28);
+  head.writeUInt32LE(32, 76); head.writeUInt32LE(0x4, 80); head.write('DX10', 84, 'latin1');
+  head.writeUInt32LE(0x1000 | 0x400000 | 0x8, 108);
+  head.writeUInt32LE(98, 128); head.writeUInt32LE(3, 132); head.writeUInt32LE(0, 136); head.writeUInt32LE(1, 140); head.writeUInt32LE(0, 144); // BC7_UNORM, 2D, 1 slice (like WoT's own files)
+  return Buffer.concat([head, ...levels]);
+}
+function encodeDxtDds(w, h, rgba, kind, opts) {
   const dxt5 = kind === 'DXT5' || kind === 'DXT3';
   const bs = dxt5 ? 16 : 8;
   const levels = [];
-  let cw = w, chh = h, cur = rgba;
-  for (;;) {
+  for (const L of mipChain(w, h, rgba, opts)) {
+    const cw = L.w, chh = L.h, cur = L.d;
     const bw = Math.max(1, (cw + 3) >> 2), bh = Math.max(1, (chh + 3) >> 2), out = Buffer.alloc(bw * bh * bs), px = new Uint8Array(64);
     for (let by = 0; by < bh; by++) for (let bx = 0; bx < bw; bx++) {
       for (let k = 0; k < 16; k++) {
@@ -560,13 +769,6 @@ function encodeDds(w, h, rgba, kind) {
       else encodeColorBlock(px, out, o, true);
     }
     levels.push(out);
-    if (cw === 1 && chh === 1) break;
-    const nw = Math.max(1, cw >> 1), nh = Math.max(1, chh >> 1), next = new Uint8Array(nw * nh * 4);
-    for (let y = 0; y < nh; y++) for (let x = 0; x < nw; x++) for (let c = 0; c < 4; c++) {
-      const x0 = Math.min(cw - 1, x * 2), x1 = Math.min(cw - 1, x * 2 + 1), y0 = Math.min(chh - 1, y * 2), y1 = Math.min(chh - 1, y * 2 + 1);
-      next[(y * nw + x) * 4 + c] = (cur[(y0 * cw + x0) * 4 + c] + cur[(y0 * cw + x1) * 4 + c] + cur[(y1 * cw + x0) * 4 + c] + cur[(y1 * cw + x1) * 4 + c] + 2) >> 2;
-    }
-    cur = next; cw = nw; chh = nh;
   }
   const head = Buffer.alloc(128);
   head.write('DDS ', 0, 'latin1');
@@ -617,4 +819,4 @@ function mo(buf) {
   return map;
 }
 
-module.exports = { Pkg, unpackXml, packXml, setVal, mkNode, writePrimitives, makeVertexSection, makeIndexSection, packN3, isPacked, kid, kids, at, str, vec, primitiveSections, readIndices, readVertices, nodeWorlds, applySkin, dds, ddsToRgba, encodePng, decodePng, encodeDds, zipStore, mo };
+module.exports = { Pkg, unpackXml, packXml, setVal, mkNode, writePrimitives, makeVertexSection, makeIndexSection, packN3, isPacked, kid, kids, at, str, vec, primitiveSections, readIndices, readVertices, nodeWorlds, applySkin, dds, ddsToRgba, encodePng, decodePng, encodeDds, mipChain, zipStore, mo };
