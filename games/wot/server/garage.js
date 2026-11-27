@@ -381,8 +381,9 @@ module.exports = function garage({ DATA, gameDir, gameVersion, modsDir }) {
     };
     editTexture('mask', (px, o, k, kind) => {
       const r = Math.round(px[o] + (255 - px[o]) * k);
-      // green = ambient occlusion: mostly lifted under the sticker, so it is not darkened by the baked shadows
-      const g = Math.round(px[o + 1] + (255 - px[o + 1]) * 0.7 * k);
+      // green = ambient occlusion (the shader uses it to the 4th power for the style and multiplies the light with it):
+      // fully lifted under the sticker, so a sticker in a recess / under an overhang is not darkened by baked shadows
+      const g = Math.round(px[o + 1] + (255 - px[o + 1]) * k);
       const al = kind === 'DXT1' ? px[o + 3] : Math.round(px[o + 3] * (1 - k));
       if (r === px[o] && g === px[o + 1] && al === px[o + 3]) return false;
       px[o] = r; px[o + 1] = g; px[o + 3] = al; return true;
@@ -481,7 +482,7 @@ module.exports = function garage({ DATA, gameDir, gameVersion, modsDir }) {
         const f = path.join(dir, r.texName);
         fs.mkdirSync(path.dirname(f), { recursive: true });
         fs.writeFileSync(f, dds);
-        const small = bw.ddsToRgba(dds, 2048);
+        const small = bw.ddsToRgba(dds, 4096); // full resolution, so the preview after "Anwenden" is as sharp as in game
         fs.writeFileSync(f.replace(/\.dds$/i, '.png'), bw.encodePng(small.width, small.height, small.rgba, true));
       }
       // camouflage exclude masks (same format as the originals) – keep 2D styles off the stickers
