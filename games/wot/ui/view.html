@@ -105,6 +105,13 @@
           <div class="sub" style="margin:2px 0 12px">Jeder Panzer aus deiner Installation</div>
           <input class="input" id="garSearch" placeholder="Panzer suchen …">
           <div class="gar-filters"><select class="input" id="garNation"></select><select class="input" id="garLevel"></select><select class="input" id="garType"></select></div>
+          <div class="gar-edited" id="garEdited" hidden>
+            <button class="gar-ed-head" id="garEdHead"><svg><use href="#i-right"/></svg><span>Bearbeitete Panzer</span><b id="garEdCount"></b></button>
+            <div class="gar-ed-body" id="garEdBody" hidden>
+              <div class="gar-ed-list" id="garEdList"></div>
+              <button class="btn sm ghost danger" id="garEdAll"><svg><use href="#i-trash"/></svg>Alle Panzer leeren</button>
+            </div>
+          </div>
           <div class="gar-count" id="garCount"></div>
           <div class="gar-list" id="garList"></div>
         </div>
@@ -188,7 +195,7 @@
                 <button class="btn primary" id="stkApply"><svg><use href="#i-upload"/></svg>Anwenden (in WoT einbauen)</button>
                 <button class="btn sm ghost" id="stkReview" title="Zeigt die eingebrannte Textur – so sieht es in WoT aus">Prüfansicht</button>
                 <div class="stk-status" id="stkStatus"></div>
-                <div class="note" style="margin-top:6px;font-size:11.5px">Nur du siehst die Sticker. 2D-Stile werden unter den Stickern ausgespart, bei 3D-Stilen sind sie nicht sichtbar. Wirkt nach WoT-Neustart.</div>
+                <div class="note" style="margin-top:6px;font-size:11.5px">Nur du siehst die Sticker. 2D-Stile werden unter den Stickern ausgespart, 3D-Stile bekommen die Sticker ebenfalls (Vorschau: „Modell“ im Panel Ansicht &amp; Teile). Wirkt nach WoT-Neustart.</div>
               </div>
               </div>
             </div>
@@ -196,6 +203,7 @@
             <div class="gar-panel">
               <button class="pan-min" id="garPanelMin" title="Panel minimieren"><svg><use href="#i-minus"/></svg></button>
               <div class="gp-title">Ansicht &amp; Teile</div>
+              <div class="gar-row" id="garSetRow" hidden><span class="lbl">Modell</span><select class="input" id="garSet" title="3D-Stil als Vorschau anzeigen – Sticker werden beim Anwenden auch in alle 3D-Stile eingebaut"></select></div>
               <div class="gar-row"><span class="lbl">Teile</span><div class="chips" id="garParts"></div></div>
               <div class="gar-row"><span class="lbl">Turm</span><input type="range" id="garYaw" min="-180" max="180" value="0"></div>
               <div class="gar-row"><span class="lbl">Kanone</span><input type="range" id="garPitch" min="-10" max="25" value="0"></div>

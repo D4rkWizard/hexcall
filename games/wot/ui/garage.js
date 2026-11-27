@@ -7,7 +7,7 @@
   const ROMAN = ['', 'I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX', 'X', 'XI'];
   const PART_LABEL = { chassis: 'Fahrwerk', hull: 'Wanne', turret: 'Turm', gun: 'Kanone' };
   const MAX_DECALS = 6; // live preview: stickers per part
-  const G = { tanks: [], nation: 'alle', level: 0, type: 'alle', q: '', current: null, opened: false };
+  const G = { tanks: [], nation: 'alle', level: 0, type: 'alle', q: '', current: null, opened: false, view: '', edited: [], edOpen: false };
   // sticker state of the current tank
   const ST = { images: [], list: [], sel: null, place: null, applied: null, review: false, saveTimer: 0 };
   // imported 3D models: library, placements on the current tank, GPU cache per library model
@@ -846,7 +846,7 @@
     clearTimeout(ST.saveTimer);
     const id = G.current, list = ST.list.map(({ id: sid, image, part, p, n, r, u, opacity, size, rot, flip, crop, bright, sat, contrast }) => ({ id: sid, image, part, p, n, r, u, opacity, size, rot, flip, crop, bright, sat, contrast }));
     ST.saveTimer = setTimeout(() => fetch('/api/wot/garage/stickers', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ tank: id, stickers: list }) })
-      .then((r) => r.json()).then((d) => { if (d.error) toast(d.error, true); }), 350);
+      .then((r) => r.json()).then((d) => { if (d.error) toast(d.error, true); loadEdited(); }), 350);
     ST.dirty = true;
     syncApply();
   }
@@ -934,7 +934,7 @@
       if (d.clash && d.clash.length) toast('Ein anderer Panzer benutzt dieselbe Textur – dessen Sticker überschreiben sich gegenseitig.', true);
       if (ST.applied) { setReview(true); toast('In WoT eingebaut. Wirkt nach dem nächsten Start von World of Tanks. Du siehst jetzt die Prüfansicht.'); }
       else toast('Sticker dieses Panzers aus WoT entfernt.');
-      renderStickers();
+      renderStickers(); loadEdited();
     } catch (e) { toast(e.message, true); syncApply(); }
     finally { document.body.classList.remove('wait'); btn.disabled = false; syncApply(); }
   }
@@ -1076,25 +1076,28 @@
   }
 
   /* ---------------- loading a tank ---------------- */
-  async function loadTank(id) {
+  // view = '' (normal model) or the model set of a 3D style – stickers/paint always belong to the tank itself
+  async function loadTank(id, view = '') {
     if (!initGl()) return;
-    G.current = id;
+    if (G.current !== id) view = '';
+    G.current = id; G.view = view;
+    const vid = view ? `${id}@${view}` : id;
     renderList();
     const msg = $('#garMsg');
     msg.textContent = 'Lade Modell …'; msg.hidden = false;
     try {
-      const info = await (await fetch(`/api/wot/garage/tank?id=${encodeURIComponent(id)}`)).json();
+      const info = await (await fetch(`/api/wot/garage/tank?id=${encodeURIComponent(vid)}`)).json();
       if (info.error) throw new Error(info.error);
-      if (G.current !== id) return;
+      if (G.current !== id || G.view !== view) return;
       const all = info.parts.flatMap((p) => p.meshes.map((m) => ({ ...m, part: p.part })));
       if (!all.length) throw new Error('Für diesen Panzer gibt es kein Modell in deiner Installation.');
       let done = 0;
       const [loaded] = await Promise.all([Promise.all(all.map(async (m) => {
-        const buf = await (await fetch(`/api/wot/garage/mesh?id=${encodeURIComponent(id)}&i=${m.i}`)).arrayBuffer();
+        const buf = await (await fetch(`/api/wot/garage/mesh?id=${encodeURIComponent(vid)}&i=${m.i}`)).arrayBuffer();
         msg.textContent = `Lade Modell … ${++done}/${all.length}`;
         return { m, buf };
       })), loadStickers(id), loadPlacements(id), loadPaint(id)]);
-      if (G.current !== id) return;
+      if (G.current !== id || G.view !== view) return;
       clearMeshes();
       R.offsets = Object.fromEntries(info.parts.map((p) => [p.part, p.offset]));
       R.yaw = 0; R.pitch = 0; $('#garYaw').value = 0; $('#garPitch').value = 0;
@@ -1114,6 +1117,10 @@
       R.dirty = true;
       const t = G.tanks.find((x) => x.id === id) || {};
       $('#garTitle').textContent = info.name;
+      const sets = info.sets || [];
+      $('#garSetRow').hidden = !sets.length;
+      $('#garSet').innerHTML = '<option value="">Standard</option>' + sets.map((s) => `<option value="${esc(s.id)}">3D-Stil: ${esc(s.name)}</option>`).join('');
+      $('#garSet').value = view;
       $('#garMeta').textContent = [t.nationName, t.level ? `Stufe ${ROMAN[t.level]}` : '', t.type, t.premium ? 'Premium/Spezial' : ''].filter(Boolean).join(' · ');
       $('#garParts').innerHTML = info.parts.map((p) => `<button class="chip ${R.hidden.has(p.part) ? '' : 'active'}" data-part="${p.part}">${esc(p.label)}</button>`).join('');
       const tris = info.parts.reduce((a, p) => a + p.meshes.reduce((b, m) => b + m.triangles, 0), 0);
@@ -1125,6 +1132,31 @@
     } catch (e) {
       if (G.current === id) { msg.textContent = e.message; msg.hidden = false; }
     }
+  }
+
+  /* ---------------- overview of edited tanks ---------------- */
+  async function loadEdited() {
+    try { const r = await fetch('/api/wot/garage/edited'); const d = await r.json(); if (r.ok) G.edited = d; } catch {}
+    renderEdited();
+  }
+  function renderEdited() {
+    const l = G.edited || [];
+    $('#garEdited').hidden = !l.length;
+    $('#garEdCount').textContent = l.length;
+    $('#garEdHead').classList.toggle('open', G.edOpen);
+    $('#garEdBody').hidden = !G.edOpen;
+    const bits = (t) => [t.stickers ? `${t.stickers} Sticker` : '', t.paint ? 'Malerei' : '', t.models ? `${t.models} Anbauten` : ''].filter(Boolean).join(' · ');
+    $('#garEdList').innerHTML = l.map((t) => `<div class="gar-ed-item ${t.id === G.current ? 'active' : ''}">
+      <button class="gar-ed-open" data-edopen="${esc(t.id)}" title="Öffnen"><span class="gt-lvl">${ROMAN[t.level] || ''}</span><span class="gar-ed-name">${esc(t.name)}<small>${esc(bits(t))}${t.applied || t.modelsApplied ? ' · <i class="ok">eingebaut</i>' : ''}</small></span></button>
+      <button class="btn sm ghost icon" data-edclear="${esc(t.id)}" title="Alles von diesem Panzer entfernen (Sticker, Malerei, Anbauten – auch aus WoT)"><svg><use href="#i-trash"/></svg></button></div>`).join('');
+  }
+  async function clearEdited(all, id) {
+    const r = await fetch(all ? '/api/wot/garage/clear-all' : '/api/wot/garage/clear', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(all ? { confirm: true } : { tank: id }) });
+    const d = await r.json();
+    if (!r.ok) return toast(d.error || 'Fehler', true);
+    G.edited = d.edited || []; renderEdited();
+    toast(all ? 'Alle Panzer geleert – Sticker, Malerei und Anbauten sind auch aus WoT entfernt.' : 'Panzer geleert – auch aus WoT entfernt.');
+    if (G.current && (all || id === G.current)) loadTank(G.current, G.view);
   }
 
   /* ---------------- list ---------------- */
@@ -1156,7 +1188,7 @@
     try {
       const r = await fetch('/api/wot/garage/tanks'); const d = await r.json();
       if (!r.ok) throw new Error(d.error || 'Fehler');
-      G.tanks = d; fillFilters(); renderList();
+      G.tanks = d; fillFilters(); renderList(); loadEdited();
       const first = d.find((t) => t.key === 'G12_Ltraktor') || d[0];
       if (first) loadTank(first.id);
     } catch (e) { $('#garList').innerHTML = `<div class="note" style="padding:12px">${esc(e.message)}</div>`; }
@@ -1170,6 +1202,18 @@
     $('#garLevel').addEventListener('change', (e) => { G.level = Number(e.target.value); renderList(); });
     $('#garType').addEventListener('change', (e) => { G.type = e.target.value; renderList(); });
     $('#garList').addEventListener('click', (e) => { const b = e.target.closest('[data-tank]'); if (b) loadTank(b.dataset.tank); });
+    $('#garSet').addEventListener('change', (e) => { if (G.current) loadTank(G.current, e.target.value); });
+    $('#garEdHead').addEventListener('click', () => { G.edOpen = !G.edOpen; renderEdited(); });
+    $('#garEdList').addEventListener('click', (e) => {
+      const o = e.target.closest('[data-edopen]'); if (o) { loadTank(o.dataset.edopen); renderEdited(); return; }
+      const c = e.target.closest('[data-edclear]'); if (c) clearEdited(false, c.dataset.edclear);
+    });
+    $('#garEdAll').addEventListener('click', () => {
+      const n = (G.edited || []).length;
+      if (!n) return;
+      if (!confirm(`Wirklich ALLE ${n} bearbeiteten Panzer leeren?\n\nAlle Sticker, Malereien und 3D-Anbauten werden gelöscht und auch aus World of Tanks entfernt. Das kann nicht rückgängig gemacht werden. (Deine Bilder und Modelle in der Sammlung bleiben erhalten.)`)) return;
+      clearEdited(true);
+    });
     $('#garParts').addEventListener('click', (e) => {
       const b = e.target.closest('[data-part]'); if (!b) return;
       const p = b.dataset.part; R.hidden.has(p) ? R.hidden.delete(p) : R.hidden.add(p);

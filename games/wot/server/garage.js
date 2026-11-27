@@ -66,17 +66,21 @@ module.exports = function garage({ DATA, gameDir, gameVersion, modsDir }) {
   }
 
   // the vehicle definition: model paths of chassis/hull/turret/gun and where they are attached
-  // id = "nation:key", optionally "nation:key|turretName|gunName" for a specific module setup (replays)
+  // id = "nation:key", optionally "nation:key|turretName|gunName" for a specific module setup (replays),
+  // and "…@setName" for the models of a 3D style (vehicle xml: models/sets/<setName>)
   function tank(id) {
     const s = load();
     if (tankCache.has(id)) return tankCache.get(id).info;
-    const [base, wantTurret, wantGun] = String(id).split('|');
+    const [idPart, set] = String(id).split('@');
+    if (set !== undefined && !/^[\w-]+$/.test(set)) throw new Error('Unbekannter 3D-Stil');
+    const [base, wantTurret, wantGun] = idPart.split('|');
     const [nation, key] = base.split(':');
     if (!NATIONS[nation] || !/^[\w-]+$/.test(key || '')) throw new Error('Unbekannter Panzer');
     const buf = s.pkg.read(`scripts/item_defs/vehicles/${nation}/${key}.xml`);
     if (!buf) throw new Error('Panzerdaten nicht gefunden');
     const V = bw.unpackXml(buf);
-    const model = (n) => bw.str(bw.at(n, 'models/undamaged'));
+    const setModel = (n) => { if (!set) return ''; const ss = bw.at(n, 'models/sets'); const k = ss && bw.kid(ss, set); return k ? bw.str(bw.kid(k, 'undamaged')) : ''; };
+    const model = (n) => setModel(n) || bw.str(bw.at(n, 'models/undamaged'));
     const v3 = (n) => { const a = bw.vec(n) || [0, 0, 0]; return [a[0] || 0, a[1] || 0, a[2] || 0]; };
     const hull = bw.kid(V, 'hull');
     const chassisList = bw.kid(V, 'chassis') ? bw.kid(V, 'chassis').c : [];
@@ -144,10 +148,46 @@ module.exports = function garage({ DATA, gameDir, gameVersion, modsDir }) {
     }
     const partFiles = Object.fromEntries(parts.map((p) => [p.part, { visual: p.visual, model: p.modelPath }]));
     parts.forEach((p) => { delete p.visual; delete p.modelPath; });
-    const info = { id, name: tankName(base), nation, key, parts };
+    // 3D styles of this tank (model sets of the hull), named like in the game
+    const setsNode = hull && bw.at(hull, 'models/sets');
+    const sets = setsNode ? setsNode.c.map(([k]) => ({ id: k, name: styleName(k) })) : [];
+    const info = { id, name: tankName(base), nation, key, parts, sets, set: set || null };
     tankCache.set(id, { info, meshes, partFiles });
-    if (tankCache.size > 6) tankCache.delete(tankCache.keys().next().value);
+    if (tankCache.size > 10) tankCache.delete(tankCache.keys().next().value);
     return info;
+  }
+  // display names of 3D styles: styles/list.xml links modelsSet -> userString (vehicle_customization.mo)
+  let styleNames = null;
+  function styleName(set) {
+    const s = load();
+    if (!styleNames) {
+      styleNames = new Map();
+      try {
+        const mo = bw.mo(fs.readFileSync(path.join(s.dir, 'res', 'text', 'lc_messages', 'vehicle_customization.mo')));
+        const walk = (n) => { for (const [k, c] of n.c || []) {
+          if (k === 'style') { const ms = bw.str(bw.kid(c, 'modelsSet')), us = bw.str(bw.kid(c, 'userString')); if (ms && !styleNames.has(ms)) styleNames.set(ms, mo.get(us.replace(/^#vehicle_customization:/, '')) || ms); }
+          else walk(c);
+        } };
+        walk(bw.unpackXml(s.pkg.read('scripts/item_defs/customization/styles/list.xml')));
+      } catch {}
+    }
+    return styleNames.get(set) || set.replace(/_/g, ' ');
+  }
+  // all meshes the stickers of a tank are baked into: the normal model plus every 3D style. A texture is only taken
+  // from the first model that uses it (3D styles often reuse the normal textures – they must not be painted twice).
+  function bakeMeshes(tankId) {
+    const info = tank(tankId), out = [], claimed = new Set();
+    for (const set of [null, ...info.sets.map((x) => x.id)]) {
+      const vid = set ? `${tankId}@${set}` : tankId;
+      try { tank(vid); } catch { continue; }
+      const own = tankCache.get(vid).meshes, mine = new Set();
+      for (const m of own) {
+        if (m.diffuse && claimed.has(m.diffuse)) continue;
+        out.push(m); if (m.diffuse) mine.add(m.diffuse);
+      }
+      for (const d of mine) claimed.add(d);
+    }
+    return out;
   }
   function tankName(id) { const t = tanks().find((x) => x.id === id); return t ? t.name : id; }
 
@@ -255,8 +295,7 @@ module.exports = function garage({ DATA, gameDir, gameVersion, modsDir }) {
 
   // paint the stickers of one tank into copies of its colour textures (full resolution)
   function bake(tankId, list, paint = new Map()) {
-    tank(tankId);
-    const { meshes } = tankCache.get(tankId);
+    const meshes = bakeMeshes(tankId);
     const imgs = new Map();
     const getImg = (id) => { if (!imgs.has(id)) imgs.set(id, bw.decodePng(image(id))); return imgs.get(id); };
     const byPart = {};
@@ -420,8 +459,7 @@ module.exports = function garage({ DATA, gameDir, gameVersion, modsDir }) {
   const writePaintIndex = (tankId, idx) => { fs.mkdirSync(paintDir(tankId), { recursive: true }); fs.writeFileSync(path.join(paintDir(tankId), 'index.json'), JSON.stringify(idx, null, 1)); };
   const paintFile = (tex) => `${require('crypto').createHash('sha1').update(String(tex).toLowerCase()).digest('hex').slice(0, 16)}.png`;
   function diffuseOf(tankId, tex) {
-    tank(tankId);
-    const own = tankCache.get(tankId).meshes.some((m) => m.diffuse === tex);
+    const own = bakeMeshes(tankId).some((m) => m.diffuse === tex);
     if (!own) throw new Error('Diese Textur gehört nicht zu diesem Panzer');
     return tex;
   }
@@ -777,7 +815,42 @@ module.exports = function garage({ DATA, gameDir, gameVersion, modsDir }) {
     return out;
   }
 
-  return { tanks, tank, mesh, texture, moduleNames, partGeometry, addImage, image, removeImage, stickers, saveStickers, apply, paintList, paintImage, savePaint, clearPaint,
+  /* ================= overview: which tanks were edited, clearing ================= */
+  function edited() {
+    const all = readAll(), M = readM(), ids = new Set([...Object.keys(all.tanks), ...Object.keys(all.applied), ...Object.keys(M.tanks), ...Object.keys(M.applied)]);
+    try { for (const d of fs.readdirSync(PAINT)) { const idx = readJson(path.join(PAINT, d, 'index.json'), {}); if (Object.keys(idx).length) ids.add(d.replace(/_/, ':')); } } catch {}
+    let names = new Map();
+    try { names = new Map(tanks().map((t) => [t.id, t])); } catch {}
+    return [...ids].map((id) => {
+      const t = names.get(id) || {};
+      return { id, name: t.name || id, level: t.level || 0, type: t.type || '', nationName: t.nationName || '',
+        stickers: (all.tanks[id] || []).length, paint: Object.keys(paintIndex(id)).length, models: (M.tanks[id] || []).length,
+        applied: !!all.applied[id], modelsApplied: !!M.applied[id] };
+    }).filter((x) => x.stickers || x.paint || x.models || x.applied || x.modelsApplied)
+      .sort((a, b) => b.level - a.level || a.name.localeCompare(b.name, 'de'));
+  }
+  // remove stickers, paint and 3D parts of one tank (or all) – mods are rewritten first, so a locked file changes nothing
+  function clearTanks(ids) {
+    load();
+    const all = readAll(), M = readM();
+    for (const id of ids) { delete all.tanks[id]; delete all.applied[id]; delete M.tanks[id]; delete M.applied[id]; }
+    writeMod(all);
+    writeModelMod(M);
+    writeAll(all); writeM(M);
+    for (const id of ids) {
+      fs.rmSync(path.join(OUT, safeId(id)), { recursive: true, force: true });
+      fs.rmSync(path.join(MOUT, safeId(id)), { recursive: true, force: true });
+      fs.rmSync(paintDir(id), { recursive: true, force: true });
+    }
+    return { ok: true, edited: edited() };
+  }
+  function clearTank(id) {
+    if (!/^[a-z]+:[\w-]+$/.test(String(id))) throw new Error('Unbekannter Panzer');
+    return clearTanks([String(id)]);
+  }
+  function clearAll() { return clearTanks(edited().map((x) => x.id)); }
+
+  return { tanks, tank, mesh, texture, edited, clearTank, clearAll, moduleNames, partGeometry, addImage, image, removeImage, stickers, saveStickers, apply, paintList, paintImage, savePaint, clearPaint,
     addModel, modelBin, modelTex, removeModel, placements, savePlacements, applyModels };
 };
 

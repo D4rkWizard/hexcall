@@ -12,6 +12,8 @@
 - 3D garage: small stickers stay sharp – mipmapped, gamma-correct filtering with gentle sharpening, and the tank texture is written at 2x/4x resolution (max 4096) when a sticker would get only few pixels
 - 3D garage: per sticker brightness, colour strength and contrast (live preview, baked the same way)
 - 3D garage: emblem-quality stickers – textures with stickers/paint are written as BC7 (the format WoT uses for its own 3D parts) instead of DXT, so colours, gradients and edges stay clean; mipmaps are averaged in linear light and lightly sharpened; like an emblem's own texture, every sticker now gets about one texel per image pixel (up to 512×512, texture max 4096); the 3D preview after "Apply" shows the full resolution
+- 3D garage: stickers and paint also appear on **3D styles** – "Apply" builds them into the textures of every 3D style of the tank; the View & parts panel can show each 3D style's model as a preview
+- 3D garage: **edited tanks** overview (stickers, paint, 3D parts, installed or not) with "clear" per tank and "clear all tanks" (with a safety question) – also removes them from WoT
 - "Play" for World of Tanks starts the Wargaming Game Center first if it is not running (otherwise WoT is not signed in) – also for Hexcall's restart button and replays
 - Language, theme and updates are now set once for the whole client (6 languages, 3 themes)
 - Hexcall studio: **Listen to original** – plays WoT's own voice line or effect for every step (converted with the free tool vgmstream, downloaded once on request), with a playback volume slider in the studio
