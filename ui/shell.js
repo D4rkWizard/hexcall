@@ -38,6 +38,10 @@ function fmtDur(ms) {
   return m % 60 ? `${h} h ${m % 60} min` : `${h} h`;
 }
 const fmtHours = (ms) => (!ms ? '–' : ms < 3600000 ? `${Math.max(1, Math.round(ms / 60000))} min` : `${fmt(ms / 3600000, ms < 36000000 ? 1 : 0)} h`);
+// estimated total play time (game module delivers { ms, battleMs, battles, km, since })
+const estTitle = (e) => e.kind === 'osu'
+  ? `Geschätzt: ${fmtHours(e.mapMs)} reine Map-Spielzeit laut osu!-Profil${e.plays ? ` (${fmt(e.plays)} Plays)` : ''} × ${fmt(e.ratio, 2)} für Menüs, Songauswahl und Pausen. ${e.measured ? `Den Faktor hat Hexhub aus ${fmtHours(e.measuredMapMs)} mitgemessener Map-Zeit ermittelt.` : 'Der Faktor ist noch ein Schätzwert – er wird genauer, sobald Hexhub eine Weile osu! mitgemessen hat.'}`
+  : `Geschätzt aus der Statistik des Spiels: ${fmtHours(e.battleMs)} im Gefecht in ${fmt(e.battles)} Zufallsgefechten (seit ${dateFmt(e.since, false)}) plus etwa 2½ min pro Gefecht für Garage, Warteschlange und Laden. ${fmt(e.km)} km gefahren.`;
 const dateFmt = (iso, withTime = true) => (iso ? new Date(iso).toLocaleString(locale(), withTime ? { day: '2-digit', month: '2-digit', year: '2-digit', hour: '2-digit', minute: '2-digit' } : { day: '2-digit', month: '2-digit', year: 'numeric' }) : '–');
 function dropZone(el, onFiles) {
   ['dragenter', 'dragover'].forEach((ev) => el.addEventListener(ev, (e) => { e.preventDefault(); el.classList.add('over'); }));
@@ -147,6 +151,7 @@ const Hexhub = (() => {
     if (g.version) meta.push(`<span>${icon('tag')}${esc(g.version)}</span>`);
     if (g.player) meta.push(`<span>${icon('user')}${esc(g.player)}</span>`);
     if (g.playtime && g.playtime.total) meta.push(`<span title="Gemessen, während Hexhub läuft">${icon('clock')}${fmtHours(g.playtime.total)} gespielt</span>`);
+    if (g.playtimeEst && g.playtimeEst.ms) meta.push(`<span title="${esc(estTitle(g.playtimeEst))}">${icon('clock')}≈ ${fmtHours(g.playtimeEst.ms)} gesamt</span>`);
     if (!g.installed) meta.push(`<span>Nicht gefunden – <a href="#" data-view="settings" style="color:var(--g)">Ordner wählen</a></span>`);
     $(`[data-gmeta="${g.id}"]`).innerHTML = meta.join('');
     const mod = S.mods[g.id];
@@ -195,6 +200,7 @@ const Hexhub = (() => {
           <div class="gc-stats">
             <div><b>${g.version ? esc(g.version) : '–'}</b>Version</div>
             <div><b>${fmtHours(g.playtime && g.playtime.total)}</b>Gespielt</div>
+            ${g.playtimeEst && g.playtimeEst.ms ? `<div title="${esc(estTitle(g.playtimeEst))}"><b>${fmtHours(g.playtimeEst.ms)}</b>Gesamt ca.</div>` : ''}
             ${stats.map(([v, l]) => `<div><b>${v}</b>${esc(l)}</div>`).join('')}
           </div>
           <div class="qlinks">${g.tabs.slice(1).map((t) => `<button data-view="game:${g.id}" data-tab="${t.id}">${icon(t.icon)}${esc(t.label)}</button>`).join('')}</div>

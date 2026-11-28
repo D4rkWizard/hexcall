@@ -7,6 +7,7 @@ const { spawn } = require('child_process');
 
 const HEXCALL = path.join(__dirname, 'hexcall');
 const wgc = require('./server/wgc');
+const dossier = require('./server/dossier');
 
 module.exports = {
   id: 'wot',
@@ -246,7 +247,7 @@ module.exports = {
       onSettings: (s, patch) => { if ('lang' in patch || 'theme' in patch || 'animations' in patch) hexcall.applyShared(s); },
       async info() {
         const g = gameDir();
-        return { installed: !!g, dir: g, version: g ? gameVersion(g) : null, player: hexcall.wotPlayer(), hexcall: gamePaths.versionInfo().version };
+        return { installed: !!g, dir: g, version: g ? gameVersion(g) : null, player: hexcall.wotPlayer(), hexcall: gamePaths.versionInfo().version, playtimeEst: dossier.estimate() };
       },
       async launch() {
         const g = gameDir();

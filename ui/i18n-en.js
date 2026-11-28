@@ -11,7 +11,7 @@ I18N.add('en', {
   // home
   'Dein Spiele-Client': 'Your game client', 'Alle Spiele. Alle Mods.': 'All games. All mods.', 'Willkommen zurück.': 'Welcome back.',
   'Starte deine Spiele, sieh was gerade läuft und nutze alle Mods und Werkzeuge von DarkWizard – an einem Ort.': 'Launch your games, see what is running and use all mods and tools by DarkWizard – in one place.',
-  'Bereit': 'Ready', 'Nicht gefunden': 'Not found', 'Nicht gestartet': 'Not running', 'Version': 'Version', 'Gespielt': 'Played',
+  'Bereit': 'Ready', 'Nicht gefunden': 'Not found', 'Nicht gestartet': 'Not running', 'Version': 'Version', 'Gespielt': 'Played', 'Gesamt ca.': 'Total approx.',
   'Spielen': 'Play', 'Schließen': 'Close', 'Öffnen': 'Open', 'Spielordner öffnen': 'Open game folder', 'Ordner wählen': 'Choose folder',
   'Gemessen, während Hexhub läuft': 'Measured while Hexhub is running', 'gerade eben': 'just now', 'Spiel': 'Game',
   // game taglines and tabs (from the modules)
@@ -43,6 +43,10 @@ I18N.add('en', {
   [/^seit (.+)$/, 'for $1'],
   [/^(.+) läuft$/, '$1 running'],
   [/^(.+) gespielt$/, '$1 played'],
+  [/^≈ (.+) gesamt$/, '≈ $1 total'],
+  [/^Geschätzt: (.+) reine Map-Spielzeit laut osu!-Profil(?: \((.+) Plays\))? × (.+) für Menüs, Songauswahl und Pausen\. Den Faktor hat Hexhub aus (.+) mitgemessener Map-Zeit ermittelt\.$/, 'Estimated: $1 of pure map time on your osu! profile ($2 plays) × $3 for menus, song select and breaks. Hexhub worked out the factor from $4 of map time it measured.'],
+  [/^Geschätzt: (.+) reine Map-Spielzeit laut osu!-Profil(?: \((.+) Plays\))? × (.+) für Menüs, Songauswahl und Pausen\. Der Faktor ist noch ein Schätzwert – er wird genauer, sobald Hexhub eine Weile osu! mitgemessen hat\.$/, 'Estimated: $1 of pure map time on your osu! profile ($2 plays) × $3 for menus, song select and breaks. The factor is still a guess – it gets more accurate once Hexhub has measured osu! for a while.'],
+  [/^Geschätzt aus der Statistik des Spiels: (.+) im Gefecht in (.+) Zufallsgefechten \(seit (.+)\) plus etwa 2½ min pro Gefecht für Garage, Warteschlange und Laden\. (.+) km gefahren\.$/, "Estimated from the game's statistics: $1 in battle in $2 random battles (since $3) plus about 2½ min per battle for garage, queue and loading. $4 km driven."],
   [/^Willkommen zurück, (.+)\.$/, 'Welcome back, $1.'],
   [/^(.+) wird gestartet …$/, '$1 is starting …'],
   [/^(.+) wirklich schließen\? Nicht gespeicherter Fortschritt kann verloren gehen\.$/, 'Really close $1? Unsaved progress may be lost.'],

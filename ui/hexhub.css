@@ -82,7 +82,8 @@
 .gc-body { padding: 14px 18px 18px; display: flex; flex-direction: column; gap: 12px; flex: 1; }
 .gc-body p { margin: 0; color: var(--muted); font-size: 13px; }
 .gc-stats { display: flex; gap: 22px; font-size: 12px; color: var(--muted); }
-.gc-stats b { display: block; color: var(--text); font: 600 16px var(--head); }
+.gc-stats { flex-wrap: wrap; row-gap: 10px; }
+.gc-stats b { white-space: nowrap; display: block; color: var(--text); font: 600 16px var(--head); }
 .gc-acts { display: flex; gap: 8px; margin-top: auto; }
 .gc-acts .btn.primary { flex: 1; background: linear-gradient(180deg, color-mix(in srgb, var(--g) 80%, #fff), var(--g)); border-color: var(--g); color: #1a1108; }
 .qlinks { display: flex; flex-wrap: wrap; gap: 6px; }

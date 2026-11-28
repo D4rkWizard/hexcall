@@ -298,13 +298,21 @@ module.exports = {
       return false;
     }
 
+    /* ------------------------------------------------------------ estimated total play time */
+    const playerName = () => { const d = osuDir(); if (!d) return null; let p = userCfg(d).Username || null; try { const data = db(); if (data && data.player) p = data.player; } catch {} return p; };
+    const profile = require('./server/profile')({
+      DATA, player: playerName,
+      clientMs: () => { const w = ctx.watcher().get('osu'); return (w.playtime && w.playtime.total) || 0; },
+      running: () => !!ctx.watcher().get('osu').running,
+    });
+
     return {
       routes, raw,
       async info() {
         const d = osuDir(), cfg = d ? userCfg(d) : {};
         let player = cfg.Username || null;
         try { const data = db(); if (data && data.player) player = data.player; } catch {}
-        return { installed: !!d, dir: d, version: cfg.LastVersion || null, player };
+        return { installed: !!d, dir: d, version: cfg.LastVersion || null, player, playtimeEst: profile.estimate() };
       },
       async launch() {
         const d = osuDir();
